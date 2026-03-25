@@ -1,0 +1,15 @@
+D:\Projetos\BFGA-BoardForGamingApp\.worktrees\bfga-implementation\src\BFGA.Network\bin\Debug\net9.0\BFGA.Network.deps.json
+D:\Projetos\BFGA-BoardForGamingApp\.worktrees\bfga-implementation\src\BFGA.Network\bin\Debug\net9.0\BFGA.Network.dll
+D:\Projetos\BFGA-BoardForGamingApp\.worktrees\bfga-implementation\src\BFGA.Network\bin\Debug\net9.0\BFGA.Network.pdb
+D:\Projetos\BFGA-BoardForGamingApp\.worktrees\bfga-implementation\src\BFGA.Network\bin\Debug\net9.0\BFGA.Core.dll
+D:\Projetos\BFGA-BoardForGamingApp\.worktrees\bfga-implementation\src\BFGA.Network\bin\Debug\net9.0\BFGA.Core.pdb
+D:\Projetos\BFGA-BoardForGamingApp\.worktrees\bfga-implementation\src\BFGA.Network\obj\Debug\net9.0\BFGA.Network.csproj.AssemblyReference.cache
+D:\Projetos\BFGA-BoardForGamingApp\.worktrees\bfga-implementation\src\BFGA.Network\obj\Debug\net9.0\BFGA.Network.GeneratedMSBuildEditorConfig.editorconfig
+D:\Projetos\BFGA-BoardForGamingApp\.worktrees\bfga-implementation\src\BFGA.Network\obj\Debug\net9.0\BFGA.Network.AssemblyInfoInputs.cache
+D:\Projetos\BFGA-BoardForGamingApp\.worktrees\bfga-implementation\src\BFGA.Network\obj\Debug\net9.0\BFGA.Network.AssemblyInfo.cs
+D:\Projetos\BFGA-BoardForGamingApp\.worktrees\bfga-implementation\src\BFGA.Network\obj\Debug\net9.0\BFGA.Network.csproj.CoreCompileInputs.cache
+D:\Projetos\BFGA-BoardForGamingApp\.worktrees\bfga-implementation\src\BFGA.Network\obj\Debug\net9.0\BFGA.Net.843811DF.Up2Date
+D:\Projetos\BFGA-BoardForGamingApp\.worktrees\bfga-implementation\src\BFGA.Network\obj\Debug\net9.0\BFGA.Network.dll
+D:\Projetos\BFGA-BoardForGamingApp\.worktrees\bfga-implementation\src\BFGA.Network\obj\Debug\net9.0\refint\BFGA.Network.dll
+D:\Projetos\BFGA-BoardForGamingApp\.worktrees\bfga-implementation\src\BFGA.Network\obj\Debug\net9.0\BFGA.Network.pdb
+D:\Projetos\BFGA-BoardForGamingApp\.worktrees\bfga-implementation\src\BFGA.Network\obj\Debug\net9.0\ref\BFGA.Network.dll

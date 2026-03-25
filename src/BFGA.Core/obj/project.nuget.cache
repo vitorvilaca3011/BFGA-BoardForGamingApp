@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "Afo9l3QHouc=",
+  "success": true,
+  "projectFilePath": "D:\\Projetos\\BFGA-BoardForGamingApp\\.worktrees\\bfga-implementation\\src\\BFGA.Core\\BFGA.Core.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Administrator\\.nuget\\packages\\messagepack\\2.5.187\\messagepack.2.5.187.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\messagepack.annotations\\2.5.187\\messagepack.annotations.2.5.187.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\microsoft.net.stringtools\\17.6.3\\microsoft.net.stringtools.17.6.3.nupkg.sha512"
+  ],
+  "logs": []
+}

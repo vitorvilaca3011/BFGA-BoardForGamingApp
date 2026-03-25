@@ -1,0 +1,142 @@
+{
+  "version": 2,
+  "dgSpecHash": "fpDQhrwTcIQ=",
+  "success": true,
+  "projectFilePath": "D:\\Projetos\\BFGA-BoardForGamingApp\\.worktrees\\bfga-implementation\\src\\BFGA.App\\BFGA.App.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Administrator\\.nuget\\packages\\avalonia\\11.3.12\\avalonia.11.3.12.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\avalonia.angle.windows.natives\\2.1.25547.20250602\\avalonia.angle.windows.natives.2.1.25547.20250602.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\avalonia.buildservices\\11.3.2\\avalonia.buildservices.11.3.2.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\avalonia.controls.colorpicker\\11.3.12\\avalonia.controls.colorpicker.11.3.12.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\avalonia.controls.panandzoom\\0.4.0\\avalonia.controls.panandzoom.0.4.0.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\avalonia.desktop\\11.3.12\\avalonia.desktop.11.3.12.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\avalonia.diagnostics\\11.3.12\\avalonia.diagnostics.11.3.12.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\avalonia.fonts.inter\\11.3.12\\avalonia.fonts.inter.11.3.12.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\avalonia.freedesktop\\11.3.12\\avalonia.freedesktop.11.3.12.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\avalonia.native\\11.3.12\\avalonia.native.11.3.12.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\avalonia.remote.protocol\\11.3.12\\avalonia.remote.protocol.11.3.12.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\avalonia.skia\\11.3.12\\avalonia.skia.11.3.12.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\avalonia.themes.fluent\\11.3.12\\avalonia.themes.fluent.11.3.12.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\avalonia.themes.simple\\11.3.12\\avalonia.themes.simple.11.3.12.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\avalonia.win32\\11.3.12\\avalonia.win32.11.3.12.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\avalonia.x11\\11.3.12\\avalonia.x11.11.3.12.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\harfbuzzsharp\\8.3.1.1\\harfbuzzsharp.8.3.1.1.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\harfbuzzsharp.nativeassets.linux\\8.3.1.1\\harfbuzzsharp.nativeassets.linux.8.3.1.1.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\harfbuzzsharp.nativeassets.macos\\8.3.1.1\\harfbuzzsharp.nativeassets.macos.8.3.1.1.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\harfbuzzsharp.nativeassets.webassembly\\8.3.1.1\\harfbuzzsharp.nativeassets.webassembly.8.3.1.1.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\harfbuzzsharp.nativeassets.win32\\8.3.1.1\\harfbuzzsharp.nativeassets.win32.8.3.1.1.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\litenetlib\\2.1.0\\litenetlib.2.1.0.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\messagepack\\2.5.187\\messagepack.2.5.187.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\messagepack.annotations\\2.5.187\\messagepack.annotations.2.5.187.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\microcom.runtime\\0.11.0\\microcom.runtime.0.11.0.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\microsoft.net.stringtools\\17.6.3\\microsoft.net.stringtools.17.6.3.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\microsoft.netcore.platforms\\1.0.1\\microsoft.netcore.platforms.1.0.1.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\microsoft.netcore.targets\\1.0.1\\microsoft.netcore.targets.1.0.1.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\serilog\\1.5.14\\serilog.1.5.14.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\skiasharp\\3.116.1\\skiasharp.3.116.1.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\skiasharp.nativeassets.linux\\2.88.9\\skiasharp.nativeassets.linux.2.88.9.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\skiasharp.nativeassets.macos\\3.116.1\\skiasharp.nativeassets.macos.3.116.1.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\skiasharp.nativeassets.webassembly\\2.88.9\\skiasharp.nativeassets.webassembly.2.88.9.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\skiasharp.nativeassets.win32\\3.116.1\\skiasharp.nativeassets.win32.3.116.1.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\splat\\1.6.2\\splat.1.6.2.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\sprache\\2.0.0.50\\sprache.2.0.0.50.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\system.collections\\4.0.11\\system.collections.4.0.11.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\system.collections.concurrent\\4.0.12\\system.collections.concurrent.4.0.12.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\system.componentmodel\\4.0.1\\system.componentmodel.4.0.1.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\system.diagnostics.debug\\4.0.11\\system.diagnostics.debug.4.0.11.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\system.diagnostics.tools\\4.0.1\\system.diagnostics.tools.4.0.1.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\system.diagnostics.tracing\\4.1.0\\system.diagnostics.tracing.4.1.0.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\system.globalization\\4.0.11\\system.globalization.4.0.11.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\system.io\\4.1.0\\system.io.4.1.0.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\system.io.pipelines\\8.0.0\\system.io.pipelines.8.0.0.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\system.linq\\4.1.0\\system.linq.4.1.0.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\system.linq.expressions\\4.1.0\\system.linq.expressions.4.1.0.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\system.objectmodel\\4.0.12\\system.objectmodel.4.0.12.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\system.reactive\\3.0.0\\system.reactive.3.0.0.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\system.reactive.core\\3.0.0\\system.reactive.core.3.0.0.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\system.reactive.interfaces\\3.0.0\\system.reactive.interfaces.3.0.0.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\system.reactive.linq\\3.0.0\\system.reactive.linq.3.0.0.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\system.reactive.platformservices\\3.0.0\\system.reactive.platformservices.3.0.0.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\system.reflection\\4.1.0\\system.reflection.4.1.0.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\system.reflection.emit\\4.0.1\\system.reflection.emit.4.0.1.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\system.reflection.emit.ilgeneration\\4.0.1\\system.reflection.emit.ilgeneration.4.0.1.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\system.reflection.emit.lightweight\\4.0.1\\system.reflection.emit.lightweight.4.0.1.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\system.reflection.extensions\\4.0.1\\system.reflection.extensions.4.0.1.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\system.reflection.primitives\\4.0.1\\system.reflection.primitives.4.0.1.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\system.reflection.typeextensions\\4.1.0\\system.reflection.typeextensions.4.1.0.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\system.resources.resourcemanager\\4.0.1\\system.resources.resourcemanager.4.0.1.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\system.runtime\\4.1.0\\system.runtime.4.1.0.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\system.runtime.extensions\\4.1.0\\system.runtime.extensions.4.1.0.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\system.runtime.handles\\4.0.1\\system.runtime.handles.4.0.1.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\system.runtime.interopservices.windowsruntime\\4.0.1\\system.runtime.interopservices.windowsruntime.4.0.1.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\system.text.encoding\\4.0.11\\system.text.encoding.4.0.11.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\system.threading\\4.0.11\\system.threading.4.0.11.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\system.threading.tasks\\4.0.11\\system.threading.tasks.4.0.11.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\system.threading.thread\\4.0.0\\system.threading.thread.4.0.0.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\system.threading.threadpool\\4.0.10\\system.threading.threadpool.4.0.10.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\system.threading.timer\\4.0.1\\system.threading.timer.4.0.1.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\tmds.dbus.protocol\\0.21.2\\tmds.dbus.protocol.0.21.2.nupkg.sha512"
+  ],
+  "logs": [
+    {
+      "code": "NU1603",
+      "level": "Warning",
+      "message": "BFGA.App depends on Avalonia.Controls.PanAndZoom (>= 0.3.0) but Avalonia.Controls.PanAndZoom 0.3.0 was not found. Avalonia.Controls.PanAndZoom 0.4.0 was resolved instead.",
+      "projectPath": "D:\\Projetos\\BFGA-BoardForGamingApp\\.worktrees\\bfga-implementation\\src\\BFGA.App\\BFGA.App.csproj",
+      "warningLevel": 1,
+      "filePath": "D:\\Projetos\\BFGA-BoardForGamingApp\\.worktrees\\bfga-implementation\\src\\BFGA.App\\BFGA.App.csproj",
+      "libraryId": "Avalonia.Controls.PanAndZoom",
+      "targetGraphs": [
+        "net9.0"
+      ]
+    },
+    {
+      "code": "NU1701",
+      "level": "Warning",
+      "message": "Package 'Avalonia.Controls.PanAndZoom 0.4.0' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net9.0'. This package may not be fully compatible with your project.",
+      "projectPath": "D:\\Projetos\\BFGA-BoardForGamingApp\\.worktrees\\bfga-implementation\\src\\BFGA.App\\BFGA.App.csproj",
+      "warningLevel": 1,
+      "filePath": "D:\\Projetos\\BFGA-BoardForGamingApp\\.worktrees\\bfga-implementation\\src\\BFGA.App\\BFGA.App.csproj",
+      "libraryId": "Avalonia.Controls.PanAndZoom",
+      "targetGraphs": [
+        "net9.0"
+      ]
+    },
+    {
+      "code": "NU1701",
+      "level": "Warning",
+      "message": "Package 'Serilog 1.5.14' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net9.0'. This package may not be fully compatible with your project.",
+      "projectPath": "D:\\Projetos\\BFGA-BoardForGamingApp\\.worktrees\\bfga-implementation\\src\\BFGA.App\\BFGA.App.csproj",
+      "warningLevel": 1,
+      "filePath": "D:\\Projetos\\BFGA-BoardForGamingApp\\.worktrees\\bfga-implementation\\src\\BFGA.App\\BFGA.App.csproj",
+      "libraryId": "Serilog",
+      "targetGraphs": [
+        "net9.0"
+      ]
+    },
+    {
+      "code": "NU1701",
+      "level": "Warning",
+      "message": "Package 'Splat 1.6.2' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net9.0'. This package may not be fully compatible with your project.",
+      "projectPath": "D:\\Projetos\\BFGA-BoardForGamingApp\\.worktrees\\bfga-implementation\\src\\BFGA.App\\BFGA.App.csproj",
+      "warningLevel": 1,
+      "filePath": "D:\\Projetos\\BFGA-BoardForGamingApp\\.worktrees\\bfga-implementation\\src\\BFGA.App\\BFGA.App.csproj",
+      "libraryId": "Splat",
+      "targetGraphs": [
+        "net9.0"
+      ]
+    },
+    {
+      "code": "NU1701",
+      "level": "Warning",
+      "message": "Package 'Sprache 2.0.0.50' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net9.0'. This package may not be fully compatible with your project.",
+      "projectPath": "D:\\Projetos\\BFGA-BoardForGamingApp\\.worktrees\\bfga-implementation\\src\\BFGA.App\\BFGA.App.csproj",
+      "warningLevel": 1,
+      "filePath": "D:\\Projetos\\BFGA-BoardForGamingApp\\.worktrees\\bfga-implementation\\src\\BFGA.App\\BFGA.App.csproj",
+      "libraryId": "Sprache",
+      "targetGraphs": [
+        "net9.0"
+      ]
+    }
+  ]
+}

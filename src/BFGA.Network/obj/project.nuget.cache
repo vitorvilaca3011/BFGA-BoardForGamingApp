@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "dgSpecHash": "sabtmPP4mVI=",
+  "success": true,
+  "projectFilePath": "D:\\Projetos\\BFGA-BoardForGamingApp\\.worktrees\\bfga-implementation\\src\\BFGA.Network\\BFGA.Network.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Administrator\\.nuget\\packages\\litenetlib\\2.1.0\\litenetlib.2.1.0.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\messagepack\\2.5.187\\messagepack.2.5.187.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\messagepack.annotations\\2.5.187\\messagepack.annotations.2.5.187.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\microsoft.net.stringtools\\17.6.3\\microsoft.net.stringtools.17.6.3.nupkg.sha512"
+  ],
+  "logs": []
+}

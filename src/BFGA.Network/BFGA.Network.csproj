@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="LiteNetLib" Version="2.1.0" />
+    <PackageReference Include="MessagePack" Version="2.5.187" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BFGA.Core\BFGA.Core.csproj" />
+  </ItemGroup>
+
+</Project>

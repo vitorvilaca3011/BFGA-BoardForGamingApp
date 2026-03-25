@@ -1,0 +1,154 @@
+{
+  "format": 1,
+  "restore": {
+    "D:\\Projetos\\BFGA-BoardForGamingApp\\.worktrees\\bfga-implementation\\src\\BFGA.Canvas\\BFGA.Canvas.csproj": {}
+  },
+  "projects": {
+    "D:\\Projetos\\BFGA-BoardForGamingApp\\.worktrees\\bfga-implementation\\src\\BFGA.Canvas\\BFGA.Canvas.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "D:\\Projetos\\BFGA-BoardForGamingApp\\.worktrees\\bfga-implementation\\src\\BFGA.Canvas\\BFGA.Canvas.csproj",
+        "projectName": "BFGA.Canvas",
+        "projectPath": "D:\\Projetos\\BFGA-BoardForGamingApp\\.worktrees\\bfga-implementation\\src\\BFGA.Canvas\\BFGA.Canvas.csproj",
+        "packagesPath": "C:\\Users\\Administrator\\.nuget\\packages\\",
+        "outputPath": "D:\\Projetos\\BFGA-BoardForGamingApp\\.worktrees\\bfga-implementation\\src\\BFGA.Canvas\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\Administrator\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {
+              "D:\\Projetos\\BFGA-BoardForGamingApp\\.worktrees\\bfga-implementation\\src\\BFGA.Core\\BFGA.Core.csproj": {
+                "projectPath": "D:\\Projetos\\BFGA-BoardForGamingApp\\.worktrees\\bfga-implementation\\src\\BFGA.Core\\BFGA.Core.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "Avalonia": {
+              "target": "Package",
+              "version": "[11.3.12, )"
+            },
+            "Avalonia.Controls.PanAndZoom": {
+              "target": "Package",
+              "version": "[0.4.0, )"
+            },
+            "Avalonia.Skia": {
+              "target": "Package",
+              "version": "[11.3.12, )"
+            },
+            "SkiaSharp": {
+              "target": "Package",
+              "version": "[3.116.1, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files (x86)\\dotnet\\sdk\\9.0.312/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "D:\\Projetos\\BFGA-BoardForGamingApp\\.worktrees\\bfga-implementation\\src\\BFGA.Core\\BFGA.Core.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "D:\\Projetos\\BFGA-BoardForGamingApp\\.worktrees\\bfga-implementation\\src\\BFGA.Core\\BFGA.Core.csproj",
+        "projectName": "BFGA.Core",
+        "projectPath": "D:\\Projetos\\BFGA-BoardForGamingApp\\.worktrees\\bfga-implementation\\src\\BFGA.Core\\BFGA.Core.csproj",
+        "packagesPath": "C:\\Users\\Administrator\\.nuget\\packages\\",
+        "outputPath": "D:\\Projetos\\BFGA-BoardForGamingApp\\.worktrees\\bfga-implementation\\src\\BFGA.Core\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\Administrator\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "MessagePack": {
+              "target": "Package",
+              "version": "[2.5.187, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files (x86)\\dotnet\\sdk\\9.0.312/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}
