@@ -175,6 +175,47 @@ public class SerializationTests
     }
 
     [Fact]
+    public void BoardState_RoundTrip_PreservesTextElement_Polymorphic()
+    {
+        var boardId = Guid.NewGuid();
+        var textElementId = Guid.NewGuid();
+
+        var board = new BoardState
+        {
+            BoardId = boardId,
+            BoardName = "Text Test Board"
+        };
+
+        board.Elements.Add(new TextElement
+        {
+            Id = textElementId,
+            Position = new Vector2(50, 50),
+            Size = new Vector2(100, 30),
+            Rotation = 0f,
+            ZIndex = 4,
+            OwnerId = Guid.NewGuid(),
+            IsLocked = false,
+            Text = "Hello World",
+            FontSize = 14f,
+            Color = SKColors.Black,
+            FontFamily = "Arial"
+        });
+
+        var bytes = MessagePackSerializer.Serialize(board, Options);
+        var restored = MessagePackSerializer.Deserialize<BoardState>(bytes, Options);
+
+        Assert.NotNull(restored);
+        Assert.Equal(1, restored.Elements.Count);
+
+        var restoredText = Assert.IsType<TextElement>(restored.Elements[0]);
+        Assert.Equal(textElementId, restoredText.Id);
+        Assert.Equal("Hello World", restoredText.Text);
+        Assert.Equal(14f, restoredText.FontSize);
+        Assert.Equal(SKColors.Black, restoredText.Color);
+        Assert.Equal("Arial", restoredText.FontFamily);
+    }
+
+    [Fact]
     public void BoardState_RoundTrip_PreservesLargeImageBytes()
     {
         var board = new BoardState

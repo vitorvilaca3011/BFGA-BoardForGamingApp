@@ -49,7 +49,7 @@ public class BoardStateTests
         board.Elements.Add(stroke);
 
         Assert.Single(board.Elements);
-        Assert.Equal(3, board.Elements[0].Points.Count);
+        Assert.Equal(3, ((StrokeElement)board.Elements[0]).Points.Count);
     }
 
     [Fact]

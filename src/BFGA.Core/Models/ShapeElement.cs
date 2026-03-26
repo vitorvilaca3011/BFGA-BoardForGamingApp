@@ -7,15 +7,15 @@ namespace BFGA.Core.Models;
 [MessagePackObject]
 public class ShapeElement : BoardElement
 {
-    [Key(10)]
+    [Key(7)]
     public ShapeType Type { get; set; }
 
-    [Key(11)]
+    [Key(8)]
     public SKColor StrokeColor { get; set; }
 
-    [Key(12)]
+    [Key(9)]
     public SKColor FillColor { get; set; }
 
-    [Key(13)]
+    [Key(10)]
     public float StrokeWidth { get; set; }
 }

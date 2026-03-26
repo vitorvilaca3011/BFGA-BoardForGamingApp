@@ -7,12 +7,12 @@ namespace BFGA.Core.Models;
 [MessagePackObject]
 public class StrokeElement : BoardElement
 {
-    [Key(10)]
+    [Key(7)]
     public List<Vector2> Points { get; set; } = new();
 
-    [Key(11)]
+    [Key(8)]
     public SKColor Color { get; set; }
 
-    [Key(12)]
+    [Key(9)]
     public float Thickness { get; set; }
 }
