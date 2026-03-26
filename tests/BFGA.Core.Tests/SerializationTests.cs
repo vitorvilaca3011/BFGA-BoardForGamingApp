@@ -129,7 +129,7 @@ public class SerializationTests
         var strokeId = Guid.NewGuid();
         var shapeId = Guid.NewGuid();
         var imageId = Guid.NewGuid();
-        var strokeImageData = new byte[] { 0x89, 0x50 };
+        var testImageData = new byte[] { 0x89, 0x50 };
 
         var board = new BoardState
         {
@@ -164,7 +164,7 @@ public class SerializationTests
             Id = imageId,
             Position = new Vector2(0, 100),
             Size = new Vector2(200, 150),
-            ImageData = strokeImageData,
+            ImageData = testImageData,
             OriginalFileName = "image.png"
         });
 
@@ -194,8 +194,8 @@ public class SerializationTests
         // Verify ImageElement polymorphic type and properties
         var restoredImage = Assert.IsType<ImageElement>(restored.Elements[2]);
         Assert.Equal(imageId, restoredImage.Id);
-        Assert.Equal(strokeImageData.Length, restoredImage.ImageData.Length);
-        Assert.Equal(strokeImageData, restoredImage.ImageData);
+        Assert.Equal(testImageData.Length, restoredImage.ImageData.Length);
+        Assert.Equal(testImageData, restoredImage.ImageData);
         Assert.Equal("image.png", restoredImage.OriginalFileName);
     }
 

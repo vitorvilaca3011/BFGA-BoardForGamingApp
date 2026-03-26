@@ -8,7 +8,7 @@ namespace BFGA.Core.Models;
 [MessagePack.Union(1, typeof(ShapeElement))]
 [MessagePack.Union(2, typeof(ImageElement))]
 [MessagePack.Union(3, typeof(TextElement))]
-public abstract partial class BoardElement
+public abstract class BoardElement
 {
     [Key(0)]
     public Guid Id { get; set; }

@@ -17,6 +17,7 @@ public static class MessagePackSetup
         );
 
         Options = MessagePackSerializerOptions.Standard
+            .WithSecurity(MessagePackSecurity.UntrustedData)
             .WithResolver(resolver);
     }
 }
