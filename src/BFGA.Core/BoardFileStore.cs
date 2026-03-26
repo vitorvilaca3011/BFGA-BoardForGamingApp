@@ -13,24 +13,27 @@ public static class BoardFileStore
             throw new ArgumentException("File path cannot be null or empty.", nameof(filePath));
 
         var directory = Path.GetDirectoryName(filePath);
-        if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
-        {
+        if (string.IsNullOrEmpty(directory))
+            directory = Directory.GetCurrentDirectory();
+        if (!Directory.Exists(directory))
             Directory.CreateDirectory(directory);
-        }
 
-        var tempPath = Path.GetTempFileName();
+        var tempPath = Path.Combine(directory, $"{Path.GetRandomFileName()}.tmp");
         try
         {
             await using (var stream = File.Create(tempPath))
             {
                 await MessagePackSerializer.SerializeAsync(stream, board, MessagePackSetup.Options, cancellationToken);
             }
-            File.Move(tempPath, filePath, overwrite: true);
+
+            if (File.Exists(filePath))
+                File.Replace(tempPath, filePath, destinationBackupFileName: null);
+            else
+                File.Move(tempPath, filePath);
         }
-        catch (Exception ex) when (ex is not ArgumentNullException and not ArgumentException and not OperationCanceledException)
+        finally
         {
             if (File.Exists(tempPath)) File.Delete(tempPath);
-            throw new InvalidOperationException($"Failed to save board to '{filePath}': {ex.Message}", ex);
         }
     }
 
