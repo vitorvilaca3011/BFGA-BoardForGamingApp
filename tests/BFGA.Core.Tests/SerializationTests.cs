@@ -126,7 +126,10 @@ public class SerializationTests
     {
         var boardId = Guid.NewGuid();
         var lastModified = DateTime.UtcNow;
-        var ownerId = Guid.NewGuid();
+        var strokeId = Guid.NewGuid();
+        var shapeId = Guid.NewGuid();
+        var imageId = Guid.NewGuid();
+        var strokeImageData = new byte[] { 0x89, 0x50 };
 
         var board = new BoardState
         {
@@ -137,7 +140,7 @@ public class SerializationTests
 
         board.Elements.Add(new StrokeElement
         {
-            Id = Guid.NewGuid(),
+            Id = strokeId,
             Position = new Vector2(0, 0),
             Size = new Vector2(100, 50),
             Points = new List<Vector2> { new(0, 0), new(50, 50) },
@@ -147,7 +150,7 @@ public class SerializationTests
 
         board.Elements.Add(new ShapeElement
         {
-            Id = Guid.NewGuid(),
+            Id = shapeId,
             Position = new Vector2(100, 0),
             Size = new Vector2(100, 100),
             Type = ShapeType.Rectangle,
@@ -158,10 +161,10 @@ public class SerializationTests
 
         board.Elements.Add(new ImageElement
         {
-            Id = Guid.NewGuid(),
+            Id = imageId,
             Position = new Vector2(0, 100),
             Size = new Vector2(200, 150),
-            ImageData = new byte[] { 0x89, 0x50 },
+            ImageData = strokeImageData,
             OriginalFileName = "image.png"
         });
 
@@ -172,6 +175,28 @@ public class SerializationTests
         Assert.Equal(boardId, restored.BoardId);
         Assert.Equal("Test Board", restored.BoardName);
         Assert.Equal(3, restored.Elements.Count);
+
+        // Verify StrokeElement polymorphic type and properties
+        var restoredStroke = Assert.IsType<StrokeElement>(restored.Elements[0]);
+        Assert.Equal(strokeId, restoredStroke.Id);
+        Assert.Equal(2, restoredStroke.Points.Count);
+        Assert.Equal(SKColors.Red, restoredStroke.Color);
+        Assert.Equal(2f, restoredStroke.Thickness);
+
+        // Verify ShapeElement polymorphic type and properties
+        var restoredShape = Assert.IsType<ShapeElement>(restored.Elements[1]);
+        Assert.Equal(shapeId, restoredShape.Id);
+        Assert.Equal(ShapeType.Rectangle, restoredShape.Type);
+        Assert.Equal(SKColors.Blue, restoredShape.StrokeColor);
+        Assert.Equal(SKColors.Transparent, restoredShape.FillColor);
+        Assert.Equal(1f, restoredShape.StrokeWidth);
+
+        // Verify ImageElement polymorphic type and properties
+        var restoredImage = Assert.IsType<ImageElement>(restored.Elements[2]);
+        Assert.Equal(imageId, restoredImage.Id);
+        Assert.Equal(strokeImageData.Length, restoredImage.ImageData.Length);
+        Assert.Equal(strokeImageData, restoredImage.ImageData);
+        Assert.Equal("image.png", restoredImage.OriginalFileName);
     }
 
     [Fact]
