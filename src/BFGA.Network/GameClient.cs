@@ -207,15 +207,15 @@ public class GameClient : IDisposable
     private void SetDisconnected()
     {
         _isConnected = false;
-        _connectionEvent.Set();
+        _connectionEvent.Reset();
         Disconnected?.Invoke(this, EventArgs.Empty);
     }
 
     public void Dispose()
     {
         if (_isDisposed) return;
-        _isDisposed = true;
         Disconnect();
+        _isDisposed = true;
         _connectionEvent.Dispose();
     }
 
@@ -245,6 +245,7 @@ public class GameClient : IDisposable
 
         public void OnNetworkError(IPEndPoint endPoint, int socketErrorCode)
         {
+            Debug.WriteLine($"[GameClient] Network error to {endPoint}: socket error {socketErrorCode}");
         }
 
         public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod)

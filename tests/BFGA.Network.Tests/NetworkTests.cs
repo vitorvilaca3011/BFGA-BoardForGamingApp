@@ -27,9 +27,10 @@ public class NetworkTests
         // Arrange
         using var host = new GameHost();
 
-        // Act & Assert - Should not throw
-        host.Start(7778);
+        // Act & Assert - Should not throw (port 0 lets OS assign a free port)
+        host.Start(0);
         Assert.True(host.IsRunning);
+        Assert.True(host.Port > 0);
         host.Stop();
         Assert.False(host.IsRunning);
     }
@@ -39,7 +40,7 @@ public class NetworkTests
     {
         // Arrange
         using var host = new GameHost();
-        host.Start(7779);
+        host.Start(0);
 
         // Act
         var roster = host.GetPlayerRoster();
@@ -66,7 +67,8 @@ public class NetworkTests
     {
         // Arrange
         using var host = new GameHost();
-        host.Start(7780);
+        host.Start(0);
+        int hostPort = host.Port;
 
         using var client = new GameClient("TestPlayer");
         var joinedEvent = new ManualResetEventSlim(false);
@@ -79,7 +81,7 @@ public class NetworkTests
         };
 
         // Act - Start connection
-        _ = client.ConnectAsync("localhost", 7780);
+        _ = client.ConnectAsync("localhost", hostPort);
         
         // Pump events to establish connection and trigger PeerJoined
         for (int i = 0; i < 100; i++)
@@ -93,6 +95,7 @@ public class NetworkTests
         // Assert
         Assert.True(client.IsConnected);
         Assert.NotNull(receivedClientId);
+        Assert.NotEqual(Guid.Empty, receivedClientId);
 
         host.Stop();
         client.Disconnect();
@@ -103,10 +106,11 @@ public class NetworkTests
     {
         // Arrange
         using var host = new GameHost();
-        host.Start(7771);
+        host.Start(0);
+        int hostPort = host.Port;
 
         using var client = new GameClient("HostPlayer");
-        var connectTask = client.ConnectAsync("localhost", 7771);
+        var connectTask = client.ConnectAsync("localhost", hostPort);
         
         // Pump events to establish connection
         for (int i = 0; i < 100; i++)
@@ -151,6 +155,11 @@ public class NetworkTests
 
         Assert.True(received);
         Assert.NotNull(receivedOp);
+        // Verify it's the same AddElementOperation with the same element
+        Assert.IsType<AddElementOperation>(receivedOp);
+        var receivedAddOp = (AddElementOperation)receivedOp!;
+        Assert.Equal(addOp.Element.Id, receivedAddOp.Element.Id);
+        Assert.Equal(addOp.Element.Position, receivedAddOp.Element.Position);
     }
 
     [Fact]
@@ -160,7 +169,7 @@ public class NetworkTests
         
         // Arrange
         using var host = new GameHost();
-        host.Start(7772);
+        host.Start(0);
 
         // Act & Assert - Broadcast should not throw even with no clients
         var operation = new CursorUpdateOperation(

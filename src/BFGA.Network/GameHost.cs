@@ -62,6 +62,9 @@ public class OperationReceivedEventArgs : EventArgs
 public class GameHost : IDisposable
 {
     private readonly NetManager _netManager;
+    // NOTE: NetDataWriter is not thread-safe. This is acceptable for v0.1 where the API
+    // is designed for single-threaded UI use. If multi-threaded access is needed in the future,
+    // a lock or thread-local NetDataWriter instances would be required.
     private readonly NetDataWriter _dataWriter;
     private readonly ConcurrentDictionary<Guid, (NetPeer Peer, PlayerInfo Info)> _players;
     private readonly Dictionary<Guid, BoardElement> _boardElements;
@@ -116,6 +119,9 @@ public class GameHost : IDisposable
 
     /// <summary>
     /// Gets the current board state.
+    /// NOTE: The returned BoardState is a direct reference to internal state, not a clone.
+    /// Callers can mutate internal state. For v0.1 this is acceptable given the single-threaded
+    /// UI model. Full isolation would require cloning which has performance implications.
     /// </summary>
     public BoardState BoardState => _boardState;
 
@@ -515,7 +521,7 @@ public class GameHost : IDisposable
 
         public void OnNetworkError(IPEndPoint endPoint, int socketErrorCode)
         {
-            // Log in debug mode
+            Debug.WriteLine($"[Host] Network error from {endPoint}: socket error {socketErrorCode}");
         }
 
         public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod)
