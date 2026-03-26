@@ -91,7 +91,10 @@ public class GameClient : IDisposable
         if (_isConnected || _isDisposed) return;
 
         _netManager = new NetManager(new ClientEventListener(this));
-        _netManager.Start();
+        if (!_netManager.Start())
+        {
+            throw new InvalidOperationException($"Failed to start network client");
+        }
         
         // Connect using display name as connection key (server retrieves it via ConnectionKey property)
         _netManager.Connect(hostAddress, port, _displayName);

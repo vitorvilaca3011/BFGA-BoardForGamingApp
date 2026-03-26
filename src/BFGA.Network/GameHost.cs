@@ -157,7 +157,10 @@ public class GameHost : IDisposable
         if (_isRunning) return;
 
         _port = port;
-        _netManager.Start(port);
+        if (!_netManager.Start(port))
+        {
+            throw new InvalidOperationException($"Failed to start network host on port {port}");
+        }
         // Query the actual bound port (important when port=0 for dynamic allocation)
         _port = _netManager.LocalPort;
         _isRunning = true;
@@ -274,6 +277,15 @@ public class GameHost : IDisposable
 
     private bool ValidateOperation(BoardOperation operation)
     {
+        // Reject host-only operations that should never come from clients
+        switch (operation)
+        {
+            case PeerJoinedOperation:
+            case PeerLeftOperation:
+            case FullSyncResponseOperation:
+                return false;
+        }
+
         switch (operation)
         {
             case UpdateElementOperation update:
