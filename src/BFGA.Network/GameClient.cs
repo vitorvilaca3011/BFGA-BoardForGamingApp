@@ -82,6 +82,8 @@ public class GameClient : IDisposable
 
     /// <summary>
     /// Connects to a game host asynchronously.
+    /// NOTE: This implementation blocks the calling thread while polling for connection.
+    /// The method name is async for future compatibility but currently does not await any async operations.
     /// </summary>
     /// <param name="hostAddress">The host's IP address or hostname.</param>
     /// <param name="port">The port to connect to (default 7777).</param>

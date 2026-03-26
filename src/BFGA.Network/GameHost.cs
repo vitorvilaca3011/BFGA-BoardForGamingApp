@@ -1,5 +1,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Net;
+using System.Numerics;
 using BFGA.Core;
 using BFGA.Core.Models;
 using BFGA.Network.Protocol;
@@ -289,11 +291,27 @@ public class GameHost : IDisposable
         switch (operation)
         {
             case UpdateElementOperation update:
+                lock (_lockObject)
+                {
+                    if (!_boardElements.ContainsKey(update.ElementId))
+                    {
+                        return false;
+                    }
+                }
+                break;
             case MoveElementOperation move:
+                lock (_lockObject)
+                {
+                    if (!_boardElements.ContainsKey(move.ElementId))
+                    {
+                        return false;
+                    }
+                }
+                break;
             case DeleteElementOperation delete:
                 lock (_lockObject)
                 {
-                    if (!_boardElements.ContainsKey(delete?.ElementId ?? update?.ElementId ?? move!.ElementId))
+                    if (!_boardElements.ContainsKey(delete.ElementId))
                     {
                         return false;
                     }
