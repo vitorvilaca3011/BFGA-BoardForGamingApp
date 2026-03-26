@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Net;
+using System.Net.Sockets;
 using BFGA.Core;
 using BFGA.Network.Protocol;
 using LiteNetLib;
@@ -110,7 +111,6 @@ public class GameClient : IDisposable
             {
                 _netManager.DisconnectAll();
                 _netManager.Stop();
-                _netManager.Dispose();
                 _netManager = null;
                 return;
             }
@@ -138,7 +138,6 @@ public class GameClient : IDisposable
         _connectionEvent.Reset();
         _netManager?.DisconnectAll();
         _netManager?.Stop();
-        _netManager?.Dispose();
         _netManager = null;
         _connectedPeer = null;
         _isConnected = false;
@@ -167,8 +166,9 @@ public class GameClient : IDisposable
         }
         
         _dataWriter.Reset();
-        _dataWriter.Put(OperationSerializer.Serialize(operation));
-        _connectedPeer.Send(_dataWriter, channel);
+        _dataWriter.PutBytesWithLength(OperationSerializer.Serialize(operation));
+        var deliveryMethod = channel == UnreliableChannel ? DeliveryMethod.Unreliable : DeliveryMethod.ReliableOrdered;
+        _connectedPeer.Send(_dataWriter, (byte)channel, deliveryMethod);
     }
 
     /// <summary>
@@ -249,12 +249,12 @@ public class GameClient : IDisposable
             _client.SetDisconnected();
         }
 
-        public void OnNetworkError(IPEndPoint endPoint, int socketErrorCode)
+        public void OnNetworkError(IPEndPoint endPoint, SocketError socketErrorCode)
         {
             Debug.WriteLine($"[GameClient] Network error to {endPoint}: socket error {socketErrorCode}");
         }
 
-        public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod)
+        public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channel, DeliveryMethod deliveryMethod)
         {
             try
             {
@@ -272,7 +272,7 @@ public class GameClient : IDisposable
         {
         }
 
-        public void OnLatencyUpdate(NetPeer peer, int latency)
+        public void OnNetworkLatencyUpdate(NetPeer peer, int latency)
         {
         }
     }

@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net;
+using System.Net.Sockets;
 using System.Numerics;
 using BFGA.Core;
 using BFGA.Core.Models;
@@ -200,11 +201,12 @@ public class GameHost : IDisposable
 
         var channel = reliable ? ReliableChannel : UnreliableChannel;
         _dataWriter.Reset();
-        _dataWriter.Put(OperationSerializer.Serialize(operation));
+        _dataWriter.PutBytesWithLength(OperationSerializer.Serialize(operation));
+        var deliveryMethod = reliable ? DeliveryMethod.ReliableOrdered : DeliveryMethod.Unreliable;
 
         foreach (var player in _players.Values)
         {
-            player.Peer.Send(_dataWriter, channel);
+            player.Peer.Send(_dataWriter, (byte)channel, deliveryMethod);
         }
     }
 
@@ -470,8 +472,9 @@ public class GameHost : IDisposable
     {
         var channel = reliable ? ReliableChannel : UnreliableChannel;
         _dataWriter.Reset();
-        _dataWriter.Put(OperationSerializer.Serialize(operation));
-        peer.Send(_dataWriter, channel);
+        _dataWriter.PutBytesWithLength(OperationSerializer.Serialize(operation));
+        var deliveryMethod = reliable ? DeliveryMethod.ReliableOrdered : DeliveryMethod.Unreliable;
+        peer.Send(_dataWriter, (byte)channel, deliveryMethod);
     }
 
     private void SendFullSync(NetPeer peer, Guid clientId)
@@ -484,7 +487,6 @@ public class GameHost : IDisposable
     public void Dispose()
     {
         Stop();
-        _netManager.Dispose();
     }
 
     private class HostEventListener : INetEventListener
@@ -498,10 +500,23 @@ public class GameHost : IDisposable
 
         public void OnConnectionRequest(ConnectionRequest request)
         {
-            // Read display name from connection key (client sends it as the connection key)
-            var displayName = !string.IsNullOrEmpty(request.ConnectionKey) 
-                ? request.ConnectionKey 
-                : $"Player{_host._players.Count + 1}";
+            // Read display name from connection data (client sends it during connection)
+            string displayName = $"Player{_host._players.Count + 1}";
+            try
+            {
+                if (request.Data.AvailableBytes > 0)
+                {
+                    var nameFromClient = request.Data.GetString();
+                    if (!string.IsNullOrEmpty(nameFromClient))
+                    {
+                        displayName = nameFromClient;
+                    }
+                }
+            }
+            catch
+            {
+                // Use default name if reading fails
+            }
             
             // Store display name by endpoint for retrieval in OnPeerConnected
             _host._pendingDisplayNames[request.RemoteEndPoint] = displayName;
@@ -513,10 +528,10 @@ public class GameHost : IDisposable
             // Get display name that was stored in OnConnectionRequest
             string displayName = $"Player{_host._players.Count + 1}";
             
-            if (_host._pendingDisplayNames.TryGetValue(peer.EndPoint, out var pendingName))
+            if (_host._pendingDisplayNames.TryGetValue(new IPEndPoint(peer.Address, peer.Port), out var pendingName))
             {
                 displayName = pendingName;
-                _host._pendingDisplayNames.Remove(peer.EndPoint);
+                _host._pendingDisplayNames.Remove(new IPEndPoint(peer.Address, peer.Port));
             }
             
             var clientId = _host.AssignClientId(peer, displayName);
@@ -551,12 +566,12 @@ public class GameHost : IDisposable
             }
         }
 
-        public void OnNetworkError(IPEndPoint endPoint, int socketErrorCode)
+        public void OnNetworkError(IPEndPoint endPoint, SocketError socketErrorCode)
         {
             Debug.WriteLine($"[Host] Network error from {endPoint}: socket error {socketErrorCode}");
         }
 
-        public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod)
+        public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, byte channel, DeliveryMethod deliveryMethod)
         {
             try
             {
@@ -576,7 +591,7 @@ public class GameHost : IDisposable
             catch (Exception ex)
             {
                 // Malformed messages - drop silently (logged in debug)
-                Debug.WriteLine($"[Host] Dropped malformed message from {peer.EndPoint}: {ex.Message}");
+                Debug.WriteLine($"[Host] Dropped malformed message from {peer.Address}: {ex.Message}");
             }
         }
 
@@ -584,7 +599,7 @@ public class GameHost : IDisposable
         {
         }
 
-        public void OnLatencyUpdate(NetPeer peer, int latency)
+        public void OnNetworkLatencyUpdate(NetPeer peer, int latency)
         {
         }
     }

@@ -1,4 +1,3 @@
-using BFGA.Core;
 using BFGA.Network.Protocol;
 using MessagePack;
 
@@ -6,7 +5,7 @@ namespace BFGA.Network;
 
 /// <summary>
 /// Serializes and deserializes board operations using MessagePack.
-/// Uses the resolver from BFGA.Core for consistent type handling.
+/// Uses the network-specific resolver that includes both core formatters and network union types.
 /// </summary>
 public static class OperationSerializer
 {
@@ -17,7 +16,7 @@ public static class OperationSerializer
     /// <returns>The serialized bytes.</returns>
     public static byte[] Serialize(BoardOperation operation)
     {
-        return MessagePackSerializer.Serialize(operation, MessagePackSetup.Options);
+        return MessagePackSerializer.Serialize(operation, NetworkMessagePackSetup.Options);
     }
 
     /// <summary>
@@ -27,26 +26,16 @@ public static class OperationSerializer
     /// <returns>The deserialized board operation.</returns>
     public static BoardOperation Deserialize(byte[] data)
     {
-        return MessagePackSerializer.Deserialize<BoardOperation>(data, MessagePackSetup.Options);
+        return MessagePackSerializer.Deserialize<BoardOperation>(data, NetworkMessagePackSetup.Options);
     }
 
     /// <summary>
-    /// Serializes an operation to a stream.
+    /// Deserializes a board operation from a byte array segment.
     /// </summary>
-    /// <param name="operation">The operation to serialize.</param>
-    /// <param name="stream">The stream to write to.</param>
-    public static void SerializeToStream(BoardOperation operation, Stream stream)
-    {
-        MessagePackSerializer.Serialize(operation, stream, MessagePackSetup.Options);
-    }
-
-    /// <summary>
-    /// Deserializes an operation from a stream.
-    /// </summary>
-    /// <param name="stream">The stream to read from.</param>
+    /// <param name="data">The serialized operation bytes.</param>
     /// <returns>The deserialized board operation.</returns>
-    public static BoardOperation DeserializeFromStream(Stream stream)
+    public static BoardOperation Deserialize(ReadOnlyMemory<byte> data)
     {
-        return MessagePackSerializer.Deserialize<BoardOperation>(stream, MessagePackSetup.Options);
+        return MessagePackSerializer.Deserialize<BoardOperation>(data, NetworkMessagePackSetup.Options);
     }
 }

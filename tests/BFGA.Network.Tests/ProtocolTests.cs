@@ -36,14 +36,15 @@ public class ProtocolTests
         };
         var operation = new AddElementOperation(element);
 
-        // Act
-        var bytes = MessagePackSerializer.Serialize(operation);
-        var deserialized = MessagePackSerializer.Deserialize<BoardOperation>(bytes);
+        // Act - wrap in NetworkMessage for proper polymorphic serialization
+        var message = new NetworkMessage(operation);
+        var bytes = MessagePackSerializer.Serialize(message, MessagePackSetup.Options);
+        var restored = MessagePackSerializer.Deserialize<NetworkMessage>(bytes, MessagePackSetup.Options);
 
         // Assert
-        Assert.NotNull(deserialized);
-        Assert.IsType<AddElementOperation>(deserialized);
-        var result = (AddElementOperation)deserialized;
+        Assert.NotNull(restored.Operation);
+        Assert.IsType<AddElementOperation>(restored.Operation);
+        var result = (AddElementOperation)restored.Operation;
         Assert.Equal(element.Id, result.Element.Id);
         Assert.Equal(element.Position, result.Element.Position);
         Assert.Equal(element.Size, result.Element.Size);
@@ -62,18 +63,22 @@ public class ProtocolTests
                 { "IsLocked", true }
             });
 
-        // Act
-        var bytes = MessagePackSerializer.Serialize(operation);
-        var deserialized = MessagePackSerializer.Deserialize<BoardOperation>(bytes);
+        // Act - wrap in NetworkMessage for proper polymorphic serialization
+        var message = new NetworkMessage(operation);
+        var bytes = MessagePackSerializer.Serialize(message, MessagePackSetup.Options);
+        var restored = MessagePackSerializer.Deserialize<NetworkMessage>(bytes, MessagePackSetup.Options);
 
         // Assert
-        Assert.NotNull(deserialized);
-        Assert.IsType<UpdateElementOperation>(deserialized);
-        var result = (UpdateElementOperation)deserialized;
+        Assert.NotNull(restored.Operation);
+        Assert.IsType<UpdateElementOperation>(restored.Operation);
+        var result = (UpdateElementOperation)restored.Operation;
         Assert.Equal(elementId, result.ElementId);
         Assert.Equal(2, result.ModifiedProperties.Count);
         Assert.True(result.ModifiedProperties.TryGetValue("Position", out var position));
-        Assert.Equal(new Vector2(100, 200), position);
+        // Vector2 in Dictionary<string, object> is serialized as an object array [x, y]
+        var positionArray = Assert.IsType<object[]>(position);
+        Assert.Equal(100f, (float)positionArray[0]);
+        Assert.Equal(200f, (float)positionArray[1]);
         Assert.True(result.ModifiedProperties.TryGetValue("IsLocked", out var isLocked));
         Assert.Equal(true, isLocked);
     }
@@ -85,14 +90,15 @@ public class ProtocolTests
         var elementId = Guid.NewGuid();
         var operation = new DeleteElementOperation(elementId);
 
-        // Act
-        var bytes = MessagePackSerializer.Serialize(operation);
-        var deserialized = MessagePackSerializer.Deserialize<BoardOperation>(bytes);
+        // Act - wrap in NetworkMessage for proper polymorphic serialization
+        var message = new NetworkMessage(operation);
+        var bytes = MessagePackSerializer.Serialize(message, MessagePackSetup.Options);
+        var restored = MessagePackSerializer.Deserialize<NetworkMessage>(bytes, MessagePackSetup.Options);
 
         // Assert
-        Assert.NotNull(deserialized);
-        Assert.IsType<DeleteElementOperation>(deserialized);
-        var result = (DeleteElementOperation)deserialized;
+        Assert.NotNull(restored.Operation);
+        Assert.IsType<DeleteElementOperation>(restored.Operation);
+        var result = (DeleteElementOperation)restored.Operation;
         Assert.Equal(elementId, result.ElementId);
     }
 
@@ -107,14 +113,15 @@ public class ProtocolTests
             new Vector2(200, 150),
             45f);
 
-        // Act
-        var bytes = MessagePackSerializer.Serialize(operation);
-        var deserialized = MessagePackSerializer.Deserialize<BoardOperation>(bytes);
+        // Act - wrap in NetworkMessage for proper polymorphic serialization
+        var message = new NetworkMessage(operation);
+        var bytes = MessagePackSerializer.Serialize(message, MessagePackSetup.Options);
+        var restored = MessagePackSerializer.Deserialize<NetworkMessage>(bytes, MessagePackSetup.Options);
 
         // Assert
-        Assert.NotNull(deserialized);
-        Assert.IsType<MoveElementOperation>(deserialized);
-        var result = (MoveElementOperation)deserialized;
+        Assert.NotNull(restored.Operation);
+        Assert.IsType<MoveElementOperation>(restored.Operation);
+        var result = (MoveElementOperation)restored.Operation;
         Assert.Equal(elementId, result.ElementId);
         Assert.Equal(new Vector2(50, 100), result.Position);
         Assert.Equal(new Vector2(200, 150), result.Size);
@@ -128,14 +135,15 @@ public class ProtocolTests
         var clientId = Guid.NewGuid();
         var operation = new CursorUpdateOperation(clientId, new Vector2(320, 240));
 
-        // Act
-        var bytes = MessagePackSerializer.Serialize(operation);
-        var deserialized = MessagePackSerializer.Deserialize<BoardOperation>(bytes);
+        // Act - wrap in NetworkMessage for proper polymorphic serialization
+        var message = new NetworkMessage(operation);
+        var bytes = MessagePackSerializer.Serialize(message, MessagePackSetup.Options);
+        var restored = MessagePackSerializer.Deserialize<NetworkMessage>(bytes, MessagePackSetup.Options);
 
         // Assert
-        Assert.NotNull(deserialized);
-        Assert.IsType<CursorUpdateOperation>(deserialized);
-        var result = (CursorUpdateOperation)deserialized;
+        Assert.NotNull(restored.Operation);
+        Assert.IsType<CursorUpdateOperation>(restored.Operation);
+        var result = (CursorUpdateOperation)restored.Operation;
         Assert.Equal(clientId, result.SenderId);
         Assert.Equal(new Vector2(320, 240), result.Position);
     }
@@ -147,14 +155,15 @@ public class ProtocolTests
         var strokeId = Guid.NewGuid();
         var operation = new DrawStrokePointOperation(strokeId, new Vector2(75, 125));
 
-        // Act
-        var bytes = MessagePackSerializer.Serialize(operation);
-        var deserialized = MessagePackSerializer.Deserialize<BoardOperation>(bytes);
+        // Act - wrap in NetworkMessage for proper polymorphic serialization
+        var message = new NetworkMessage(operation);
+        var bytes = MessagePackSerializer.Serialize(message, MessagePackSetup.Options);
+        var restored = MessagePackSerializer.Deserialize<NetworkMessage>(bytes, MessagePackSetup.Options);
 
         // Assert
-        Assert.NotNull(deserialized);
-        Assert.IsType<DrawStrokePointOperation>(deserialized);
-        var result = (DrawStrokePointOperation)deserialized;
+        Assert.NotNull(restored.Operation);
+        Assert.IsType<DrawStrokePointOperation>(restored.Operation);
+        var result = (DrawStrokePointOperation)restored.Operation;
         Assert.Equal(strokeId, result.StrokeId);
         Assert.Equal(new Vector2(75, 125), result.Point);
     }
@@ -166,14 +175,15 @@ public class ProtocolTests
         var strokeId = Guid.NewGuid();
         var operation = new CancelStrokeOperation(strokeId);
 
-        // Act
-        var bytes = MessagePackSerializer.Serialize(operation);
-        var deserialized = MessagePackSerializer.Deserialize<BoardOperation>(bytes);
+        // Act - wrap in NetworkMessage for proper polymorphic serialization
+        var message = new NetworkMessage(operation);
+        var bytes = MessagePackSerializer.Serialize(message, MessagePackSetup.Options);
+        var restored = MessagePackSerializer.Deserialize<NetworkMessage>(bytes, MessagePackSetup.Options);
 
         // Assert
-        Assert.NotNull(deserialized);
-        Assert.IsType<CancelStrokeOperation>(deserialized);
-        var result = (CancelStrokeOperation)deserialized;
+        Assert.NotNull(restored.Operation);
+        Assert.IsType<CancelStrokeOperation>(restored.Operation);
+        var result = (CancelStrokeOperation)restored.Operation;
         Assert.Equal(strokeId, result.StrokeId);
     }
 
@@ -183,13 +193,14 @@ public class ProtocolTests
         // Arrange
         var operation = new RequestFullSyncOperation();
 
-        // Act
-        var bytes = MessagePackSerializer.Serialize(operation);
-        var deserialized = MessagePackSerializer.Deserialize<BoardOperation>(bytes);
+        // Act - wrap in NetworkMessage for proper polymorphic serialization
+        var message = new NetworkMessage(operation);
+        var bytes = MessagePackSerializer.Serialize(message, MessagePackSetup.Options);
+        var restored = MessagePackSerializer.Deserialize<NetworkMessage>(bytes, MessagePackSetup.Options);
 
         // Assert
-        Assert.NotNull(deserialized);
-        Assert.IsType<RequestFullSyncOperation>(deserialized);
+        Assert.NotNull(restored.Operation);
+        Assert.IsType<RequestFullSyncOperation>(restored.Operation);
     }
 
     [Fact]
@@ -224,14 +235,15 @@ public class ProtocolTests
         var clientId = Guid.NewGuid();
         var operation = new FullSyncResponseOperation(clientId, boardState, playerRoster);
 
-        // Act
-        var bytes = MessagePackSerializer.Serialize(operation);
-        var deserialized = MessagePackSerializer.Deserialize<BoardOperation>(bytes);
+        // Act - wrap in NetworkMessage for proper polymorphic serialization
+        var message = new NetworkMessage(operation);
+        var bytes = MessagePackSerializer.Serialize(message, MessagePackSetup.Options);
+        var restored = MessagePackSerializer.Deserialize<NetworkMessage>(bytes, MessagePackSetup.Options);
 
         // Assert
-        Assert.NotNull(deserialized);
-        Assert.IsType<FullSyncResponseOperation>(deserialized);
-        var result = (FullSyncResponseOperation)deserialized;
+        Assert.NotNull(restored.Operation);
+        Assert.IsType<FullSyncResponseOperation>(restored.Operation);
+        var result = (FullSyncResponseOperation)restored.Operation;
         Assert.Equal(boardState.BoardId, result.BoardState.BoardId);
         Assert.Equal(boardState.BoardName, result.BoardState.BoardName);
         Assert.Single(result.BoardState.Elements);
@@ -250,14 +262,15 @@ public class ProtocolTests
         var clientId = Guid.NewGuid();
         var operation = new PeerJoinedOperation(clientId, "TestPlayer", SKColors.Orange);
 
-        // Act
-        var bytes = MessagePackSerializer.Serialize(operation);
-        var deserialized = MessagePackSerializer.Deserialize<BoardOperation>(bytes);
+        // Act - wrap in NetworkMessage for proper polymorphic serialization
+        var message = new NetworkMessage(operation);
+        var bytes = MessagePackSerializer.Serialize(message, MessagePackSetup.Options);
+        var restored = MessagePackSerializer.Deserialize<NetworkMessage>(bytes, MessagePackSetup.Options);
 
         // Assert
-        Assert.NotNull(deserialized);
-        Assert.IsType<PeerJoinedOperation>(deserialized);
-        var result = (PeerJoinedOperation)deserialized;
+        Assert.NotNull(restored.Operation);
+        Assert.IsType<PeerJoinedOperation>(restored.Operation);
+        var result = (PeerJoinedOperation)restored.Operation;
         Assert.Equal(clientId, result.ClientId);
         Assert.Equal("TestPlayer", result.DisplayName);
         Assert.Equal(SKColors.Orange, result.AssignedColor);
@@ -270,14 +283,15 @@ public class ProtocolTests
         var clientId = Guid.NewGuid();
         var operation = new PeerLeftOperation(clientId);
 
-        // Act
-        var bytes = MessagePackSerializer.Serialize(operation);
-        var deserialized = MessagePackSerializer.Deserialize<BoardOperation>(bytes);
+        // Act - wrap in NetworkMessage for proper polymorphic serialization
+        var message = new NetworkMessage(operation);
+        var bytes = MessagePackSerializer.Serialize(message, MessagePackSetup.Options);
+        var restored = MessagePackSerializer.Deserialize<NetworkMessage>(bytes, MessagePackSetup.Options);
 
         // Assert
-        Assert.NotNull(deserialized);
-        Assert.IsType<PeerLeftOperation>(deserialized);
-        var result = (PeerLeftOperation)deserialized;
+        Assert.NotNull(restored.Operation);
+        Assert.IsType<PeerLeftOperation>(restored.Operation);
+        var result = (PeerLeftOperation)restored.Operation;
         Assert.Equal(clientId, result.ClientId);
     }
 
@@ -300,13 +314,14 @@ public class ProtocolTests
             new PeerLeftOperation(Guid.NewGuid())
         };
 
-        // Act & Assert
+        // Act & Assert - wrap in NetworkMessage for proper polymorphic serialization
         foreach (var operation in operations)
         {
-            var bytes = MessagePackSerializer.Serialize(operation);
-            var deserialized = MessagePackSerializer.Deserialize<BoardOperation>(bytes);
-            Assert.NotNull(deserialized);
-            Assert.Equal(operation.GetType(), deserialized.GetType());
+            var message = new NetworkMessage(operation);
+            var bytes = MessagePackSerializer.Serialize(message, MessagePackSetup.Options);
+            var restored = MessagePackSerializer.Deserialize<NetworkMessage>(bytes, MessagePackSetup.Options);
+            Assert.NotNull(restored.Operation);
+            Assert.Equal(operation.GetType(), restored.Operation.GetType());
         }
     }
 
