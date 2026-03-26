@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net;
 using BFGA.Core;
 using BFGA.Network.Protocol;
@@ -254,9 +255,9 @@ public class GameClient : IDisposable
                 var operation = OperationSerializer.Deserialize(data);
                 _client.HandleOperation(operation);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Malformed messages - drop silently
+                Debug.WriteLine($"[GameClient] Dropped malformed message: {ex.Message}");
             }
         }
 

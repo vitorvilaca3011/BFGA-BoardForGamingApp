@@ -314,7 +314,7 @@ public class ProtocolTests
             ZIndex = 1,
             OwnerId = Guid.NewGuid(),
             IsLocked = false,
-            ShapeType = ShapeType.Ellipse,
+            Type = ShapeType.Ellipse,
             FillColor = SKColors.Yellow,
             StrokeColor = SKColors.Black,
             StrokeWidth = 1f

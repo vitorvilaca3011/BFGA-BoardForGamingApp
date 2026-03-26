@@ -354,7 +354,7 @@ public class GameHost : IDisposable
                 case "StrokeWidth" when element is ShapeElement shape:
                     shape.StrokeWidth = Convert.ToSingle(kvp.Value);
                     break;
-                case "ShapeType" when element is ShapeElement shape:
+                case "Type" when element is ShapeElement shape:
                     shape.Type = (ShapeType)kvp.Value;
                     break;
                 // TextElement properties
