@@ -130,6 +130,7 @@ public class GameClient : IDisposable
     {
         if (!_isConnected || _isDisposed) return;
 
+        _connectionEvent.Reset();
         _netManager?.DisconnectAll();
         _netManager?.Stop();
         _netManager?.Dispose();

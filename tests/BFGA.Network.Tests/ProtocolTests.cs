@@ -72,6 +72,10 @@ public class ProtocolTests
         var result = (UpdateElementOperation)deserialized;
         Assert.Equal(elementId, result.ElementId);
         Assert.Equal(2, result.ModifiedProperties.Count);
+        Assert.True(result.ModifiedProperties.TryGetValue("Position", out var position));
+        Assert.Equal(new Vector2(100, 200), position);
+        Assert.True(result.ModifiedProperties.TryGetValue("IsLocked", out var isLocked));
+        Assert.Equal(true, isLocked);
     }
 
     [Fact]
@@ -232,6 +236,11 @@ public class ProtocolTests
         Assert.Equal(boardState.BoardName, result.BoardState.BoardName);
         Assert.Single(result.BoardState.Elements);
         Assert.Equal(2, result.PlayerRoster.Count);
+        // Verify specific element property round-trip
+        var element = result.BoardState.Elements[0] as StrokeElement;
+        Assert.NotNull(element);
+        Assert.Equal(new Vector2(100, 100), element.Size);
+        Assert.Equal(SKColors.Blue, element.Color);
     }
 
     [Fact]

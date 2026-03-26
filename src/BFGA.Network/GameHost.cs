@@ -151,13 +151,15 @@ public class GameHost : IDisposable
     /// <summary>
     /// Starts the host listening on the specified port.
     /// </summary>
-    /// <param name="port">The port to listen on (default 7777).</param>
+    /// <param name="port">The port to listen on (default 7777). Use 0 to let the OS assign a port.</param>
     public void Start(int port = 7777)
     {
         if (_isRunning) return;
 
         _port = port;
         _netManager.Start(port);
+        // Query the actual bound port (important when port=0 for dynamic allocation)
+        _port = _netManager.LocalPort;
         _isRunning = true;
     }
 
@@ -266,7 +268,7 @@ public class GameHost : IDisposable
 
         ApplyOperation(operation);
         
-        // Broadcast to other clients (but not the sender)
+        // Broadcast to all connected clients (including sender for consistency)
         BroadcastOperation(operation, IsOperationReliable(operation));
     }
 
