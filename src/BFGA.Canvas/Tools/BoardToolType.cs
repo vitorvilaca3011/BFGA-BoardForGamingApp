@@ -7,7 +7,10 @@ public enum BoardToolType
     Pen,
     Rectangle,
     Ellipse,
-    Shape,
     Image,
-    Eraser
+    Eraser,
+    Arrow,
+    Line,
+    Text,
+    LaserPointer
 }

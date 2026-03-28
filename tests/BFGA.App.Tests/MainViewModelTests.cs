@@ -780,10 +780,8 @@ public class MainViewModelTests
         Assert.NotNull(controller);
 
         var currentTool = (BoardToolType)controller!.GetType().GetProperty(nameof(BoardToolController.CurrentTool))!.GetValue(controller)!;
-        var shapeType = (ShapeType)controller.GetType().GetProperty(nameof(BoardToolController.ShapeType))!.GetValue(controller)!;
 
-        Assert.Equal(BoardToolType.Shape, currentTool);
-        Assert.Equal(ShapeType.Rectangle, shapeType);
+        Assert.Equal(BoardToolType.Rectangle, currentTool);
     }
 
     [Fact]

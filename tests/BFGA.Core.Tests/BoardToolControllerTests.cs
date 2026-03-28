@@ -405,7 +405,7 @@ public class BoardToolControllerTests
             ShapeType = ShapeType.Rectangle
         };
 
-        controller.SetTool(BoardToolType.Shape);
+        controller.SetTool(BoardToolType.Rectangle);
         controller.HandlePointerDown(new Vector2(40, 40));
         controller.HandlePointerMove(new Vector2(10, 20));
         controller.HandlePointerUp(new Vector2(10, 20));
@@ -425,7 +425,7 @@ public class BoardToolControllerTests
             ShapeType = ShapeType.Rectangle
         };
 
-        controller.SetTool(BoardToolType.Shape);
+        controller.SetTool(BoardToolType.Rectangle);
         controller.HandlePointerDown(new Vector2(40, 40));
         var result = controller.HandlePointerUp(new Vector2(40, 40));
 
@@ -446,7 +446,7 @@ public class BoardToolControllerTests
             ShapeType = ShapeType.Rectangle
         };
 
-        controller.SetTool(BoardToolType.Shape);
+        controller.SetTool(BoardToolType.Rectangle);
         controller.HandlePointerDown(new Vector2(20, 20));
         controller.HandlePointerMove(new Vector2(30, 30));
         controller.HandlePointerUp(new Vector2(30, 30));

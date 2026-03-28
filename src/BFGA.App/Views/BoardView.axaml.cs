@@ -163,20 +163,7 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
         _toolController.StrokeWidth = boardScreen.StrokeWidth;
         _toolController.Opacity = boardScreen.Opacity;
 
-        switch (boardScreen.SelectedTool)
-        {
-            case BoardToolType.Rectangle:
-                _toolController.SetTool(BoardToolType.Shape);
-                _toolController.ShapeType = ShapeType.Rectangle;
-                break;
-            case BoardToolType.Ellipse:
-                _toolController.SetTool(BoardToolType.Shape);
-                _toolController.ShapeType = ShapeType.Ellipse;
-                break;
-            default:
-                _toolController.SetTool(boardScreen.SelectedTool);
-                break;
-        }
+        _toolController.SetTool(boardScreen.SelectedTool);
     }
 
     private void HandlePointerPressed(object? sender, PointerPressedEventArgs e)

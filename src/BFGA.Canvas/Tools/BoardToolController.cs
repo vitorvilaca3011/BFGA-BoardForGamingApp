@@ -100,8 +100,10 @@ public sealed class BoardToolController
             case BoardToolType.Pen:
                 return HandlePenDown(position);
             case BoardToolType.Rectangle:
+                ShapeType = ShapeType.Rectangle;
+                return HandleShapeDown(position);
             case BoardToolType.Ellipse:
-            case BoardToolType.Shape:
+                ShapeType = ShapeType.Ellipse;
                 return HandleShapeDown(position);
             case BoardToolType.Eraser:
                 return HandleEraserDown(position);
