@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Avalonia.Input;
 using Avalonia;
 using Avalonia.Controls;
@@ -10,6 +11,8 @@ namespace BFGA.App;
 
 public partial class MainWindow : Window
 {
+    private bool _isClosing;
+
     public MainWindow()
     {
         InitializeComponent();
@@ -19,15 +22,46 @@ public partial class MainWindow : Window
             if (DataContext is MainViewModel viewModel)
             {
                 viewModel.StartPolling();
+                Closing += OnWindowClosing;
             }
         }
     }
 
     protected override void OnClosed(EventArgs e)
     {
-        CloseDataContext(DataContext);
+        if (!_isClosing && DataContext is IDisposable disposable && DataContext is not MainViewModel)
+        {
+            disposable.Dispose();
+        }
 
         base.OnClosed(e);
+    }
+
+    private async void OnWindowClosing(object? sender, WindowClosingEventArgs e)
+    {
+        if (_isClosing)
+            return;
+
+        e.Cancel = true;
+        _isClosing = true;
+
+        try
+        {
+            Task cleanupTask = Task.CompletedTask;
+            if (DataContext is MainViewModel viewModel)
+                cleanupTask = viewModel.CloseAsync();
+
+            var timeoutTask = Task.Delay(TimeSpan.FromSeconds(3));
+            var winner = await Task.WhenAny(cleanupTask, timeoutTask);
+
+            if (winner == cleanupTask)
+                await cleanupTask;
+        }
+        catch (Exception)
+        {
+        }
+
+        Close();
     }
 
     public static void CloseDataContext(object? dataContext)
