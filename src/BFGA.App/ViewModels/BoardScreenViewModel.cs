@@ -14,6 +14,10 @@ public sealed class BoardScreenViewModel : ViewModelBase, IDisposable
     private readonly RelayCommand _ellipseToolCommand;
     private readonly RelayCommand _imageToolCommand;
     private readonly RelayCommand _eraserToolCommand;
+    private readonly RelayCommand _arrowToolCommand;
+    private readonly RelayCommand _lineToolCommand;
+    private readonly RelayCommand _textToolCommand;
+    private readonly RelayCommand _laserPointerToolCommand;
     private BoardToolType _selectedTool = BoardToolType.Select;
     private SKColor _selectedStrokeColor = SKColors.White;
     private SKColor _selectedFillColor = SKColors.Transparent;
@@ -32,6 +36,10 @@ public sealed class BoardScreenViewModel : ViewModelBase, IDisposable
         _ellipseToolCommand = new RelayCommand(() => SelectedTool = BoardToolType.Ellipse);
         _imageToolCommand = new RelayCommand(() => SelectedTool = BoardToolType.Image);
         _eraserToolCommand = new RelayCommand(() => SelectedTool = BoardToolType.Eraser);
+        _arrowToolCommand = new RelayCommand(() => SelectedTool = BoardToolType.Arrow);
+        _lineToolCommand = new RelayCommand(() => SelectedTool = BoardToolType.Line);
+        _textToolCommand = new RelayCommand(() => SelectedTool = BoardToolType.Text);
+        _laserPointerToolCommand = new RelayCommand(() => SelectedTool = BoardToolType.LaserPointer);
     }
 
     private void OnMainViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -65,6 +73,10 @@ public sealed class BoardScreenViewModel : ViewModelBase, IDisposable
             OnPropertyChanged(nameof(IsEllipseToolActive));
             OnPropertyChanged(nameof(IsImageToolActive));
             OnPropertyChanged(nameof(IsEraserToolActive));
+            OnPropertyChanged(nameof(IsArrowToolActive));
+            OnPropertyChanged(nameof(IsLineToolActive));
+            OnPropertyChanged(nameof(IsTextToolActive));
+            OnPropertyChanged(nameof(IsLaserPointerToolActive));
             OnPropertyChanged(nameof(IsPropertyPanelVisible));
             OnPropertyChanged(nameof(ShowFillSection));
         }
@@ -103,6 +115,10 @@ public sealed class BoardScreenViewModel : ViewModelBase, IDisposable
         BoardToolType.Ellipse => "Ellipse",
         BoardToolType.Image => "Image",
         BoardToolType.Eraser => "Eraser",
+        BoardToolType.Arrow => "Arrow",
+        BoardToolType.Line => "Line",
+        BoardToolType.Text => "Text",
+        BoardToolType.LaserPointer => "Laser Pointer",
         _ => SelectedTool.ToString()
     };
 
@@ -113,6 +129,10 @@ public sealed class BoardScreenViewModel : ViewModelBase, IDisposable
     public RelayCommand EllipseToolCommand => _ellipseToolCommand;
     public RelayCommand ImageToolCommand => _imageToolCommand;
     public RelayCommand EraserToolCommand => _eraserToolCommand;
+    public RelayCommand ArrowToolCommand => _arrowToolCommand;
+    public RelayCommand LineToolCommand => _lineToolCommand;
+    public RelayCommand TextToolCommand => _textToolCommand;
+    public RelayCommand LaserPointerToolCommand => _laserPointerToolCommand;
 
     public bool IsSelectToolActive => SelectedTool == BoardToolType.Select;
 
@@ -128,7 +148,15 @@ public sealed class BoardScreenViewModel : ViewModelBase, IDisposable
 
     public bool IsEraserToolActive => SelectedTool == BoardToolType.Eraser;
 
-    public bool IsPropertyPanelVisible => SelectedTool is BoardToolType.Pen or BoardToolType.Rectangle or BoardToolType.Ellipse;
+    public bool IsArrowToolActive => SelectedTool == BoardToolType.Arrow;
+
+    public bool IsLineToolActive => SelectedTool == BoardToolType.Line;
+
+    public bool IsTextToolActive => SelectedTool == BoardToolType.Text;
+
+    public bool IsLaserPointerToolActive => SelectedTool == BoardToolType.LaserPointer;
+
+    public bool IsPropertyPanelVisible => SelectedTool is BoardToolType.Pen or BoardToolType.Rectangle or BoardToolType.Ellipse or BoardToolType.Arrow or BoardToolType.Line;
 
     public bool ShowFillSection => SelectedTool is BoardToolType.Rectangle or BoardToolType.Ellipse;
 

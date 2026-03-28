@@ -1,10 +1,29 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <StreamGeometry x:Key="ToolIconSelect">M3,3 L13,13 M3,6 L3,13 L10,10 Z</StreamGeometry>
-    <StreamGeometry x:Key="ToolIconHand">M4,13 C4,10 4,7 4,5 C4,4 5,3 6,3 C7,3 8,4 8,5 L8,9 L9,4 C9,3 10,2 11,2 C12,2 13,3 13,4 L12,10 L12,13 Z</StreamGeometry>
-    <StreamGeometry x:Key="ToolIconPen">M3,13 L5,13 L12,6 L10,4 L3,11 Z M9,3 L11,5</StreamGeometry>
-    <StreamGeometry x:Key="ToolIconRectangle">M3,4 H13 V12 H3 Z</StreamGeometry>
-    <StreamGeometry x:Key="ToolIconEllipse">M3,8 C3,5 5,3 8,3 C11,3 13,5 13,8 C13,11 11,13 8,13 C5,13 3,11 3,8 Z</StreamGeometry>
-    <StreamGeometry x:Key="ToolIconImage">M3,4 H13 V12 H3 Z M5,10 L7,8 L9,10 L11,7 L13,12 H3 Z M6,7 A1,1 0 1 1 6,7.01</StreamGeometry>
-    <StreamGeometry x:Key="ToolIconEraser">M4,13 L2,11 L8,5 L12,9 L8,13 Z M8,13 H13</StreamGeometry>
+    <!-- Navigation -->
+    <StreamGeometry x:Key="ToolIconSelect">M3,3 L10,20 L12,13 L19,15 Z</StreamGeometry>
+    <StreamGeometry x:Key="ToolIconHand">M18,11 V6 A1,1 0 0 0 16,6 V10 M14,5.5 V4 A1,1 0 0 0 12,4 V10 M10,5.5 V4 A1,1 0 0 0 8,4 V10 M8,10 V7 A1,1 0 0 0 6,7 V14 C6,18 9,21 13,21 C17,21 20,18 20,14 V11 A1,1 0 0 0 18,11 Z</StreamGeometry>
+
+    <!-- Shapes -->
+    <StreamGeometry x:Key="ToolIconRectangle">M3,5 H21 V19 H3 Z</StreamGeometry>
+    <StreamGeometry x:Key="ToolIconEllipse">M12,4 C17.52,4 22,7.58 22,12 C22,16.42 17.52,20 12,20 C6.48,20 2,16.42 2,12 C2,7.58 6.48,4 12,4 Z</StreamGeometry>
+    <StreamGeometry x:Key="ToolIconArrow">M5,12 H19 M19,12 L13,6 M19,12 L13,18</StreamGeometry>
+    <StreamGeometry x:Key="ToolIconLine">M5,19 L19,5</StreamGeometry>
+
+    <!-- Freehand -->
+    <StreamGeometry x:Key="ToolIconPen">M21.174,6.812 A1,1 0 0 0 19.86,5.244 L5.22,17.372 L3,21 L6.628,18.78 Z M15,11 L13,9</StreamGeometry>
+
+    <!-- Text & Media -->
+    <StreamGeometry x:Key="ToolIconText">M6,4 L6,8 M18,4 L18,8 M6,4 H18 M12,4 V20 M9,20 H15</StreamGeometry>
+    <StreamGeometry x:Key="ToolIconImage">M3,5 C3,3.9 3.9,3 5,3 H19 C20.1,3 21,3.9 21,5 V19 C21,20.1 20.1,21 19,21 H5 C3.9,21 3,20.1 3,19 Z M3,16 L8,11 L13,16 M14,15 L17,12 L21,16 M10,9 A1.5,1.5 0 1 1 10,8.99</StreamGeometry>
+
+    <!-- Utility -->
+    <StreamGeometry x:Key="ToolIconEraser">M10.5,21 H18 M7,21 L20.5,7.5 A2.12,2.12 0 0 0 17,4 L3.5,17.5 A2.12,2.12 0 0 0 7,21 Z M2,21 H7 M13,7.5 L17,11.5</StreamGeometry>
+    <StreamGeometry x:Key="ToolIconLaser">M12,12 m-1,0 a1,1 0 1,0 2,0 a1,1 0 1,0 -2,0 M12,2 V5 M12,19 V22 M2,12 H5 M19,12 H22 M4.93,4.93 L7.05,7.05 M16.95,16.95 L19.07,19.07 M4.93,19.07 L7.05,16.95 M16.95,7.05 L19.07,4.93</StreamGeometry>
+
+    <!-- Bottom bar icons -->
+    <StreamGeometry x:Key="IconUndo">M3,7 V13 H9 M3,13 A9,6 0 0 1 21,13</StreamGeometry>
+    <StreamGeometry x:Key="IconRedo">M21,7 V13 H15 M21,13 A9,6 0 0 0 3,13</StreamGeometry>
+    <StreamGeometry x:Key="IconZoomIn">M11,4 A7,7 0 1 0 11,18 A7,7 0 0 0 11,4 M21,21 L16.65,16.65 M8,11 H14 M11,8 V14</StreamGeometry>
+    <StreamGeometry x:Key="IconZoomOut">M11,4 A7,7 0 1 0 11,18 A7,7 0 0 0 11,4 M21,21 L16.65,16.65 M8,11 H14</StreamGeometry>
 </ResourceDictionary>

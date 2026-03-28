@@ -156,6 +156,15 @@ public partial class MainWindow : Window
             case Key.X:
                 boardScreen.EraserToolCommand.Execute(null);
                 return true;
+            case Key.A:
+                boardScreen.ArrowToolCommand.Execute(null);
+                return true;
+            case Key.L:
+                boardScreen.LineToolCommand.Execute(null);
+                return true;
+            case Key.T:
+                boardScreen.TextToolCommand.Execute(null);
+                return true;
             default:
                 return false;
         }

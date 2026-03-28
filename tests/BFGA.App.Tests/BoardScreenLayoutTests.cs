@@ -23,44 +23,50 @@ public class BoardScreenLayoutTests
         Assert.Contains("Board=\"{Binding MainViewModel.Board}\"", xaml);
         Assert.Contains("RemoteCursors=\"{Binding MainViewModel.RemoteCursors}\"", xaml);
         Assert.Contains("RemoteStrokePreviews=\"{Binding MainViewModel.RemoteStrokePreviews}\"", xaml);
-        Assert.Contains("DockPanel", xaml);
-        Assert.Contains("DockPanel.Dock=\"Left\"", xaml);
-        Assert.DoesNotContain("DockPanel.Dock=\"Bottom\"", xaml);
+        Assert.Contains("Grid", xaml);
+        Assert.DoesNotContain("DockPanel", xaml);
         Assert.Contains("views:BottomBar x:Name=\"bottomBar\"", xaml);
         Assert.Contains("views:PropertyPanel", xaml);
         Assert.Contains("HorizontalAlignment=\"Center\"", xaml);
         Assert.Contains("VerticalAlignment=\"Bottom\"", xaml);
         Assert.Contains("Margin=\"0,0,0,12\"", xaml);
         Assert.Contains("VerticalAlignment=\"Center\"", xaml);
-        Assert.Contains("DockPanel.Dock=\"Left\"", xaml);
+        Assert.Contains("HorizontalAlignment=\"Center\"", xaml);
         Assert.Contains("Border.property-panel", themeXaml);
         Assert.Contains("Button.color-swatch", themeXaml);
         Assert.Contains("Button.transparent-swatch", themeXaml);
 
-        Assert.Contains("StackPanel", toolbarXaml);
         Assert.Contains("xmlns:vm=\"clr-namespace:BFGA.App.ViewModels\"", toolbarXaml);
         Assert.Contains("x:DataType=\"vm:BoardScreenViewModel\"", toolbarXaml);
         Assert.Contains("Classes=\"whiteboard-toolbar\"", toolbarXaml);
-        Assert.Equal(2, CountOccurrences(toolbarXaml, "Height=\"1\""));
-        Assert.Equal(2, CountOccurrences(toolbarXaml, "BorderSubtle"));
+        Assert.Equal(4, CountOccurrences(toolbarXaml, "Background=\"{DynamicResource BorderDefault}\""));
         AssertSequence(
             toolbarXaml,
             "ToolIconSelect",
             "ToolIconHand",
-            "Height=\"1\"",
-            "ToolIconPen",
             "ToolIconRectangle",
             "ToolIconEllipse",
-            "Height=\"1\"",
+            "ToolIconArrow",
+            "ToolIconLine",
+            "BorderDefault",
+            "ToolIconPen",
+            "BorderDefault",
+            "ToolIconText",
             "ToolIconImage",
-            "ToolIconEraser");
+            "BorderDefault",
+            "ToolIconEraser",
+            "ToolIconLaser");
         Assert.Contains("Classes.active=\"{Binding IsSelectToolActive}\"", toolbarXaml);
         Assert.Contains("Classes.active=\"{Binding IsHandToolActive}\"", toolbarXaml);
         Assert.Contains("Classes.active=\"{Binding IsPenToolActive}\"", toolbarXaml);
         Assert.Contains("Classes.active=\"{Binding IsRectangleToolActive}\"", toolbarXaml);
         Assert.Contains("Classes.active=\"{Binding IsEllipseToolActive}\"", toolbarXaml);
+        Assert.Contains("Classes.active=\"{Binding IsArrowToolActive}\"", toolbarXaml);
+        Assert.Contains("Classes.active=\"{Binding IsLineToolActive}\"", toolbarXaml);
+        Assert.Contains("Classes.active=\"{Binding IsTextToolActive}\"", toolbarXaml);
         Assert.Contains("Classes.active=\"{Binding IsImageToolActive}\"", toolbarXaml);
         Assert.Contains("Classes.active=\"{Binding IsEraserToolActive}\"", toolbarXaml);
+        Assert.Contains("Classes.active=\"{Binding IsLaserPointerToolActive}\"", toolbarXaml);
         Assert.Contains("views:BoardView", xaml);
         Assert.Contains("KeyDown=\"OnKeyDown\"", mainWindowXaml);
         Assert.Contains("PathIcon", toolbarXaml);
@@ -143,6 +149,10 @@ public class BoardScreenLayoutTests
         Assert.Contains("ToolIconSelect", toolbar);
         Assert.Contains("ToolIconHand", toolbar);
         Assert.Contains("ToolIconPen", toolbar);
+        Assert.Contains("ToolIconArrow", toolbar);
+        Assert.Contains("ToolIconLine", toolbar);
+        Assert.Contains("ToolIconText", toolbar);
+        Assert.Contains("ToolIconLaser", toolbar);
         Assert.Contains("Slider", bottomBar);
         Assert.Contains("ZoomLabel", bottomBar);
         Assert.Contains("ZoomInCommand", bottomBar);

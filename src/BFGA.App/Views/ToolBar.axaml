@@ -1,63 +1,93 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:icons="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls"
              xmlns:vm="clr-namespace:BFGA.App.ViewModels"
              x:Class="BFGA.App.Views.ToolBar"
              x:DataType="vm:BoardScreenViewModel"
              Classes="whiteboard-toolbar">
-    <Border Classes="whiteboard-toolbar-panel">
-        <StackPanel Spacing="4">
-            <Button Classes="whiteboard-tool-button"
+    <Border Classes="whiteboard-floating-toolbar">
+        <StackPanel Orientation="Horizontal" Spacing="2">
+            <!-- Navigation -->
+            <Button Classes="whiteboard-float-tool-button"
                     Classes.active="{Binding IsSelectToolActive}"
                     Command="{Binding SelectToolCommand}"
                     ToolTip.Tip="Select (V)">
-                <icons:PathIcon Data="{StaticResource ToolIconSelect}" />
+                <PathIcon Data="{StaticResource ToolIconSelect}" Width="16" Height="16" />
             </Button>
-
-            <Button Classes="whiteboard-tool-button"
+            <Button Classes="whiteboard-float-tool-button"
                     Classes.active="{Binding IsHandToolActive}"
                     Command="{Binding HandToolCommand}"
                     ToolTip.Tip="Hand (H)">
-                <icons:PathIcon Data="{StaticResource ToolIconHand}" />
+                <PathIcon Data="{StaticResource ToolIconHand}" Width="16" Height="16" />
             </Button>
 
-            <Border Height="1" Background="{DynamicResource BorderSubtle}" Margin="2,2" />
+            <Border Width="1" Height="20" Background="{DynamicResource BorderDefault}" Margin="4,0" />
 
-            <Button Classes="whiteboard-tool-button"
-                    Classes.active="{Binding IsPenToolActive}"
-                    Command="{Binding PenToolCommand}"
-                    ToolTip.Tip="Pen (P)">
-                <icons:PathIcon Data="{StaticResource ToolIconPen}" />
-            </Button>
-
-            <Button Classes="whiteboard-tool-button"
+            <!-- Shapes -->
+            <Button Classes="whiteboard-float-tool-button"
                     Classes.active="{Binding IsRectangleToolActive}"
                     Command="{Binding RectangleToolCommand}"
                     ToolTip.Tip="Rectangle (R)">
-                <icons:PathIcon Data="{StaticResource ToolIconRectangle}" />
+                <PathIcon Data="{StaticResource ToolIconRectangle}" Width="16" Height="16" />
             </Button>
-
-            <Button Classes="whiteboard-tool-button"
+            <Button Classes="whiteboard-float-tool-button"
                     Classes.active="{Binding IsEllipseToolActive}"
                     Command="{Binding EllipseToolCommand}"
                     ToolTip.Tip="Ellipse (E)">
-                <icons:PathIcon Data="{StaticResource ToolIconEllipse}" />
+                <PathIcon Data="{StaticResource ToolIconEllipse}" Width="16" Height="16" />
+            </Button>
+            <Button Classes="whiteboard-float-tool-button"
+                    Classes.active="{Binding IsArrowToolActive}"
+                    Command="{Binding ArrowToolCommand}"
+                    ToolTip.Tip="Arrow (A)">
+                <PathIcon Data="{StaticResource ToolIconArrow}" Width="16" Height="16" />
+            </Button>
+            <Button Classes="whiteboard-float-tool-button"
+                    Classes.active="{Binding IsLineToolActive}"
+                    Command="{Binding LineToolCommand}"
+                    ToolTip.Tip="Line (L)">
+                <PathIcon Data="{StaticResource ToolIconLine}" Width="16" Height="16" />
             </Button>
 
-            <Border Height="1" Background="{DynamicResource BorderSubtle}" Margin="2,2" />
+            <Border Width="1" Height="20" Background="{DynamicResource BorderDefault}" Margin="4,0" />
 
-            <Button Classes="whiteboard-tool-button"
+            <!-- Freehand -->
+            <Button Classes="whiteboard-float-tool-button"
+                    Classes.active="{Binding IsPenToolActive}"
+                    Command="{Binding PenToolCommand}"
+                    ToolTip.Tip="Pen (P)">
+                <PathIcon Data="{StaticResource ToolIconPen}" Width="16" Height="16" />
+            </Button>
+
+            <Border Width="1" Height="20" Background="{DynamicResource BorderDefault}" Margin="4,0" />
+
+            <!-- Text & Media -->
+            <Button Classes="whiteboard-float-tool-button"
+                    Classes.active="{Binding IsTextToolActive}"
+                    Command="{Binding TextToolCommand}"
+                    ToolTip.Tip="Text (T)">
+                <PathIcon Data="{StaticResource ToolIconText}" Width="16" Height="16" />
+            </Button>
+            <Button Classes="whiteboard-float-tool-button"
                     Classes.active="{Binding IsImageToolActive}"
                     Command="{Binding ImageToolCommand}"
                     ToolTip.Tip="Image (I)">
-                <icons:PathIcon Data="{StaticResource ToolIconImage}" />
+                <PathIcon Data="{StaticResource ToolIconImage}" Width="16" Height="16" />
             </Button>
 
-            <Button Classes="whiteboard-tool-button"
+            <Border Width="1" Height="20" Background="{DynamicResource BorderDefault}" Margin="4,0" />
+
+            <!-- Utility -->
+            <Button Classes="whiteboard-float-tool-button"
                     Classes.active="{Binding IsEraserToolActive}"
                     Command="{Binding EraserToolCommand}"
                     ToolTip.Tip="Eraser (X)">
-                <icons:PathIcon Data="{StaticResource ToolIconEraser}" />
+                <PathIcon Data="{StaticResource ToolIconEraser}" Width="16" Height="16" />
+            </Button>
+            <Button Classes="whiteboard-float-tool-button"
+                    Classes.active="{Binding IsLaserPointerToolActive}"
+                    Command="{Binding LaserPointerToolCommand}"
+                    ToolTip.Tip="Laser Pointer">
+                <PathIcon Data="{StaticResource ToolIconLaser}" Width="16" Height="16" />
             </Button>
         </StackPanel>
     </Border>

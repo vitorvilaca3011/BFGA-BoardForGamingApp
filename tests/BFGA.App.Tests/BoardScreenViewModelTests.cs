@@ -17,6 +17,10 @@ public class BoardScreenViewModelTests
         Assert.False(sut.IsEllipseToolActive);
         Assert.False(sut.IsImageToolActive);
         Assert.False(sut.IsEraserToolActive);
+        Assert.False(sut.IsArrowToolActive);
+        Assert.False(sut.IsLineToolActive);
+        Assert.False(sut.IsTextToolActive);
+        Assert.False(sut.IsLaserPointerToolActive);
 
         sut.SelectedTool = BoardToolType.Ellipse;
 
@@ -27,6 +31,10 @@ public class BoardScreenViewModelTests
         Assert.True(sut.IsEllipseToolActive);
         Assert.False(sut.IsImageToolActive);
         Assert.False(sut.IsEraserToolActive);
+        Assert.False(sut.IsArrowToolActive);
+        Assert.False(sut.IsLineToolActive);
+        Assert.False(sut.IsTextToolActive);
+        Assert.False(sut.IsLaserPointerToolActive);
     }
 
     [Fact]
@@ -48,5 +56,9 @@ public class BoardScreenViewModelTests
         Assert.Contains(nameof(BoardScreenViewModel.IsEllipseToolActive), changed);
         Assert.Contains(nameof(BoardScreenViewModel.IsImageToolActive), changed);
         Assert.Contains(nameof(BoardScreenViewModel.IsEraserToolActive), changed);
+        Assert.Contains(nameof(BoardScreenViewModel.IsArrowToolActive), changed);
+        Assert.Contains(nameof(BoardScreenViewModel.IsLineToolActive), changed);
+        Assert.Contains(nameof(BoardScreenViewModel.IsTextToolActive), changed);
+        Assert.Contains(nameof(BoardScreenViewModel.IsLaserPointerToolActive), changed);
     }
 }

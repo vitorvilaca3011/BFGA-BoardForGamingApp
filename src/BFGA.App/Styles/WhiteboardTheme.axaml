@@ -41,7 +41,45 @@
     </Style>
 
     <Style Selector="UserControl.whiteboard-toolbar">
-        <Setter Property="Width" Value="{StaticResource ToolBarWidth}" />
+        <Setter Property="Width" Value="NaN" />
+    </Style>
+
+    <Style Selector="Border.whiteboard-floating-toolbar">
+        <Setter Property="Background" Value="{DynamicResource BgElevated}" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="4" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
+    <!-- Floating toolbar buttons (32x32) -->
+    <Style Selector="Button.whiteboard-float-tool-button">
+        <Setter Property="Width" Value="32" />
+        <Setter Property="Height" Value="32" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.15" />
+                <BrushTransition Property="Foreground" Duration="0:0:0.15" />
+            </Transitions>
+        </Setter>
+    </Style>
+
+    <Style Selector="Button.whiteboard-float-tool-button:pointerover">
+        <Setter Property="Background" Value="{DynamicResource BgOverlay}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+    </Style>
+
+    <Style Selector="Button.whiteboard-float-tool-button.active">
+        <Setter Property="Background" Value="#1A1A2A" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
     </Style>
 
     <Style Selector="Border.whiteboard-toolbar-panel">
