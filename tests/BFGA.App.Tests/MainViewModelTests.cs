@@ -175,7 +175,7 @@ public class MainViewModelTests
 
         Assert.Contains("DataTemplate DataType=\"vm:ConnectionScreenViewModel\"", xaml);
         Assert.Contains("DataTemplate DataType=\"vm:BoardScreenViewModel\"", xaml);
-        Assert.Contains("ContentControl Content=\"{Binding CurrentScreen}\"", xaml);
+        Assert.Contains("TransitioningContentControl Content=\"{Binding CurrentScreen}\"", xaml);
         Assert.Contains("<Grid Margin=\"0\">", xaml);
     }
 

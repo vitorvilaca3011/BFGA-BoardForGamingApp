@@ -20,6 +20,10 @@
     </Window.DataTemplates>
 
     <Grid Margin="0">
-        <ContentControl Content="{Binding CurrentScreen}" />
+        <TransitioningContentControl Content="{Binding CurrentScreen}">
+            <TransitioningContentControl.PageTransition>
+                <CrossFade Duration="0:0:0.3" />
+            </TransitioningContentControl.PageTransition>
+        </TransitioningContentControl>
     </Grid>
 </Window>
