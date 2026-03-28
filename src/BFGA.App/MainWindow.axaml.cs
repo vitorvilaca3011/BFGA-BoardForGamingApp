@@ -43,8 +43,28 @@ public partial class MainWindow : Window
 
     private void OnKeyDown(object? sender, KeyEventArgs e)
     {
-        if (DataContext is not MainViewModel { CurrentScreen: BoardScreenViewModel boardScreen })
+        if (DataContext is not MainViewModel { CurrentScreen: BoardScreenViewModel boardScreen } vm)
         {
+            return;
+        }
+
+        // Check Ctrl+Shift+Z FIRST (most specific), then Ctrl+Z, then Ctrl+Y
+        if (e.Key == Key.Z && e.KeyModifiers == (KeyModifiers.Control | KeyModifiers.Shift))
+        {
+            if (vm.RedoCommand.CanExecute(null)) vm.RedoCommand.Execute(null);
+            e.Handled = true;
+            return;
+        }
+        if (e.Key == Key.Z && e.KeyModifiers == KeyModifiers.Control)
+        {
+            if (vm.UndoCommand.CanExecute(null)) vm.UndoCommand.Execute(null);
+            e.Handled = true;
+            return;
+        }
+        if (e.Key == Key.Y && e.KeyModifiers == KeyModifiers.Control)
+        {
+            if (vm.RedoCommand.CanExecute(null)) vm.RedoCommand.Execute(null);
+            e.Handled = true;
             return;
         }
 

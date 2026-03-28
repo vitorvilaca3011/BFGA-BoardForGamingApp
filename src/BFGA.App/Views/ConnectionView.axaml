@@ -1,43 +1,144 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:sys="clr-namespace:System;assembly=System.Runtime"
              xmlns:vm="clr-namespace:BFGA.App.ViewModels"
              x:Class="BFGA.App.Views.ConnectionView"
              x:DataType="vm:MainViewModel">
-    <Border Padding="12" Background="#1F1F1F" CornerRadius="6">
-        <StackPanel Spacing="10">
-            <TextBlock Text="Connection" FontWeight="Bold" FontSize="16" />
+    <Grid Background="{DynamicResource BgBase}">
+        <TextBlock HorizontalAlignment="Right"
+                   VerticalAlignment="Top"
+                   Margin="0,24,24,0"
+                   FontFamily="{StaticResource InterMediumFont}"
+                   FontSize="12"
+                   LetterSpacing="0.2"
+                   Foreground="{DynamicResource TextTertiary}"
+                   Text="01 / CONNECTION" />
 
-            <StackPanel Orientation="Horizontal" Spacing="12">
-                <RadioButton Content="Host" IsChecked="{Binding IsHostModeSelected}" IsEnabled="{Binding CanSwitchMode}" GroupName="ConnectionMode" />
-                <RadioButton Content="Join" IsChecked="{Binding IsJoinModeSelected}" IsEnabled="{Binding CanSwitchMode}" GroupName="ConnectionMode" />
-            </StackPanel>
+        <TextBlock HorizontalAlignment="Left"
+                   VerticalAlignment="Bottom"
+                   Margin="24,0,0,24"
+                   FontFamily="{StaticResource InterMediumFont}"
+                   FontSize="12"
+                   LetterSpacing="4"
+                   Foreground="{DynamicResource TextMuted}"
+                   Text="BOARD">
+            <TextBlock.RenderTransform>
+                <RotateTransform Angle="-90" />
+            </TextBlock.RenderTransform>
+        </TextBlock>
 
-            <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="8" RowSpacing="8">
-                <TextBlock Grid.Row="0" Text="Display name" VerticalAlignment="Center" />
-                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding DisplayName}" />
+        <Border HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Width="380"
+                Padding="28"
+                Background="{DynamicResource BgSurface}"
+                BorderBrush="{DynamicResource BorderDefault}"
+                BorderThickness="1"
+                CornerRadius="20">
+            <Grid RowSpacing="32">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-                <TextBlock Grid.Row="1" Text="Host address" VerticalAlignment="Center" />
-                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding HostAddress}" />
+                <Grid Grid.Row="0" Height="88" HorizontalAlignment="Center">
+                    <Canvas Width="120" Height="88">
+                        <Ellipse Width="64" Height="64"
+                                 Canvas.Left="12"
+                                 Canvas.Top="12"
+                                 Fill="{DynamicResource BgSurface}"
+                                 Stroke="{DynamicResource BorderSubtle}"
+                                 StrokeThickness="1" />
+                        <Ellipse Width="64" Height="64"
+                                 Canvas.Left="44"
+                                 Canvas.Top="12"
+                                 Fill="{DynamicResource BgElevated}"
+                                 Stroke="{DynamicResource BorderDefault}"
+                                 StrokeThickness="1" />
+                        <TextBlock Canvas.Left="16"
+                                   Canvas.Top="26"
+                                   FontFamily="{StaticResource InterExtraLightFont}"
+                                   FontSize="28"
+                                   Foreground="{DynamicResource TextPrimary}"
+                                   Text="B" />
+                        <TextBlock Canvas.Left="43"
+                                   Canvas.Top="26"
+                                   FontFamily="{StaticResource InterExtraLightFont}"
+                                   FontSize="28"
+                                   Foreground="{DynamicResource TextPrimary}"
+                                   Text="F" />
+                        <TextBlock Canvas.Left="66"
+                                   Canvas.Top="26"
+                                   FontFamily="{StaticResource InterExtraLightFont}"
+                                   FontSize="28"
+                                   Foreground="{DynamicResource TextPrimary}"
+                                   Text="G" />
+                        <TextBlock Canvas.Left="91"
+                                   Canvas.Top="26"
+                                   FontFamily="{StaticResource InterExtraLightFont}"
+                                   FontSize="28"
+                                   Foreground="{DynamicResource TextPrimary}"
+                                   Text="A" />
+                    </Canvas>
+                </Grid>
 
-                <TextBlock Grid.Row="2" Text="Port" VerticalAlignment="Center" />
-                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding HostPort}" />
+                <StackPanel Grid.Row="1" Spacing="20">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
+                        <Button Classes="connection-tab"
+                                Classes.active="{Binding IsHostMode}"
+                                Content="HOST"
+                                Command="{Binding SetHostModeCommand}"
+                                IsEnabled="{Binding CanSwitchMode}" />
+                        <Button Classes="connection-tab"
+                                Classes.active="{Binding IsJoinMode}"
+                                Content="JOIN"
+                                Command="{Binding SetJoinModeCommand}"
+                                IsEnabled="{Binding CanSwitchMode}" />
+                    </StackPanel>
 
-                <StackPanel Grid.Row="3" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="8">
-                    <Button Content="Start Host" Command="{Binding StartHostCommand}" />
-                    <Button Content="Stop Host" Command="{Binding StopHostCommand}" />
-                    <Button Content="Connect" Command="{Binding ConnectCommand}" />
-                    <Button Content="Disconnect" Command="{Binding DisconnectCommand}" />
+                    <StackPanel Spacing="14">
+                        <StackPanel Spacing="6">
+                            <TextBlock Classes="input-label" Text="Display name" />
+                            <TextBox Classes="connection-input" Text="{Binding DisplayName}" />
+                        </StackPanel>
+
+                        <StackPanel Spacing="6" IsVisible="{Binding IsJoinMode}">
+                            <TextBlock Classes="input-label" Text="Host address" />
+                            <TextBox Classes="connection-input" Text="{Binding HostAddress}" />
+                        </StackPanel>
+
+                        <StackPanel Spacing="6">
+                            <TextBlock Classes="input-label" Text="Port" />
+                            <TextBox Classes="connection-input" Text="{Binding HostPort}" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <Button Classes="connection-primary-btn"
+                            Content="{Binding PrimaryButtonText}"
+                            Command="{Binding PrimaryActionCommand}"
+                            IsEnabled="{Binding IsPrimaryButtonEnabled}" />
+
+                    <TextBlock HorizontalAlignment="Center"
+                               TextAlignment="Center"
+                               TextWrapping="Wrap"
+                               FontFamily="{StaticResource InterLightFont}"
+                               Foreground="{DynamicResource TextSecondary}"
+                               Text="{Binding StatusText}" />
+
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Center"
+                                Spacing="12"
+                                IsVisible="{Binding IsDisconnected}">
+                        <Button Classes="connection-secondary-btn"
+                                Content="LOAD BOARD"
+                                Command="{Binding LoadBoardCommand}" />
+                        <Button Classes="connection-secondary-btn"
+                                Content="SAVE BOARD"
+                                Command="{Binding SaveBoardCommand}" />
+                    </StackPanel>
                 </StackPanel>
-
-                <StackPanel Grid.Row="4" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="8">
-                    <Button Content="Load Board" Command="{Binding LoadBoardCommand}" />
-                    <Button Content="Save Board" Command="{Binding SaveBoardCommand}" />
-                </StackPanel>
-
-                <Border Grid.Row="5" Grid.ColumnSpan="2" Padding="8" Background="#2B2B2B" CornerRadius="4">
-                    <TextBlock Text="{Binding StatusText}" TextWrapping="Wrap" />
-                </Border>
             </Grid>
-        </StackPanel>
-    </Border>
+        </Border>
+    </Grid>
 </UserControl>

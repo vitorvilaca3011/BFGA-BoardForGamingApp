@@ -1,0 +1,8 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <FontFamily x:Key="InterFont">avares://BFGA.App/Assets/Fonts#Inter</FontFamily>
+    <FontFamily x:Key="InterExtraLightFont">avares://BFGA.App/Assets/Fonts#Inter ExtraLight</FontFamily>
+    <FontFamily x:Key="InterLightFont">avares://BFGA.App/Assets/Fonts#Inter Light</FontFamily>
+    <FontFamily x:Key="InterMediumFont">avares://BFGA.App/Assets/Fonts#Inter Medium</FontFamily>
+    <FontFamily x:Key="MonoFont">avares://BFGA.App/Assets/Fonts#JetBrains Mono</FontFamily>
+</ResourceDictionary>

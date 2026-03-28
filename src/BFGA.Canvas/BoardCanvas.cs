@@ -190,14 +190,14 @@ public class BoardCanvas : Control
             try
             {
                 var workspace = new SKRect(0, 0, BoardSurfaceHelper.StableWorkspaceSize, BoardSurfaceHelper.StableWorkspaceSize);
-                using (var backgroundPaint = new SKPaint { Color = new SKColor(17, 19, 24) })
+                using (var backgroundPaint = new SKPaint { Color = ThemeColors.BgSurface })
                 {
                     canvas.DrawRect(workspace, backgroundPaint);
                 }
 
                 var zoomScale = canvas.TotalMatrix.ScaleX;
                 var visibleBounds = DotGridHelper.GetVisibleBoardBounds(canvas.LocalClipBounds);
-                DotGridHelper.DrawDots(canvas, visibleBounds, Vector2.Zero, 24f, new SKColor(140, 150, 165, 120), 1.25f, zoomScale);
+                DotGridHelper.DrawDots(canvas, visibleBounds, Vector2.Zero, 24f, ThemeColors.DotGrid, 1.25f, zoomScale);
 
                 // Draw elements sorted by ZIndex (lowest first, highest on top).
                 // Avoid allocating a new list when elements are already in order.

@@ -1,0 +1,37 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:BFGA.App.Converters"
+             x:Class="BFGA.App.Views.RosterOverlay"
+             x:DataType="vm:BoardScreenViewModel"
+             xmlns:vm="clr-namespace:BFGA.App.ViewModels"
+             IsVisible="{Binding IsRosterVisible}">
+    <UserControl.Resources>
+        <converters:SKColorToBrushConverter x:Key="SKColorToBrushConverter" />
+        <converters:InitialsConverter x:Key="InitialsConverter" />
+    </UserControl.Resources>
+
+    <ItemsControl ItemsSource="{Binding MainViewModel.Roster.Values}">
+        <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" />
+            </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+
+        <ItemsControl.ItemTemplate>
+            <DataTemplate>
+                <Border Classes="roster-avatar"
+                        Margin="-6,0,0,0"
+                        Background="{Binding AssignedColor, Converter={StaticResource SKColorToBrushConverter}}"
+                        ToolTip.Tip="{Binding DisplayName}">
+                    <TextBlock Text="{Binding DisplayName, Converter={StaticResource InitialsConverter}}"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               FontFamily="{DynamicResource MonoFont}"
+                               FontSize="10"
+                               FontWeight="Bold"
+                               Foreground="White" />
+                </Border>
+            </DataTemplate>
+        </ItemsControl.ItemTemplate>
+    </ItemsControl>
+</UserControl>

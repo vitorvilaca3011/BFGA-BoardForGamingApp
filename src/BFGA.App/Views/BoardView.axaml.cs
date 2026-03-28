@@ -137,7 +137,11 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
 
     private void HandleBoardScreenPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(BoardScreenViewModel.SelectedTool))
+        if (e.PropertyName is nameof(BoardScreenViewModel.SelectedTool)
+            or nameof(BoardScreenViewModel.SelectedStrokeColor)
+            or nameof(BoardScreenViewModel.SelectedFillColor)
+            or nameof(BoardScreenViewModel.StrokeWidth)
+            or nameof(BoardScreenViewModel.Opacity))
         {
             SyncToolController();
         }
@@ -154,6 +158,10 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
 
         _toolController ??= new BoardToolController(activeBoard);
         _toolController.SetBoard(activeBoard);
+        _toolController.StrokeColor = boardScreen.SelectedStrokeColor;
+        _toolController.FillColor = boardScreen.SelectedFillColor;
+        _toolController.StrokeWidth = boardScreen.StrokeWidth;
+        _toolController.Opacity = boardScreen.Opacity;
 
         switch (boardScreen.SelectedTool)
         {

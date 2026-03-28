@@ -19,4 +19,8 @@
     <ProjectReference Include="..\BFGA.Network\BFGA.Network.csproj" />
     <ProjectReference Include="..\BFGA.Canvas\BFGA.Canvas.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\Fonts\*.ttf" />
+  </ItemGroup>
 </Project>

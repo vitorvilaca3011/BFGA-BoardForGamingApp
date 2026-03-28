@@ -19,7 +19,11 @@
         </DataTemplate>
     </Window.DataTemplates>
 
-    <Grid Margin="12">
-        <ContentControl Content="{Binding CurrentScreen}" />
+    <Grid Margin="0">
+        <TransitioningContentControl Content="{Binding CurrentScreen}">
+            <TransitioningContentControl.PageTransition>
+                <CrossFade Duration="0:0:0.3" />
+            </TransitioningContentControl.PageTransition>
+        </TransitioningContentControl>
     </Grid>
 </Window>

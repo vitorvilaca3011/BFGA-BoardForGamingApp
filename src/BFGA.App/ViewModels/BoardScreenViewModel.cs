@@ -1,9 +1,11 @@
+using System.ComponentModel;
 using BFGA.App.Infrastructure;
 using BFGA.Canvas.Tools;
+using SkiaSharp;
 
 namespace BFGA.App.ViewModels;
 
-public sealed class BoardScreenViewModel : ViewModelBase
+public sealed class BoardScreenViewModel : ViewModelBase, IDisposable
 {
     private readonly RelayCommand _selectToolCommand;
     private readonly RelayCommand _handToolCommand;
@@ -13,10 +15,15 @@ public sealed class BoardScreenViewModel : ViewModelBase
     private readonly RelayCommand _imageToolCommand;
     private readonly RelayCommand _eraserToolCommand;
     private BoardToolType _selectedTool = BoardToolType.Select;
+    private SKColor _selectedStrokeColor = SKColors.White;
+    private SKColor _selectedFillColor = SKColors.Transparent;
+    private float _strokeWidth = 2f;
+    private float _opacity = 1f;
 
     public BoardScreenViewModel(MainViewModel mainViewModel)
     {
         MainViewModel = mainViewModel;
+        MainViewModel.PropertyChanged += OnMainViewModelPropertyChanged;
 
         _selectToolCommand = new RelayCommand(() => SelectedTool = BoardToolType.Select);
         _handToolCommand = new RelayCommand(() => SelectedTool = BoardToolType.Hand);
@@ -25,6 +32,17 @@ public sealed class BoardScreenViewModel : ViewModelBase
         _ellipseToolCommand = new RelayCommand(() => SelectedTool = BoardToolType.Ellipse);
         _imageToolCommand = new RelayCommand(() => SelectedTool = BoardToolType.Image);
         _eraserToolCommand = new RelayCommand(() => SelectedTool = BoardToolType.Eraser);
+    }
+
+    private void OnMainViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(MainViewModel.Roster))
+            OnPropertyChanged(nameof(IsRosterVisible));
+    }
+
+    public void Dispose()
+    {
+        MainViewModel.PropertyChanged -= OnMainViewModelPropertyChanged;
     }
 
     public MainViewModel MainViewModel { get; }
@@ -40,7 +58,40 @@ public sealed class BoardScreenViewModel : ViewModelBase
             }
 
             OnPropertyChanged(nameof(SelectedToolText));
+            OnPropertyChanged(nameof(IsSelectToolActive));
+            OnPropertyChanged(nameof(IsHandToolActive));
+            OnPropertyChanged(nameof(IsPenToolActive));
+            OnPropertyChanged(nameof(IsRectangleToolActive));
+            OnPropertyChanged(nameof(IsEllipseToolActive));
+            OnPropertyChanged(nameof(IsImageToolActive));
+            OnPropertyChanged(nameof(IsEraserToolActive));
+            OnPropertyChanged(nameof(IsPropertyPanelVisible));
+            OnPropertyChanged(nameof(ShowFillSection));
         }
+    }
+
+    public SKColor SelectedStrokeColor
+    {
+        get => _selectedStrokeColor;
+        set => SetProperty(ref _selectedStrokeColor, value);
+    }
+
+    public SKColor SelectedFillColor
+    {
+        get => _selectedFillColor;
+        set => SetProperty(ref _selectedFillColor, value);
+    }
+
+    public float StrokeWidth
+    {
+        get => _strokeWidth;
+        set => SetProperty(ref _strokeWidth, value);
+    }
+
+    public float Opacity
+    {
+        get => _opacity;
+        set => SetProperty(ref _opacity, Math.Clamp(value, 0f, 1f));
     }
 
     public string SelectedToolText => SelectedTool switch
@@ -62,4 +113,24 @@ public sealed class BoardScreenViewModel : ViewModelBase
     public RelayCommand EllipseToolCommand => _ellipseToolCommand;
     public RelayCommand ImageToolCommand => _imageToolCommand;
     public RelayCommand EraserToolCommand => _eraserToolCommand;
+
+    public bool IsSelectToolActive => SelectedTool == BoardToolType.Select;
+
+    public bool IsHandToolActive => SelectedTool == BoardToolType.Hand;
+
+    public bool IsPenToolActive => SelectedTool == BoardToolType.Pen;
+
+    public bool IsRectangleToolActive => SelectedTool == BoardToolType.Rectangle;
+
+    public bool IsEllipseToolActive => SelectedTool == BoardToolType.Ellipse;
+
+    public bool IsImageToolActive => SelectedTool == BoardToolType.Image;
+
+    public bool IsEraserToolActive => SelectedTool == BoardToolType.Eraser;
+
+    public bool IsPropertyPanelVisible => SelectedTool is BoardToolType.Pen or BoardToolType.Rectangle or BoardToolType.Ellipse;
+
+    public bool ShowFillSection => SelectedTool is BoardToolType.Rectangle or BoardToolType.Ellipse;
+
+    public bool IsRosterVisible => MainViewModel.Roster.Count > 0;
 }

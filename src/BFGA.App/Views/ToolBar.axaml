@@ -7,31 +7,56 @@
              Classes="whiteboard-toolbar">
     <Border Classes="whiteboard-toolbar-panel">
         <StackPanel Spacing="4">
-            <Button Classes="whiteboard-tool-button" Command="{Binding SelectToolCommand}" ToolTip.Tip="Select (V)">
+            <Button Classes="whiteboard-tool-button"
+                    Classes.active="{Binding IsSelectToolActive}"
+                    Command="{Binding SelectToolCommand}"
+                    ToolTip.Tip="Select (V)">
                 <icons:PathIcon Data="{StaticResource ToolIconSelect}" />
             </Button>
 
-            <Button Classes="whiteboard-tool-button" Command="{Binding HandToolCommand}" ToolTip.Tip="Hand (H)">
+            <Button Classes="whiteboard-tool-button"
+                    Classes.active="{Binding IsHandToolActive}"
+                    Command="{Binding HandToolCommand}"
+                    ToolTip.Tip="Hand (H)">
                 <icons:PathIcon Data="{StaticResource ToolIconHand}" />
             </Button>
 
-            <Button Classes="whiteboard-tool-button" Command="{Binding PenToolCommand}" ToolTip.Tip="Pen (P)">
+            <Border Height="1" Background="{DynamicResource BorderSubtle}" Margin="2,2" />
+
+            <Button Classes="whiteboard-tool-button"
+                    Classes.active="{Binding IsPenToolActive}"
+                    Command="{Binding PenToolCommand}"
+                    ToolTip.Tip="Pen (P)">
                 <icons:PathIcon Data="{StaticResource ToolIconPen}" />
             </Button>
 
-            <Button Classes="whiteboard-tool-button" Command="{Binding RectangleToolCommand}" ToolTip.Tip="Rectangle (R)">
+            <Button Classes="whiteboard-tool-button"
+                    Classes.active="{Binding IsRectangleToolActive}"
+                    Command="{Binding RectangleToolCommand}"
+                    ToolTip.Tip="Rectangle (R)">
                 <icons:PathIcon Data="{StaticResource ToolIconRectangle}" />
             </Button>
 
-            <Button Classes="whiteboard-tool-button" Command="{Binding EllipseToolCommand}" ToolTip.Tip="Ellipse (E)">
+            <Button Classes="whiteboard-tool-button"
+                    Classes.active="{Binding IsEllipseToolActive}"
+                    Command="{Binding EllipseToolCommand}"
+                    ToolTip.Tip="Ellipse (E)">
                 <icons:PathIcon Data="{StaticResource ToolIconEllipse}" />
             </Button>
 
-            <Button Classes="whiteboard-tool-button" Command="{Binding ImageToolCommand}" ToolTip.Tip="Image (I)">
+            <Border Height="1" Background="{DynamicResource BorderSubtle}" Margin="2,2" />
+
+            <Button Classes="whiteboard-tool-button"
+                    Classes.active="{Binding IsImageToolActive}"
+                    Command="{Binding ImageToolCommand}"
+                    ToolTip.Tip="Image (I)">
                 <icons:PathIcon Data="{StaticResource ToolIconImage}" />
             </Button>
 
-            <Button Classes="whiteboard-tool-button" Command="{Binding EraserToolCommand}" ToolTip.Tip="Eraser (X)">
+            <Button Classes="whiteboard-tool-button"
+                    Classes.active="{Binding IsEraserToolActive}"
+                    Command="{Binding EraserToolCommand}"
+                    ToolTip.Tip="Eraser (X)">
                 <icons:PathIcon Data="{StaticResource ToolIconEraser}" />
             </Button>
         </StackPanel>
