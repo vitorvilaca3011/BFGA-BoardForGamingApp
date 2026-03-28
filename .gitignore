@@ -1,0 +1,16 @@
+.opencode/
+.worktrees/
+
+.vs/
+.idea/
+*.user
+*.suo
+
+**/bin/
+**/obj/
+**/TestResults/
+
+*.coverage
+*.coveragexml
+
+/nul
