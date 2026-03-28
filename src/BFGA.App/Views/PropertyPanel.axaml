@@ -6,10 +6,10 @@
              IsVisible="{Binding IsPropertyPanelVisible}">
     <Border Classes="property-panel" Width="220" Padding="16">
         <StackPanel Spacing="12">
-            <TextBlock Text="PROPERTIES" Classes="property-panel-heading" />
+            <TextBlock Text="PROPERTIES" Classes="property-panel-heading" FontFamily="{DynamicResource InterMediumFont}" />
 
             <StackPanel Spacing="8">
-                <TextBlock Text="STROKE" Classes="input-label" />
+                <TextBlock Text="STROKE" Classes="input-label" FontFamily="{DynamicResource InterMediumFont}" />
                 <WrapPanel ItemWidth="24" ItemHeight="24" HorizontalAlignment="Left">
                     <Button Classes="color-swatch" Background="#000000" Tag="#000000" Click="OnStrokeSwatchClick" />
                     <Button Classes="color-swatch" Background="#FFFFFF" Tag="#FFFFFF" Click="OnStrokeSwatchClick" />
@@ -31,7 +31,7 @@
             </StackPanel>
 
             <StackPanel Spacing="6">
-                <TextBlock Text="WIDTH" Classes="input-label" />
+                <TextBlock Text="WIDTH" Classes="input-label" FontFamily="{DynamicResource InterMediumFont}" />
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
                     <Slider Minimum="1" Maximum="20" Value="{Binding StrokeWidth, Mode=TwoWay}" />
                     <TextBlock Grid.Column="1" Text="{Binding StrokeWidth, StringFormat={}{0:0.#}}" Classes="whiteboard-status-text" />
@@ -39,7 +39,7 @@
             </StackPanel>
 
             <StackPanel Spacing="6">
-                <TextBlock Text="OPACITY" Classes="input-label" />
+                <TextBlock Text="OPACITY" Classes="input-label" FontFamily="{DynamicResource InterMediumFont}" />
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
                     <Slider Minimum="0" Maximum="1" Value="{Binding Opacity, Mode=TwoWay}" />
                     <TextBlock Grid.Column="1" Text="{Binding Opacity, StringFormat={}{0:P0}}" Classes="whiteboard-status-text" />
@@ -47,7 +47,7 @@
             </StackPanel>
 
             <StackPanel IsVisible="{Binding ShowFillSection}" Spacing="8">
-                <TextBlock Text="FILL" Classes="input-label" />
+                <TextBlock Text="FILL" Classes="input-label" FontFamily="{DynamicResource InterMediumFont}" />
                 <WrapPanel ItemWidth="24" ItemHeight="24" HorizontalAlignment="Left">
                     <Button Classes="color-swatch transparent-swatch" Background="#00000000" Tag="#00000000" Click="OnFillSwatchClick" />
                     <Button Classes="color-swatch" Background="#000000" Tag="#000000" Click="OnFillSwatchClick" />
