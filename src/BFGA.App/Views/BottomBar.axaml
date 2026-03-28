@@ -7,30 +7,55 @@
              Classes="whiteboard-bottom-bar">
     <Border Classes="whiteboard-bottom-bar-panel"
             HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,12">
-        <StackPanel Orientation="Horizontal" Spacing="8">
-            <!-- Undo/Redo — bound through MainViewModel because BottomBar's
-                 DataContext is BoardScreenViewModel (compiled bindings).
-                 BoardScreenViewModel exposes MainViewModel as a public property. -->
-            <Button Content="↶" Command="{Binding MainViewModel.UndoCommand}"
-                    IsEnabled="{Binding MainViewModel.CanUndo}" Classes="whiteboard-tool-button"
-                    Width="32" Height="32" ToolTip.Tip="Undo (Ctrl+Z)" />
-            <Button Content="↷" Command="{Binding MainViewModel.RedoCommand}"
-                    IsEnabled="{Binding MainViewModel.CanRedo}" Classes="whiteboard-tool-button"
-                    Width="32" Height="32" ToolTip.Tip="Redo (Ctrl+Y)" />
+        <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+            <!-- Undo -->
+            <Button Command="{Binding MainViewModel.UndoCommand}"
+                    IsEnabled="{Binding MainViewModel.CanUndo}"
+                    Classes="whiteboard-tool-button"
+                    Width="28" Height="28"
+                    ToolTip.Tip="Undo (Ctrl+Z)">
+                <PathIcon Data="{StaticResource IconUndo}" Width="14" Height="14" />
+            </Button>
+            <!-- Redo -->
+            <Button Command="{Binding MainViewModel.RedoCommand}"
+                    IsEnabled="{Binding MainViewModel.CanRedo}"
+                    Classes="whiteboard-tool-button"
+                    Width="28" Height="28"
+                    ToolTip.Tip="Redo (Ctrl+Y)">
+                <PathIcon Data="{StaticResource IconRedo}" Width="14" Height="14" />
+            </Button>
 
             <!-- Divider -->
-            <Border Width="1" Height="20" Background="{DynamicResource BorderSubtle}" />
+            <Border Width="1" Height="16" Background="{DynamicResource BorderDefault}" Margin="4,0" />
 
-            <!-- Zoom controls -->
+            <!-- Zoom out -->
             <Button Command="{Binding BoardView.ZoomOutCommand, ElementName=root}"
-                    Classes="whiteboard-tool-button" Content="−" ToolTip.Tip="Zoom out" />
+                    Classes="whiteboard-tool-button"
+                    Width="28" Height="28"
+                    ToolTip.Tip="Zoom out">
+                <PathIcon Data="{StaticResource IconZoomOut}" Width="14" Height="14" />
+            </Button>
+
+            <!-- Zoom slider -->
             <Slider Minimum="0.2" Maximum="3"
                     Value="{Binding BoardView.ZoomLevel, ElementName=root, Mode=TwoWay}"
-                    Width="160" TickFrequency="0.1" ToolTip.Tip="Zoom level" />
+                    Width="140" TickFrequency="0.1" VerticalAlignment="Center" />
+
+            <!-- Zoom label -->
             <TextBlock Text="{Binding BoardView.ZoomLabel, ElementName=root}"
-                       Classes="whiteboard-shortcut-hint" />
+                       FontFamily="{DynamicResource InterMediumFont}"
+                       FontSize="12"
+                       Foreground="{DynamicResource TextSecondary}"
+                       VerticalAlignment="Center"
+                       MinWidth="52" TextAlignment="Center" />
+
+            <!-- Zoom in -->
             <Button Command="{Binding BoardView.ZoomInCommand, ElementName=root}"
-                    Classes="whiteboard-tool-button" Content="+" ToolTip.Tip="Zoom in" />
+                    Classes="whiteboard-tool-button"
+                    Width="28" Height="28"
+                    ToolTip.Tip="Zoom in">
+                <PathIcon Data="{StaticResource IconZoomIn}" Width="14" Height="14" />
+            </Button>
         </StackPanel>
     </Border>
 </UserControl>
