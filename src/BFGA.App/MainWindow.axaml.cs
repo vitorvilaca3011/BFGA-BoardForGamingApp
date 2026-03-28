@@ -110,6 +110,22 @@ public partial class MainWindow : Window
         e.Handled = true;
     }
 
+    private void OnSettingsClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (DataContext is MainViewModel vm)
+            vm.IsSettingsOpen = !vm.IsSettingsOpen;
+    }
+
+    private void OnMinimizeClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        WindowState = WindowState.Minimized;
+    }
+
+    private void OnCloseClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        Close();
+    }
+
     public static bool TryHandleToolShortcut(BoardScreenViewModel boardScreen, Key key, KeyModifiers modifiers)
     {
         if (modifiers != KeyModifiers.None)

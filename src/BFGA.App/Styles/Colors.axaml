@@ -11,4 +11,5 @@
     <SolidColorBrush x:Key="BorderDefault" Color="#2A2A2A" />
     <SolidColorBrush x:Key="BorderSubtle" Color="#1A1A1A" />
     <SolidColorBrush x:Key="AccentWhite" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="CloseButtonHover" Color="#C42B1C" />
 </ResourceDictionary>

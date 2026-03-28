@@ -53,6 +53,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     private bool _isAutosaving;
     private int _undoShadowCount;
     private int _redoShadowCount;
+    private bool _isSettingsOpen;
     private DateTime? _joinStartedAt;
     private readonly TimeSpan _joinTimeout;
     private readonly TimeSpan _fullSyncTimeout;
@@ -177,6 +178,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
             OnPropertyChanged(nameof(PrimaryActionCommand));
             OnPropertyChanged(nameof(IsPrimaryButtonEnabled));
             OnPropertyChanged(nameof(CurrentScreen));
+            OnPropertyChanged(nameof(IsBoardScreen));
             RaiseCommandStates();
             UpdateStatusText();
         }
@@ -252,6 +254,14 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     }
 
     public bool IsDisconnected => ConnectionState == ShellConnectionState.Disconnected;
+
+    public bool IsSettingsOpen
+    {
+        get => _isSettingsOpen;
+        set => SetProperty(ref _isSettingsOpen, value);
+    }
+
+    public bool IsBoardScreen => CurrentScreen is BoardScreenViewModel;
 
     public string PrimaryButtonText => (SelectedMode, ConnectionState) switch
     {

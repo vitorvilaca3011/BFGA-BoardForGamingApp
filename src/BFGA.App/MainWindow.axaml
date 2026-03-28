@@ -2,28 +2,87 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:chrome="using:Avalonia.Controls.Chrome"
         xmlns:views="clr-namespace:BFGA.App.Views"
         xmlns:vm="clr-namespace:BFGA.App.ViewModels"
-        mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
+        mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="900"
         x:Class="BFGA.App.MainWindow"
         x:DataType="vm:MainViewModel"
         Title="BFGA"
+        Width="1400" Height="900"
+        CanResize="False"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaTitleBarHeightHint="40"
+        ExtendClientAreaChromeHints="NoChrome"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource BgBase}"
         KeyDown="OnKeyDown">
+
     <Window.DataTemplates>
         <DataTemplate DataType="vm:ConnectionScreenViewModel">
             <views:ConnectionScreen />
         </DataTemplate>
-
         <DataTemplate DataType="vm:BoardScreenViewModel">
             <views:BoardScreen />
         </DataTemplate>
     </Window.DataTemplates>
 
     <Grid Margin="0">
-        <TransitioningContentControl Content="{Binding CurrentScreen}">
-            <TransitioningContentControl.PageTransition>
-                <CrossFade Duration="0:0:0.3" />
-            </TransitioningContentControl.PageTransition>
-        </TransitioningContentControl>
+        <DockPanel>
+            <!-- Custom Title Bar -->
+            <Border DockPanel.Dock="Top" Height="40"
+                    Background="{DynamicResource BgBase}"
+                    IsHitTestVisible="True">
+                <DockPanel Margin="12,0">
+                    <!-- Left: App name -->
+                    <TextBlock DockPanel.Dock="Left"
+                               Text="BFGA"
+                               VerticalAlignment="Center"
+                               FontFamily="{DynamicResource InterMediumFont}"
+                               FontSize="14"
+                               Foreground="{DynamicResource TextSecondary}" />
+
+                    <!-- Right: Window controls -->
+                    <StackPanel DockPanel.Dock="Right"
+                                Orientation="Horizontal"
+                                Spacing="0"
+                                VerticalAlignment="Stretch">
+
+                        <!-- Gear / Settings button (only on board screen) -->
+                        <Button Classes="title-bar-button"
+                                Click="OnSettingsClick"
+                                IsVisible="{Binding IsBoardScreen}"
+                                ToolTip.Tip="Settings">
+                            <PathIcon Data="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z M12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"
+                                     Width="14" Height="14" />
+                        </Button>
+
+                        <!-- Minimize -->
+                        <Button Classes="title-bar-button"
+                                Click="OnMinimizeClick"
+                                ToolTip.Tip="Minimize">
+                            <PathIcon Data="M4,12 L20,12" Width="14" Height="14" />
+                        </Button>
+
+                        <!-- Close -->
+                        <Button Classes="title-bar-button close-button"
+                                Click="OnCloseClick"
+                                ToolTip.Tip="Close">
+                            <PathIcon Data="M18,6 L6,18 M6,6 L18,18" Width="14" Height="14" />
+                        </Button>
+                    </StackPanel>
+
+                    <!-- Spacer -->
+                    <Border />
+                </DockPanel>
+            </Border>
+
+            <!-- Main content -->
+            <TransitioningContentControl Content="{Binding CurrentScreen}">
+                <TransitioningContentControl.PageTransition>
+                    <CrossFade Duration="0:0:0.3" />
+                </TransitioningContentControl.PageTransition>
+            </TransitioningContentControl>
+        </DockPanel>
     </Grid>
 </Window>

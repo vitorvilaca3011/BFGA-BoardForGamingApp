@@ -12,6 +12,34 @@
         <Setter Property="Background" Value="{DynamicResource BgBase}" />
     </Style>
 
+    <Style Selector="Button.title-bar-button">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
+        <Setter Property="Width" Value="46" />
+        <Setter Property="Height" Value="40" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="0" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.15" />
+                <BrushTransition Property="Foreground" Duration="0:0:0.15" />
+            </Transitions>
+        </Setter>
+    </Style>
+
+    <Style Selector="Button.title-bar-button:pointerover">
+        <Setter Property="Background" Value="{DynamicResource BgOverlay}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+    </Style>
+
+    <Style Selector="Button.title-bar-button.close-button:pointerover">
+        <Setter Property="Background" Value="{DynamicResource CloseButtonHover}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+    </Style>
+
     <Style Selector="UserControl.whiteboard-toolbar">
         <Setter Property="Width" Value="{StaticResource ToolBarWidth}" />
     </Style>
