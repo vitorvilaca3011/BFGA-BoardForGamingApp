@@ -311,7 +311,9 @@ public class ProtocolTests
             new RequestFullSyncOperation(),
             new FullSyncResponseOperation(Guid.NewGuid(), new BoardState(), new Dictionary<Guid, PlayerInfo>()),
             new PeerJoinedOperation(Guid.NewGuid(), "Player", SKColors.Red),
-            new PeerLeftOperation(Guid.NewGuid())
+            new PeerLeftOperation(Guid.NewGuid()),
+            new UndoOperation(),
+            new RedoOperation()
         };
 
         // Act & Assert - wrap in NetworkMessage for proper polymorphic serialization

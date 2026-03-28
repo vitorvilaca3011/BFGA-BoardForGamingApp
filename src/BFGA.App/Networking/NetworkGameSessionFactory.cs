@@ -75,6 +75,11 @@ public sealed class NetworkGameSessionFactory : IGameSessionFactory
             _inner.PollEvents();
         }
 
+        public bool CanUndo => _inner.CanUndoLocal;
+        public bool CanRedo => _inner.CanRedoLocal;
+        public bool TryUndo() => _inner.TryUndoLocal();
+        public bool TryRedo() => _inner.TryRedoLocal();
+
         public void Dispose()
         {
             _inner.Dispose();

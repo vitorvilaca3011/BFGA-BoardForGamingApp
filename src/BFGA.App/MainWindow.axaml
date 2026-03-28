@@ -19,7 +19,7 @@
         </DataTemplate>
     </Window.DataTemplates>
 
-    <Grid Margin="12">
+    <Grid Margin="0">
         <ContentControl Content="{Binding CurrentScreen}" />
     </Grid>
 </Window>

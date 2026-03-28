@@ -1,5 +1,7 @@
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Numerics;
@@ -74,6 +76,9 @@ public class GameHost : IDisposable
     private readonly Dictionary<IPEndPoint, string> _pendingDisplayNames;
     private readonly object _lockObject = new();
     
+    private readonly UndoRedoManager _undoManager = new();
+    private static readonly Guid _hostUserId = Guid.Empty;
+
     private BoardState _boardState;
     private bool _isRunning;
     private int _port;
@@ -152,7 +157,29 @@ public class GameHost : IDisposable
             return false;
         }
 
+        operation.SenderId = _hostUserId;
         ApplyOperation(operation);
+        return true;
+    }
+
+    public bool CanUndoLocal => _undoManager.CanUndo(_hostUserId);
+    public bool CanRedoLocal => _undoManager.CanRedo(_hostUserId);
+
+    public bool TryUndoLocal()
+    {
+        var result = _undoManager.TryUndo(_hostUserId);
+        if (result is null) return false;
+        ApplyOperationNoUndo(result);
+        BroadcastOperation(result, IsOperationReliable(result));
+        return true;
+    }
+
+    public bool TryRedoLocal()
+    {
+        var result = _undoManager.TryRedo(_hostUserId);
+        if (result is null) return false;
+        ApplyOperationNoUndo(result);
+        BroadcastOperation(result, IsOperationReliable(result));
         return true;
     }
 
@@ -174,14 +201,14 @@ public class GameHost : IDisposable
 
     private static readonly SKColor[] PlayerColors = new[]
     {
-        SKColors.Red,
-        SKColors.Blue,
-        SKColors.Green,
-        SKColors.Orange,
-        SKColors.Purple,
-        SKColors.Cyan,
-        SKColors.Yellow,
-        SKColors.Magenta
+        new SKColor(0xFF, 0x6B, 0x6B), // #FF6B6B
+        new SKColor(0x4E, 0xCD, 0xC4), // #4ECDC4
+        new SKColor(0x45, 0xB7, 0xD1), // #45B7D1
+        new SKColor(0x96, 0xCE, 0xB4), // #96CEB4
+        new SKColor(0xFF, 0xEA, 0xA7), // #FFEAA7
+        new SKColor(0xDD, 0xA0, 0xDD), // #DDA0DD
+        new SKColor(0x98, 0xD8, 0xC8), // #98D8C8
+        new SKColor(0xF7, 0xDC, 0x6F), // #F7DC6F
     };
 
     public GameHost()
@@ -317,8 +344,34 @@ public class GameHost : IDisposable
         bool isValid = ValidateOperation(operation);
         if (!isValid) return;
 
+        // SHORT-CIRCUIT: Undo/Redo are meta-operations — resolve them to
+        // concrete ops and apply+broadcast the result, NOT the request.
+        switch (operation)
+        {
+            case UndoOperation:
+            {
+                var undoResult = _undoManager.TryUndo(operation.SenderId);
+                if (undoResult is not null)
+                {
+                    ApplyOperationNoUndo(undoResult);
+                    BroadcastOperation(undoResult, IsOperationReliable(undoResult));
+                }
+                return;
+            }
+            case RedoOperation:
+            {
+                var redoResult = _undoManager.TryRedo(operation.SenderId);
+                if (redoResult is not null)
+                {
+                    ApplyOperationNoUndo(redoResult);
+                    BroadcastOperation(redoResult, IsOperationReliable(redoResult));
+                }
+                return;
+            }
+        }
+
         ApplyOperation(operation);
-        
+
         // Broadcast to all connected clients (including sender for consistency)
         BroadcastOperation(operation, IsOperationReliable(operation));
     }
@@ -332,6 +385,10 @@ public class GameHost : IDisposable
             case PeerLeftOperation:
             case FullSyncResponseOperation:
                 return false;
+            // UndoOperation and RedoOperation are valid client requests — allow through
+            case UndoOperation:
+            case RedoOperation:
+                return true;
         }
 
         switch (operation)
@@ -368,26 +425,66 @@ public class GameHost : IDisposable
     }
 
     private void ApplyOperation(BoardOperation operation)
+        => ApplyOperationCore(operation, pushUndo: true);
+
+    private void ApplyOperationNoUndo(BoardOperation operation)
+        => ApplyOperationCore(operation, pushUndo: false);
+
+    private void ApplyOperationCore(BoardOperation operation, bool pushUndo)
     {
         lock (_lockObject)
         {
             switch (operation)
             {
                 case AddElementOperation add:
+                {
+                    if (pushUndo)
+                    {
+                        var inverseDelete = new DeleteElementOperation { ElementId = add.Element.Id };
+                        _undoManager.Push(operation.SenderId, operation, inverseDelete);
+                    }
                     _boardElements[add.Element.Id] = add.Element;
                     break;
+                }
                 case UpdateElementOperation update:
                     if (_boardElements.TryGetValue(update.ElementId, out var existingElement))
                     {
+                        if (pushUndo)
+                        {
+                            var inverseProps = new Dictionary<string, object>();
+                            foreach (var key in update.ModifiedProperties.Keys)
+                                inverseProps[key] = GetElementProperty(existingElement, key);
+                            var inverseUpdate = new UpdateElementOperation(update.ElementId, inverseProps);
+                            _undoManager.Push(operation.SenderId, operation, inverseUpdate);
+                        }
                         ApplyModifiedProperties(existingElement, update.ModifiedProperties);
                     }
                     break;
                 case DeleteElementOperation delete:
-                    _boardElements.Remove(delete.ElementId);
+                    if (_boardElements.TryGetValue(delete.ElementId, out var deletedElement))
+                    {
+                        if (pushUndo)
+                        {
+                            var inverseAdd = new AddElementOperation { Element = CloneElement(deletedElement) };
+                            _undoManager.Push(operation.SenderId, operation, inverseAdd);
+                        }
+                        _boardElements.Remove(delete.ElementId);
+                    }
                     break;
                 case MoveElementOperation move:
                     if (_boardElements.TryGetValue(move.ElementId, out var movableElement))
                     {
+                        if (pushUndo)
+                        {
+                            var inverseMoveOp = new MoveElementOperation
+                            {
+                                ElementId = move.ElementId,
+                                Position = movableElement.Position,
+                                Size = movableElement.Size,
+                                Rotation = movableElement.Rotation,
+                            };
+                            _undoManager.Push(operation.SenderId, operation, inverseMoveOp);
+                        }
                         movableElement.Position = move.Position;
                         movableElement.Size = move.Size;
                         movableElement.Rotation = move.Rotation;
@@ -404,6 +501,36 @@ public class GameHost : IDisposable
         => MessagePackSerializer.Deserialize<BoardState>(
             MessagePackSerializer.Serialize(source, BFGA.Core.MessagePackSetup.Options),
             BFGA.Core.MessagePackSetup.Options);
+
+    private static BoardElement CloneElement(BoardElement source)
+        => MessagePackSerializer.Deserialize<BoardElement>(
+            MessagePackSerializer.Serialize(source, BFGA.Core.MessagePackSetup.Options),
+            BFGA.Core.MessagePackSetup.Options);
+
+    private static object GetElementProperty(BoardElement element, string key)
+    {
+        return key switch
+        {
+            "Position" => element.Position,
+            "Size" => element.Size,
+            "Rotation" => element.Rotation,
+            "ZIndex" => (object)element.ZIndex,
+            "IsLocked" => element.IsLocked,
+            "Color" when element is StrokeElement stroke => stroke.Color,
+            "Color" when element is TextElement text => text.Color,
+            "Thickness" when element is StrokeElement stroke => stroke.Thickness,
+            "StrokeColor" when element is ShapeElement shape => shape.StrokeColor,
+            "FillColor" when element is ShapeElement shape => shape.FillColor,
+            "StrokeWidth" when element is ShapeElement shape => shape.StrokeWidth,
+            "Type" when element is ShapeElement shape => (object)shape.Type,
+            "Text" when element is TextElement text => text.Text,
+            "FontSize" when element is TextElement text => text.FontSize,
+            "FontFamily" when element is TextElement text => text.FontFamily,
+            "ImageData" when element is ImageElement image => image.ImageData,
+            "OriginalFileName" when element is ImageElement image => (object)(image.OriginalFileName ?? string.Empty),
+            _ => new object()
+        };
+    }
 
     private static void ApplyModifiedProperties(BoardElement element, Dictionary<string, object> properties)
     {
@@ -494,9 +621,10 @@ public class GameHost : IDisposable
     private Guid AssignClientId(NetPeer peer, string displayName)
     {
         var clientId = Guid.NewGuid();
-        var colorIndex = _players.Count % PlayerColors.Length;
-        var playerInfo = new PlayerInfo(displayName, PlayerColors[colorIndex]);
-        
+        var usedColors = new HashSet<SKColor>(_players.Values.Select(p => p.Info.AssignedColor));
+        var assignedColor = PlayerColors.FirstOrDefault(c => !usedColors.Contains(c), PlayerColors[_players.Count % PlayerColors.Length]);
+        var playerInfo = new PlayerInfo(displayName, assignedColor);
+
         _players[clientId] = (peer, playerInfo);
         peer.Tag = displayName;
         return clientId;

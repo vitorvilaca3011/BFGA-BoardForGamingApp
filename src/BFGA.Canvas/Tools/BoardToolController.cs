@@ -42,6 +42,14 @@ public sealed class BoardToolController
 
     public BoardToolType CurrentTool { get; private set; } = BoardToolType.Select;
 
+    public SKColor StrokeColor { get; set; } = SKColors.White;
+
+    public SKColor FillColor { get; set; } = SKColors.Transparent;
+
+    public float StrokeWidth { get; set; } = 2f;
+
+    public float Opacity { get; set; } = 1f;
+
     public ShapeType ShapeType { get; set; } = ShapeType.Rectangle;
 
     public void SetTool(BoardToolType tool)
@@ -238,8 +246,8 @@ public sealed class BoardToolController
             Id = Guid.NewGuid(),
             Position = position,
             Points = [Vector2.Zero],
-            Color = SKColors.Black,
-            Thickness = 2f,
+            Color = ApplyOpacity(StrokeColor, Opacity),
+            Thickness = StrokeWidth,
             ZIndex = GetNextZIndex()
         };
 
@@ -284,9 +292,9 @@ public sealed class BoardToolController
             Position = position,
             Size = Vector2.Zero,
             Type = ShapeType,
-            StrokeColor = SKColors.Black,
-            FillColor = SKColors.Transparent,
-            StrokeWidth = 1f
+            StrokeColor = ApplyOpacity(StrokeColor, Opacity),
+            FillColor = ApplyOpacity(FillColor, Opacity),
+            StrokeWidth = StrokeWidth
         };
 
         Board.Elements.Add(_activeShape);
@@ -517,4 +525,7 @@ public sealed class BoardToolController
 
     private static bool Intersects(SKRect a, SKRect b)
         => a.Left <= b.Right && a.Right >= b.Left && a.Top <= b.Bottom && a.Bottom >= b.Top;
+
+    private static SKColor ApplyOpacity(SKColor color, float opacity)
+        => color.WithAlpha((byte)(opacity * 255));
 }

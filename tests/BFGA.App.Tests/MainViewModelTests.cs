@@ -64,6 +64,60 @@ public class MainViewModelTests
     }
 
     [Fact]
+    public void MainViewModel_ExposesConnectionScreenComputedWrappers()
+    {
+        var sut = new MainViewModel();
+
+        Assert.True(sut.IsHostMode);
+        Assert.False(sut.IsJoinMode);
+        Assert.True(sut.IsDisconnected);
+        Assert.Equal("START HOST", sut.PrimaryButtonText);
+        Assert.Same(sut.StartHostCommand, sut.PrimaryActionCommand);
+        Assert.True(sut.IsPrimaryButtonEnabled);
+
+        sut.SelectedMode = ConnectionMode.Join;
+
+        Assert.False(sut.IsHostMode);
+        Assert.True(sut.IsJoinMode);
+        Assert.Equal("CONNECT", sut.PrimaryButtonText);
+        Assert.Same(sut.ConnectCommand, sut.PrimaryActionCommand);
+        Assert.True(sut.IsPrimaryButtonEnabled);
+    }
+
+    [Fact]
+    public async Task MainViewModel_PrimaryWrappersReflectConnectionStateChanges()
+    {
+        var sessions = new FakeGameSessionFactory { DelayConnectCompletion = true };
+        var sut = new MainViewModel(sessionFactory: sessions);
+
+        Assert.True(sut.IsDisconnected);
+        Assert.Equal("START HOST", sut.PrimaryButtonText);
+
+        sut.SelectedMode = ConnectionMode.Host;
+        await sut.StartHostAsync();
+
+        Assert.False(sut.IsDisconnected);
+        Assert.Equal("STOP HOST", sut.PrimaryButtonText);
+        Assert.Same(sut.StopHostCommand, sut.PrimaryActionCommand);
+
+        await sut.StopHostAsync();
+
+        sut.SelectedMode = ConnectionMode.Join;
+        await sut.ConnectAsync();
+
+        Assert.Equal(ShellConnectionState.Joining, sut.ConnectionState);
+        Assert.Equal("CONNECTING...", sut.PrimaryButtonText);
+        Assert.Same(sut.ConnectCommand, sut.PrimaryActionCommand);
+        Assert.False(sut.IsPrimaryButtonEnabled);
+
+        sessions.LastCreatedClient!.RaiseConnected();
+
+        Assert.Equal("DISCONNECT", sut.PrimaryButtonText);
+        Assert.Same(sut.DisconnectCommand, sut.PrimaryActionCommand);
+        Assert.True(sut.IsPrimaryButtonEnabled);
+    }
+
+    [Fact]
     public async Task BoardScreen_FollowsMainViewModelStateReplacements()
     {
         var filePath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.bfga");
@@ -122,6 +176,40 @@ public class MainViewModelTests
         Assert.Contains("DataTemplate DataType=\"vm:ConnectionScreenViewModel\"", xaml);
         Assert.Contains("DataTemplate DataType=\"vm:BoardScreenViewModel\"", xaml);
         Assert.Contains("ContentControl Content=\"{Binding CurrentScreen}\"", xaml);
+        Assert.Contains("<Grid Margin=\"0\">", xaml);
+    }
+
+    [Fact]
+    public void WhiteboardTheme_DefinesConnectionScreenStyleTokens()
+    {
+        var themeXaml = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "BFGA.App", "Styles", "WhiteboardTheme.axaml"));
+
+        Assert.Contains("connection-tab", themeXaml);
+        Assert.Contains("connection-tab.active", themeXaml);
+        Assert.Contains("input-label", themeXaml);
+        Assert.Contains("connection-input", themeXaml);
+        Assert.Contains("connection-primary-btn", themeXaml);
+        Assert.Contains("connection-secondary-btn", themeXaml);
+    }
+
+    [Fact]
+    public void ConnectionView_UsesCardWrapperAroundCenteredFormContent()
+    {
+        var xaml = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "BFGA.App", "Views", "ConnectionView.axaml"));
+        var normalized = new string(xaml.Where(character => !char.IsWhiteSpace(character)).ToArray());
+
+        const string wrapperStart = "<BorderHorizontalAlignment=\"Center\"VerticalAlignment=\"Center\"Width=\"380\"Padding=\"28\"Background=\"{DynamicResourceBgSurface}\"BorderBrush=\"{DynamicResourceBorderDefault}\"BorderThickness=\"1\"CornerRadius=\"20\"><GridRowSpacing=\"32\">";
+        const string primaryButton = "<ButtonClasses=\"connection-primary-btn\"";
+
+        Assert.Contains(wrapperStart, normalized);
+
+        var borderStart = normalized.IndexOf(wrapperStart, StringComparison.Ordinal);
+        var primaryButtonStart = normalized.IndexOf(primaryButton, StringComparison.Ordinal);
+        var borderEnd = normalized.IndexOf("</Border>", borderStart, StringComparison.Ordinal);
+
+        Assert.True(borderStart >= 0);
+        Assert.True(primaryButtonStart > borderStart);
+        Assert.True(borderEnd > primaryButtonStart);
     }
 
     [Fact]
@@ -1143,6 +1231,11 @@ public class MainViewModelTests
 
             return true;
         }
+
+        public bool CanUndo => false;
+        public bool CanRedo => false;
+        public bool TryUndo() => false;
+        public bool TryRedo() => false;
 
         public void Dispose()
         {

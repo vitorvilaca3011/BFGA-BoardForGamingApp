@@ -21,7 +21,9 @@ public enum OperationType
     RequestFullSync = 7,
     FullSyncResponse = 8,
     PeerJoined = 9,
-    PeerLeft = 10
+    PeerLeft = 10,
+    Undo = 11,
+    Redo = 12
 }
 
 /// <summary>
@@ -40,6 +42,8 @@ public enum OperationType
 [MessagePack.Union(8, typeof(FullSyncResponseOperation))]
 [MessagePack.Union(9, typeof(PeerJoinedOperation))]
 [MessagePack.Union(10, typeof(PeerLeftOperation))]
+[MessagePack.Union(11, typeof(UndoOperation))]
+[MessagePack.Union(12, typeof(RedoOperation))]
 public abstract class BoardOperation
 {
     /// <summary>
@@ -366,4 +370,24 @@ public class PeerLeftOperation : BoardOperation
     {
         ClientId = clientId;
     }
+}
+
+/// <summary>
+/// Requests the host to undo the sender's last operation.
+/// Direction: Client -> Host
+/// </summary>
+[MessagePackObject]
+public sealed class UndoOperation : BoardOperation
+{
+    public override OperationType Type => OperationType.Undo;
+}
+
+/// <summary>
+/// Requests the host to redo the sender's last undone operation.
+/// Direction: Client -> Host
+/// </summary>
+[MessagePackObject]
+public sealed class RedoOperation : BoardOperation
+{
+    public override OperationType Type => OperationType.Redo;
 }

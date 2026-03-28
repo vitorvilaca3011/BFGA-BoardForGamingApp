@@ -1,0 +1,73 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:BFGA.App.ViewModels"
+             x:Class="BFGA.App.Views.PropertyPanel"
+             x:DataType="vm:BoardScreenViewModel"
+             IsVisible="{Binding IsPropertyPanelVisible}">
+    <Border Classes="property-panel" Width="220" Padding="16">
+        <StackPanel Spacing="12">
+            <TextBlock Text="PROPERTIES" Classes="property-panel-heading" />
+
+            <StackPanel Spacing="8">
+                <TextBlock Text="STROKE" Classes="input-label" />
+                <WrapPanel ItemWidth="24" ItemHeight="24" HorizontalAlignment="Left">
+                    <Button Classes="color-swatch" Background="#000000" Tag="#000000" Click="OnStrokeSwatchClick" />
+                    <Button Classes="color-swatch" Background="#FFFFFF" Tag="#FFFFFF" Click="OnStrokeSwatchClick" />
+                    <Button Classes="color-swatch" Background="#FF3B30" Tag="#FF3B30" Click="OnStrokeSwatchClick" />
+                    <Button Classes="color-swatch" Background="#FF9500" Tag="#FF9500" Click="OnStrokeSwatchClick" />
+                    <Button Classes="color-swatch" Background="#FFCC00" Tag="#FFCC00" Click="OnStrokeSwatchClick" />
+                    <Button Classes="color-swatch" Background="#34C759" Tag="#34C759" Click="OnStrokeSwatchClick" />
+                    <Button Classes="color-swatch" Background="#007AFF" Tag="#007AFF" Click="OnStrokeSwatchClick" />
+                    <Button Classes="color-swatch" Background="#AF52DE" Tag="#AF52DE" Click="OnStrokeSwatchClick" />
+                    <Button Classes="color-swatch" Background="#5856D6" Tag="#5856D6" Click="OnStrokeSwatchClick" />
+                    <Button Classes="color-swatch" Background="#FF2D55" Tag="#FF2D55" Click="OnStrokeSwatchClick" />
+                    <Button Classes="color-swatch" Background="#A2845E" Tag="#A2845E" Click="OnStrokeSwatchClick" />
+                    <Button Classes="color-swatch" Background="#8E8E93" Tag="#8E8E93" Click="OnStrokeSwatchClick" />
+                    <Button Classes="color-swatch" Background="#636366" Tag="#636366" Click="OnStrokeSwatchClick" />
+                    <Button Classes="color-swatch" Background="#48484A" Tag="#48484A" Click="OnStrokeSwatchClick" />
+                    <Button Classes="color-swatch" Background="#2C2C2E" Tag="#2C2C2E" Click="OnStrokeSwatchClick" />
+                    <Button Classes="color-swatch" Background="#1C1C1E" Tag="#1C1C1E" Click="OnStrokeSwatchClick" />
+                </WrapPanel>
+            </StackPanel>
+
+            <StackPanel Spacing="6">
+                <TextBlock Text="WIDTH" Classes="input-label" />
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <Slider Minimum="1" Maximum="20" Value="{Binding StrokeWidth, Mode=TwoWay}" />
+                    <TextBlock Grid.Column="1" Text="{Binding StrokeWidth, StringFormat={}{0:0.#}}" Classes="whiteboard-status-text" />
+                </Grid>
+            </StackPanel>
+
+            <StackPanel Spacing="6">
+                <TextBlock Text="OPACITY" Classes="input-label" />
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <Slider Minimum="0" Maximum="1" Value="{Binding Opacity, Mode=TwoWay}" />
+                    <TextBlock Grid.Column="1" Text="{Binding Opacity, StringFormat={}{0:P0}}" Classes="whiteboard-status-text" />
+                </Grid>
+            </StackPanel>
+
+            <StackPanel IsVisible="{Binding ShowFillSection}" Spacing="8">
+                <TextBlock Text="FILL" Classes="input-label" />
+                <WrapPanel ItemWidth="24" ItemHeight="24" HorizontalAlignment="Left">
+                    <Button Classes="color-swatch transparent-swatch" Background="#00000000" Tag="#00000000" Click="OnFillSwatchClick" />
+                    <Button Classes="color-swatch" Background="#000000" Tag="#000000" Click="OnFillSwatchClick" />
+                    <Button Classes="color-swatch" Background="#FFFFFF" Tag="#FFFFFF" Click="OnFillSwatchClick" />
+                    <Button Classes="color-swatch" Background="#FF3B30" Tag="#FF3B30" Click="OnFillSwatchClick" />
+                    <Button Classes="color-swatch" Background="#FF9500" Tag="#FF9500" Click="OnFillSwatchClick" />
+                    <Button Classes="color-swatch" Background="#FFCC00" Tag="#FFCC00" Click="OnFillSwatchClick" />
+                    <Button Classes="color-swatch" Background="#34C759" Tag="#34C759" Click="OnFillSwatchClick" />
+                    <Button Classes="color-swatch" Background="#007AFF" Tag="#007AFF" Click="OnFillSwatchClick" />
+                    <Button Classes="color-swatch" Background="#AF52DE" Tag="#AF52DE" Click="OnFillSwatchClick" />
+                    <Button Classes="color-swatch" Background="#5856D6" Tag="#5856D6" Click="OnFillSwatchClick" />
+                    <Button Classes="color-swatch" Background="#FF2D55" Tag="#FF2D55" Click="OnFillSwatchClick" />
+                    <Button Classes="color-swatch" Background="#A2845E" Tag="#A2845E" Click="OnFillSwatchClick" />
+                    <Button Classes="color-swatch" Background="#8E8E93" Tag="#8E8E93" Click="OnFillSwatchClick" />
+                    <Button Classes="color-swatch" Background="#636366" Tag="#636366" Click="OnFillSwatchClick" />
+                    <Button Classes="color-swatch" Background="#48484A" Tag="#48484A" Click="OnFillSwatchClick" />
+                    <Button Classes="color-swatch" Background="#2C2C2E" Tag="#2C2C2E" Click="OnFillSwatchClick" />
+                    <Button Classes="color-swatch" Background="#1C1C1E" Tag="#1C1C1E" Click="OnFillSwatchClick" />
+                </WrapPanel>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</UserControl>

@@ -19,4 +19,9 @@ public interface IGameHostSession : IDisposable
     void BroadcastOperation(BFGA.Network.Protocol.BoardOperation operation, bool reliable = true);
     void BroadcastFullSync();
     void PollEvents();
+
+    bool CanUndo { get; }
+    bool CanRedo { get; }
+    bool TryUndo();
+    bool TryRedo();
 }

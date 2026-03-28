@@ -30,6 +30,8 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     private readonly AsyncRelayCommand _disconnectCommand;
     private readonly AsyncRelayCommand _loadBoardCommand;
     private readonly AsyncRelayCommand _saveBoardCommand;
+    private readonly AsyncRelayCommand _setHostModeCommand;
+    private readonly AsyncRelayCommand _setJoinModeCommand;
     private readonly ConnectionScreenViewModel _connectionScreen;
     private readonly BoardScreenViewModel _boardScreen;
 
@@ -72,6 +74,16 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         _disconnectCommand = CreateShellCommand(DisconnectAsync, CanDisconnect, "Failed to disconnect: ");
         _loadBoardCommand = CreateShellCommand(LoadBoardAsync, CanLoadBoardCommand, "Failed to load board: ");
         _saveBoardCommand = CreateShellCommand(SaveBoardAsync, CanSaveBoardCommand, "Failed to save board: ");
+        _setHostModeCommand = new AsyncRelayCommand(() =>
+        {
+            SelectedMode = ConnectionMode.Host;
+            return Task.CompletedTask;
+        }, () => CanSwitchMode, ex => HandleShellError($"Failed to set host mode: {ex.Message}"));
+        _setJoinModeCommand = new AsyncRelayCommand(() =>
+        {
+            SelectedMode = ConnectionMode.Join;
+            return Task.CompletedTask;
+        }, () => CanSwitchMode, ex => HandleShellError($"Failed to set join mode: {ex.Message}"));
         _connectionScreen = new ConnectionScreenViewModel(this);
         _boardScreen = new BoardScreenViewModel(this);
 
@@ -103,15 +115,24 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
                 return;
             }
 
+            OnPropertyChanged(nameof(IsHostMode));
+            OnPropertyChanged(nameof(IsJoinMode));
             OnPropertyChanged(nameof(IsHostModeSelected));
             OnPropertyChanged(nameof(IsJoinModeSelected));
+            OnPropertyChanged(nameof(PrimaryButtonText));
+            OnPropertyChanged(nameof(PrimaryActionCommand));
+            OnPropertyChanged(nameof(IsPrimaryButtonEnabled));
             RaiseCommandStates();
         }
     }
 
+    public bool IsHostMode => SelectedMode == ConnectionMode.Host;
+
+    public bool IsJoinMode => SelectedMode == ConnectionMode.Join;
+
     public bool IsHostModeSelected
     {
-        get => SelectedMode == ConnectionMode.Host;
+        get => IsHostMode;
         set
         {
             if (value)
@@ -123,7 +144,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
 
     public bool IsJoinModeSelected
     {
-        get => SelectedMode == ConnectionMode.Join;
+        get => IsJoinMode;
         set
         {
             if (value)
@@ -143,8 +164,12 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
                 return;
             }
 
+            OnPropertyChanged(nameof(IsDisconnected));
             OnPropertyChanged(nameof(CanLoadBoard));
             OnPropertyChanged(nameof(CanSaveBoard));
+            OnPropertyChanged(nameof(PrimaryButtonText));
+            OnPropertyChanged(nameof(PrimaryActionCommand));
+            OnPropertyChanged(nameof(IsPrimaryButtonEnabled));
             OnPropertyChanged(nameof(CurrentScreen));
             RaiseCommandStates();
             UpdateStatusText();
@@ -220,6 +245,28 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
             : _connectionScreen;
     }
 
+    public bool IsDisconnected => ConnectionState == ShellConnectionState.Disconnected;
+
+    public string PrimaryButtonText => (SelectedMode, ConnectionState) switch
+    {
+        (ConnectionMode.Host, ShellConnectionState.Hosting) => "STOP HOST",
+        (ConnectionMode.Host, ShellConnectionState.Disconnected) => "START HOST",
+        (ConnectionMode.Join, ShellConnectionState.Joining) => "CONNECTING...",
+        (ConnectionMode.Join, ShellConnectionState.Connected) => "DISCONNECT",
+        (ConnectionMode.Join, ShellConnectionState.Disconnected) => "CONNECT",
+        _ => "CONNECT",
+    };
+
+    public ICommand PrimaryActionCommand => (SelectedMode, ConnectionState) switch
+    {
+        (ConnectionMode.Host, ShellConnectionState.Hosting) => StopHostCommand,
+        (ConnectionMode.Host, ShellConnectionState.Disconnected) => StartHostCommand,
+        (ConnectionMode.Join, ShellConnectionState.Connected) => DisconnectCommand,
+        _ => ConnectCommand,
+    };
+
+    public bool IsPrimaryButtonEnabled => ConnectionState != ShellConnectionState.Joining;
+
     public IGameHostSession? Host
     {
         get => _host;
@@ -290,6 +337,8 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     public ICommand DisconnectCommand => _disconnectCommand;
     public ICommand LoadBoardCommand => _loadBoardCommand;
     public ICommand SaveBoardCommand => _saveBoardCommand;
+    public ICommand SetHostModeCommand => _setHostModeCommand;
+    public ICommand SetJoinModeCommand => _setJoinModeCommand;
 
     public bool IsAutosaveTimerEnabled => _autosaveTimer.IsEnabled;
 
@@ -514,6 +563,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
 
     public void Dispose()
     {
+        _boardScreen.Dispose();
         StopPolling();
         StopAutosave();
         Host?.Dispose();
@@ -638,6 +688,8 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         _disconnectCommand.RaiseCanExecuteChanged();
         _loadBoardCommand.RaiseCanExecuteChanged();
         _saveBoardCommand.RaiseCanExecuteChanged();
+        _setHostModeCommand.RaiseCanExecuteChanged();
+        _setJoinModeCommand.RaiseCanExecuteChanged();
         OnPropertyChanged(nameof(CanSwitchMode));
         OnPropertyChanged(nameof(CanLoadBoard));
         OnPropertyChanged(nameof(CanSaveBoard));
