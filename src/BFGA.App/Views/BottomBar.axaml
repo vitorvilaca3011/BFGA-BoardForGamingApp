@@ -1,0 +1,26 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:BFGA.App.ViewModels"
+             x:Class="BFGA.App.Views.BottomBar"
+             x:Name="root"
+             x:DataType="vm:BoardScreenViewModel"
+             Classes="whiteboard-bottom-bar">
+    <Border Classes="whiteboard-bottom-bar-panel">
+        <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto" ColumnSpacing="12" VerticalAlignment="Center">
+            <Button Command="{Binding BoardView.ZoomOutCommand, ElementName=root}" Classes="whiteboard-tool-button" Content="−" ToolTip.Tip="Zoom out" />
+            <Slider Grid.Column="1"
+                    Minimum="0.2"
+                    Maximum="3"
+                    Value="{Binding BoardView.ZoomLevel, ElementName=root, Mode=TwoWay}"
+                    Width="160"
+                    TickFrequency="0.1"
+                    ToolTip.Tip="Zoom level" />
+            <TextBlock Grid.Column="2" Text="{Binding MainViewModel.StatusText}" Classes="whiteboard-status-text" />
+            <TextBlock Grid.Column="3"
+                       Text="{Binding BoardView.ZoomLabel, ElementName=root}"
+                       Classes="whiteboard-shortcut-hint" />
+            <Button Grid.Column="4" Command="{Binding BoardView.ZoomInCommand, ElementName=root}" Classes="whiteboard-tool-button" Content="+" ToolTip.Tip="Zoom in" />
+            <TextBlock Grid.Column="5" Text="{Binding MainViewModel.ConnectionState}" Classes="whiteboard-status-text" />
+        </Grid>
+    </Border>
+</UserControl>

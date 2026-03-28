@@ -34,6 +34,7 @@ public class GameClient : IDisposable
     private bool _isConnected;
     private bool _isDisposed;
     private readonly ManualResetEventSlim _connectionEvent = new(false);
+    private TaskCompletionSource<bool>? _connectCompletionSource;
 
     /// <summary>
     /// Channel 0: Reliable ordered for all operations
@@ -83,41 +84,35 @@ public class GameClient : IDisposable
 
     /// <summary>
     /// Connects to a game host asynchronously.
-    /// NOTE: This implementation blocks the calling thread while polling for connection.
-    /// The method name is async for future compatibility but currently does not await any async operations.
+    /// After calling this method, you must poll events on both host and client
+    /// until IsConnected becomes true.
     /// </summary>
     /// <param name="hostAddress">The host's IP address or hostname.</param>
     /// <param name="port">The port to connect to (default 7777).</param>
-    /// <returns>A task that completes when the connection is established.</returns>
-    public async Task ConnectAsync(string hostAddress, int port = 7777)
+    public Task ConnectAsync(string hostAddress, int port = 7777)
     {
-        if (_isConnected || _isDisposed) return;
+        if (_isDisposed) return Task.FromException(new ObjectDisposedException(nameof(GameClient)));
+        if (_isConnected) return Task.CompletedTask;
+        if (_connectCompletionSource is not null) return _connectCompletionSource.Task;
+
+        _connectCompletionSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         _netManager = new NetManager(new ClientEventListener(this));
+        _netManager.ChannelsCount = 2; // Match host channel configuration
         if (!_netManager.Start())
         {
+            _connectCompletionSource.TrySetException(new InvalidOperationException("Failed to start network client"));
+            _connectCompletionSource = null;
+            CleanupNetworkState();
             throw new InvalidOperationException($"Failed to start network client");
         }
         
         // Connect using display name as connection key (server retrieves it via ConnectionKey property)
         _netManager.Connect(hostAddress, port, _displayName);
-
-        // Poll events while waiting for connection
-        var startTime = DateTime.UtcNow;
-        while (!_connectionEvent.Wait(10))
-        {
-            _netManager.PollEvents();
-            if ((DateTime.UtcNow - startTime).TotalMilliseconds > 5000)
-            {
-                _netManager.DisconnectAll();
-                _netManager.Stop();
-                _netManager = null;
-                return;
-            }
-        }
+        return _connectCompletionSource.Task;
     }
 
-    /// <summary>
+/// <summary>
     /// Waits for a connection to be established.
     /// </summary>
     /// <param name="timeoutMs">Timeout in milliseconds.</param>
@@ -133,13 +128,17 @@ public class GameClient : IDisposable
     /// </summary>
     public void Disconnect()
     {
-        if (!_isConnected || _isDisposed) return;
+        if (_isDisposed) return;
+
+        if (_connectCompletionSource is not null && !_isConnected)
+        {
+            _connectCompletionSource.TrySetException(new InvalidOperationException("Disconnected before connection completed."));
+            _connectCompletionSource = null;
+            CleanupNetworkState();
+        }
 
         _connectionEvent.Reset();
-        _netManager?.DisconnectAll();
-        _netManager?.Stop();
-        _netManager = null;
-        _connectedPeer = null;
+        CleanupNetworkState();
         _isConnected = false;
     }
 
@@ -150,7 +149,11 @@ public class GameClient : IDisposable
     /// <param name="reliable">Whether to use reliable delivery (default true). Ignored for CursorUpdate.</param>
     public void SendOperation(BoardOperation operation, bool reliable = true)
     {
-        if (!_isConnected || _connectedPeer == null || _isDisposed) return;
+        if (!_isConnected || _connectedPeer == null || _isDisposed)
+        {
+            Debug.WriteLine($"[GameClient] SendOperation called but not connected: IsConnected={_isConnected}, Peer={_connectedPeer}, Disposed={_isDisposed}");
+            return;
+        }
 
         operation.SenderId = _clientId;
         
@@ -169,6 +172,7 @@ public class GameClient : IDisposable
         _dataWriter.PutBytesWithLength(OperationSerializer.Serialize(operation));
         var deliveryMethod = channel == UnreliableChannel ? DeliveryMethod.Unreliable : DeliveryMethod.ReliableOrdered;
         _connectedPeer.Send(_dataWriter, (byte)channel, deliveryMethod);
+        Debug.WriteLine($"[GameClient] Sent operation {operation.Type} on channel {channel}");
     }
 
     /// <summary>
@@ -206,15 +210,44 @@ public class GameClient : IDisposable
     {
         _connectedPeer = peer;
         _isConnected = true;
+        _connectCompletionSource?.TrySetResult(true);
+        _connectCompletionSource = null;
         _connectionEvent.Set();
         Connected?.Invoke(this, EventArgs.Empty);
     }
 
     private void SetDisconnected()
     {
+        if (_connectCompletionSource is not null && !_isConnected)
+        {
+            _connectCompletionSource.TrySetException(new InvalidOperationException("Connection was lost before it completed."));
+            _connectCompletionSource = null;
+            CleanupNetworkState();
+        }
+
         _isConnected = false;
         _connectionEvent.Reset();
         Disconnected?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void FailConnectAttempt(string message)
+    {
+        if (_connectCompletionSource is null)
+        {
+            return;
+        }
+
+        _connectCompletionSource.TrySetException(new InvalidOperationException(message));
+        _connectCompletionSource = null;
+        CleanupNetworkState();
+    }
+
+    private void CleanupNetworkState()
+    {
+        _netManager?.DisconnectAll();
+        _netManager?.Stop();
+        _netManager = null;
+        _connectedPeer = null;
     }
 
     public void Dispose()
@@ -251,6 +284,7 @@ public class GameClient : IDisposable
 
         public void OnNetworkError(IPEndPoint endPoint, SocketError socketErrorCode)
         {
+            _client.FailConnectAttempt($"Network error connecting to {endPoint}: socket error {socketErrorCode}");
             Debug.WriteLine($"[GameClient] Network error to {endPoint}: socket error {socketErrorCode}");
         }
 
@@ -258,7 +292,7 @@ public class GameClient : IDisposable
         {
             try
             {
-                var data = reader.GetRemainingBytes();
+                var data = reader.GetBytesWithLength();
                 var operation = OperationSerializer.Deserialize(data);
                 _client.HandleOperation(operation);
             }

@@ -4,11 +4,13 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <!-- Disable MessagePack source generator to allow DynamicUnionResolver to handle unions -->
+    <MessagePackDisableSourceGenerator>true</MessagePackDisableSourceGenerator>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="LiteNetLib" Version="2.1.0" />
-    <PackageReference Include="MessagePack" Version="2.5.187" />
+    <PackageReference Include="MessagePack" Version="2.5.198" />
   </ItemGroup>
 
   <ItemGroup>

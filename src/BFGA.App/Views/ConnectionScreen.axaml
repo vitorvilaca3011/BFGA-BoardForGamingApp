@@ -1,0 +1,9 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:BFGA.App.Views"
+             xmlns:vm="clr-namespace:BFGA.App.ViewModels"
+             x:Class="BFGA.App.Views.ConnectionScreen"
+             x:DataType="vm:ConnectionScreenViewModel">
+    <views:ConnectionView x:Name="connectionView"
+                          DataContext="{Binding MainViewModel}" />
+</UserControl>

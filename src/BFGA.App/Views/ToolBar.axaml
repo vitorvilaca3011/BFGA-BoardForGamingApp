@@ -1,0 +1,39 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:icons="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls"
+             xmlns:vm="clr-namespace:BFGA.App.ViewModels"
+             x:Class="BFGA.App.Views.ToolBar"
+             x:DataType="vm:BoardScreenViewModel"
+             Classes="whiteboard-toolbar">
+    <Border Classes="whiteboard-toolbar-panel">
+        <StackPanel Spacing="4">
+            <Button Classes="whiteboard-tool-button" Command="{Binding SelectToolCommand}" ToolTip.Tip="Select (V)">
+                <icons:PathIcon Data="{StaticResource ToolIconSelect}" />
+            </Button>
+
+            <Button Classes="whiteboard-tool-button" Command="{Binding HandToolCommand}" ToolTip.Tip="Hand (H)">
+                <icons:PathIcon Data="{StaticResource ToolIconHand}" />
+            </Button>
+
+            <Button Classes="whiteboard-tool-button" Command="{Binding PenToolCommand}" ToolTip.Tip="Pen (P)">
+                <icons:PathIcon Data="{StaticResource ToolIconPen}" />
+            </Button>
+
+            <Button Classes="whiteboard-tool-button" Command="{Binding RectangleToolCommand}" ToolTip.Tip="Rectangle (R)">
+                <icons:PathIcon Data="{StaticResource ToolIconRectangle}" />
+            </Button>
+
+            <Button Classes="whiteboard-tool-button" Command="{Binding EllipseToolCommand}" ToolTip.Tip="Ellipse (E)">
+                <icons:PathIcon Data="{StaticResource ToolIconEllipse}" />
+            </Button>
+
+            <Button Classes="whiteboard-tool-button" Command="{Binding ImageToolCommand}" ToolTip.Tip="Image (I)">
+                <icons:PathIcon Data="{StaticResource ToolIconImage}" />
+            </Button>
+
+            <Button Classes="whiteboard-tool-button" Command="{Binding EraserToolCommand}" ToolTip.Tip="Eraser (X)">
+                <icons:PathIcon Data="{StaticResource ToolIconEraser}" />
+            </Button>
+        </StackPanel>
+    </Border>
+</UserControl>

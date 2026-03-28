@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BFGA.Core\BFGA.Core.csproj" />
+    <ProjectReference Include="..\BFGA.Network\BFGA.Network.csproj" />
   </ItemGroup>
 
 </Project>

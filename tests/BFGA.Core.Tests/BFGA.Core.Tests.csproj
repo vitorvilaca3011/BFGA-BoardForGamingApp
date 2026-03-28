@@ -16,6 +16,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\BFGA.Core\BFGA.Core.csproj" />
+    <ProjectReference Include="..\..\src\BFGA.Canvas\BFGA.Canvas.csproj" />
+    <ProjectReference Include="..\..\src\BFGA.Network\BFGA.Network.csproj" />
   </ItemGroup>
 
   <ItemGroup>

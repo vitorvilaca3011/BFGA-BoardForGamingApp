@@ -2,8 +2,24 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        xmlns:views="clr-namespace:BFGA.App.Views"
+        xmlns:vm="clr-namespace:BFGA.App.ViewModels"
+        mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
         x:Class="BFGA.App.MainWindow"
-        Title="BFGA.App">
-    Welcome to Avalonia!
+        x:DataType="vm:MainViewModel"
+        Title="BFGA"
+        KeyDown="OnKeyDown">
+    <Window.DataTemplates>
+        <DataTemplate DataType="vm:ConnectionScreenViewModel">
+            <views:ConnectionScreen />
+        </DataTemplate>
+
+        <DataTemplate DataType="vm:BoardScreenViewModel">
+            <views:BoardScreen />
+        </DataTemplate>
+    </Window.DataTemplates>
+
+    <Grid Margin="12">
+        <ContentControl Content="{Binding CurrentScreen}" />
+    </Grid>
 </Window>

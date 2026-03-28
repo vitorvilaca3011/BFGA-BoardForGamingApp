@@ -1,0 +1,72 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Styles.Resources>
+        <ResourceDictionary>
+            <x:Double x:Key="ToolButtonSize">48</x:Double>
+            <x:Double x:Key="ToolBarWidth">56</x:Double>
+            <CornerRadius x:Key="PanelCornerRadius">12</CornerRadius>
+            <SolidColorBrush x:Key="ToolBarBackground" Color="#AA171A1F" />
+            <SolidColorBrush x:Key="ToolBarBorderBrush" Color="#402C313A" />
+            <SolidColorBrush x:Key="ToolButtonBackground" Color="#33232830" />
+            <SolidColorBrush x:Key="ToolButtonForeground" Color="#F4F6F8" />
+        </ResourceDictionary>
+    </Styles.Resources>
+
+    <Style Selector="UserControl.whiteboard-shell">
+        <Setter Property="Background" Value="#101214" />
+    </Style>
+
+    <Style Selector="UserControl.whiteboard-toolbar">
+        <Setter Property="Width" Value="{StaticResource ToolBarWidth}" />
+    </Style>
+
+    <Style Selector="Border.whiteboard-toolbar-panel">
+        <Setter Property="Background" Value="{StaticResource ToolBarBackground}" />
+        <Setter Property="CornerRadius" Value="{StaticResource PanelCornerRadius}" />
+        <Setter Property="Padding" Value="4" />
+        <Setter Property="Margin" Value="0,0,6,6" />
+        <Setter Property="BorderBrush" Value="{StaticResource ToolBarBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
+    <Style Selector="TextBlock.whiteboard-toolbar-title">
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="#F4F6F8" />
+    </Style>
+
+    <Style Selector="Button.whiteboard-tool-button">
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="Width" Value="{StaticResource ToolButtonSize}" />
+        <Setter Property="Height" Value="{StaticResource ToolButtonSize}" />
+        <Setter Property="Padding" Value="6" />
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="Background" Value="{StaticResource ToolButtonBackground}" />
+        <Setter Property="Foreground" Value="{StaticResource ToolButtonForeground}" />
+    </Style>
+
+    <Style Selector="Border.whiteboard-canvas-shell">
+        <Setter Property="Background" Value="#111318" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="Padding" Value="8" />
+        <Setter Property="BorderBrush" Value="#2C313A" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
+    <Style Selector="Border.whiteboard-bottom-bar-panel">
+        <Setter Property="Background" Value="{StaticResource ToolBarBackground}" />
+        <Setter Property="CornerRadius" Value="{StaticResource PanelCornerRadius}" />
+        <Setter Property="Padding" Value="10,8" />
+        <Setter Property="Margin" Value="12,12,0,0" />
+        <Setter Property="BorderBrush" Value="{StaticResource ToolBarBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
+    <Style Selector="TextBlock.whiteboard-status-text">
+        <Setter Property="Foreground" Value="#D7DCE3" />
+    </Style>
+
+    <Style Selector="TextBlock.whiteboard-shortcut-hint">
+        <Setter Property="Foreground" Value="#9097A3" />
+    </Style>
+</Styles>

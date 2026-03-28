@@ -1,0 +1,10 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <StreamGeometry x:Key="ToolIconSelect">M3,3 L13,13 M3,6 L3,13 L10,10 Z</StreamGeometry>
+    <StreamGeometry x:Key="ToolIconHand">M4,13 C4,10 4,7 4,5 C4,4 5,3 6,3 C7,3 8,4 8,5 L8,9 L9,4 C9,3 10,2 11,2 C12,2 13,3 13,4 L12,10 L12,13 Z</StreamGeometry>
+    <StreamGeometry x:Key="ToolIconPen">M3,13 L5,13 L12,6 L10,4 L3,11 Z M9,3 L11,5</StreamGeometry>
+    <StreamGeometry x:Key="ToolIconRectangle">M3,4 H13 V12 H3 Z</StreamGeometry>
+    <StreamGeometry x:Key="ToolIconEllipse">M3,8 C3,5 5,3 8,3 C11,3 13,5 13,8 C13,11 11,13 8,13 C5,13 3,11 3,8 Z</StreamGeometry>
+    <StreamGeometry x:Key="ToolIconImage">M3,4 H13 V12 H3 Z M5,10 L7,8 L9,10 L11,7 L13,12 H3 Z M6,7 A1,1 0 1 1 6,7.01</StreamGeometry>
+    <StreamGeometry x:Key="ToolIconEraser">M4,13 L2,11 L8,5 L12,9 L8,13 Z M8,13 H13</StreamGeometry>
+</ResourceDictionary>

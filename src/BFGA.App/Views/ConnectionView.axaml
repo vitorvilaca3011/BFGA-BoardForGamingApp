@@ -1,0 +1,43 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:BFGA.App.ViewModels"
+             x:Class="BFGA.App.Views.ConnectionView"
+             x:DataType="vm:MainViewModel">
+    <Border Padding="12" Background="#1F1F1F" CornerRadius="6">
+        <StackPanel Spacing="10">
+            <TextBlock Text="Connection" FontWeight="Bold" FontSize="16" />
+
+            <StackPanel Orientation="Horizontal" Spacing="12">
+                <RadioButton Content="Host" IsChecked="{Binding IsHostModeSelected}" IsEnabled="{Binding CanSwitchMode}" GroupName="ConnectionMode" />
+                <RadioButton Content="Join" IsChecked="{Binding IsJoinModeSelected}" IsEnabled="{Binding CanSwitchMode}" GroupName="ConnectionMode" />
+            </StackPanel>
+
+            <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="8" RowSpacing="8">
+                <TextBlock Grid.Row="0" Text="Display name" VerticalAlignment="Center" />
+                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding DisplayName}" />
+
+                <TextBlock Grid.Row="1" Text="Host address" VerticalAlignment="Center" />
+                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding HostAddress}" />
+
+                <TextBlock Grid.Row="2" Text="Port" VerticalAlignment="Center" />
+                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding HostPort}" />
+
+                <StackPanel Grid.Row="3" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="8">
+                    <Button Content="Start Host" Command="{Binding StartHostCommand}" />
+                    <Button Content="Stop Host" Command="{Binding StopHostCommand}" />
+                    <Button Content="Connect" Command="{Binding ConnectCommand}" />
+                    <Button Content="Disconnect" Command="{Binding DisconnectCommand}" />
+                </StackPanel>
+
+                <StackPanel Grid.Row="4" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="8">
+                    <Button Content="Load Board" Command="{Binding LoadBoardCommand}" />
+                    <Button Content="Save Board" Command="{Binding SaveBoardCommand}" />
+                </StackPanel>
+
+                <Border Grid.Row="5" Grid.ColumnSpan="2" Padding="8" Background="#2B2B2B" CornerRadius="4">
+                    <TextBlock Text="{Binding StatusText}" TextWrapping="Wrap" />
+                </Border>
+            </Grid>
+        </StackPanel>
+    </Border>
+</UserControl>

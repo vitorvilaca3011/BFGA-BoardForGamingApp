@@ -230,7 +230,7 @@ public class SerializationTests
         var restored = MessagePackSerializer.Deserialize<BoardState>(bytes, Options);
 
         Assert.NotNull(restored);
-        Assert.Equal(1, restored.Elements.Count);
+        Assert.Single(restored.Elements);
 
         var restoredText = Assert.IsType<TextElement>(restored.Elements[0]);
         Assert.Equal(textElementId, restoredText.Id);

@@ -128,6 +128,50 @@ public class GameHost : IDisposable
     /// </summary>
     public BoardState BoardState => _boardState;
 
+    public void ReplaceBoardState(BoardState snapshot)
+    {
+        lock (_lockObject)
+        {
+            _boardState = CloneBoardState(snapshot);
+            _boardElements.Clear();
+
+            foreach (var element in _boardState.Elements)
+            {
+                _boardElements[element.Id] = element;
+            }
+
+            _boardState.Elements = _boardElements.Values.ToList();
+            _boardState.LastModified = DateTime.UtcNow;
+        }
+    }
+
+    public bool TryApplyLocalOperation(BoardOperation operation)
+    {
+        if (!_isRunning || !ValidateOperation(operation))
+        {
+            return false;
+        }
+
+        ApplyOperation(operation);
+        return true;
+    }
+
+    public void SyncAllClients()
+    {
+        if (!_isRunning)
+            return;
+
+        foreach (var player in _players.Values)
+        {
+            SendFullSync(player.Peer, GetClientId(player.Peer));
+        }
+    }
+
+    public void BroadcastFullSync()
+    {
+        SyncAllClients();
+    }
+
     private static readonly SKColor[] PlayerColors = new[]
     {
         SKColors.Red,
@@ -356,6 +400,11 @@ public class GameHost : IDisposable
         }
     }
 
+    private static BoardState CloneBoardState(BoardState source)
+        => MessagePackSerializer.Deserialize<BoardState>(
+            MessagePackSerializer.Serialize(source, BFGA.Core.MessagePackSetup.Options),
+            BFGA.Core.MessagePackSetup.Options);
+
     private static void ApplyModifiedProperties(BoardElement element, Dictionary<string, object> properties)
     {
         foreach (var kvp in properties)
@@ -378,24 +427,24 @@ public class GameHost : IDisposable
                     element.IsLocked = b;
                     break;
                 // StrokeElement properties
-                case "Color" when element is StrokeElement stroke:
-                    stroke.Color = (SkiaSharp.SKColor)kvp.Value;
+                case "Color" when element is StrokeElement stroke && kvp.Value is SkiaSharp.SKColor strokeColor:
+                    stroke.Color = strokeColor;
                     break;
                 case "Thickness" when element is StrokeElement stroke:
                     stroke.Thickness = Convert.ToSingle(kvp.Value);
                     break;
                 // ShapeElement properties
-                case "StrokeColor" when element is ShapeElement shape:
-                    shape.StrokeColor = (SkiaSharp.SKColor)kvp.Value;
+                case "StrokeColor" when element is ShapeElement shape && kvp.Value is SkiaSharp.SKColor strokeColor:
+                    shape.StrokeColor = strokeColor;
                     break;
-                case "FillColor" when element is ShapeElement shape:
-                    shape.FillColor = (SkiaSharp.SKColor)kvp.Value;
+                case "FillColor" when element is ShapeElement shape && kvp.Value is SkiaSharp.SKColor fillColor:
+                    shape.FillColor = fillColor;
                     break;
                 case "StrokeWidth" when element is ShapeElement shape:
                     shape.StrokeWidth = Convert.ToSingle(kvp.Value);
                     break;
-                case "Type" when element is ShapeElement shape:
-                    shape.Type = (ShapeType)kvp.Value;
+                case "Type" when element is ShapeElement shape && kvp.Value is ShapeType shapeType:
+                    shape.Type = shapeType;
                     break;
                 // TextElement properties
                 case "Text" when element is TextElement text:
@@ -404,15 +453,15 @@ public class GameHost : IDisposable
                 case "FontSize" when element is TextElement text:
                     text.FontSize = Convert.ToSingle(kvp.Value);
                     break;
-                case "Color" when element is TextElement text:
-                    text.Color = (SkiaSharp.SKColor)kvp.Value;
+                case "Color" when element is TextElement text && kvp.Value is SkiaSharp.SKColor textColor:
+                    text.Color = textColor;
                     break;
                 case "FontFamily" when element is TextElement text:
                     text.FontFamily = kvp.Value?.ToString() ?? string.Empty;
                     break;
                 // ImageElement properties
-                case "ImageData" when element is ImageElement image:
-                    image.ImageData = (byte[])kvp.Value;
+                case "ImageData" when element is ImageElement image && kvp.Value is byte[] imageData:
+                    image.ImageData = imageData;
                     break;
                 case "OriginalFileName" when element is ImageElement image:
                     image.OriginalFileName = kvp.Value?.ToString() ?? string.Empty;
@@ -575,8 +624,10 @@ public class GameHost : IDisposable
         {
             try
             {
-                var data = reader.GetRemainingBytes();
+                var data = reader.GetBytesWithLength();
+                Debug.WriteLine($"[Host] Received {data.Length} bytes from {peer.Address} on channel {channel}");
                 var operation = OperationSerializer.Deserialize(data);
+                Debug.WriteLine($"[Host] Deserialized operation {operation.Type}");
                 
                 // Handle special operations
                 if (operation is RequestFullSyncOperation)

@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
+using BFGA.Core;
 using BFGA.Core.Models;
 using BFGA.Network;
 using BFGA.Network.Protocol;
@@ -81,7 +82,8 @@ public class NetworkTests
         };
 
         // Act - Start connection
-        _ = client.ConnectAsync("localhost", hostPort);
+        var connectTask = client.ConnectAsync("localhost", hostPort);
+        Assert.False(connectTask.IsCompleted);
         
         // Pump events to establish connection and trigger PeerJoined
         for (int i = 0; i < 100; i++)
@@ -92,10 +94,13 @@ public class NetworkTests
             if (joinedEvent.IsSet) break;
         }
 
+        await connectTask;
+
         // Assert
         Assert.True(client.IsConnected);
         Assert.NotNull(receivedClientId);
         Assert.NotEqual(Guid.Empty, receivedClientId);
+        Assert.True(host.PlayerRoster.Count > 0, "Host should have at least one player in roster");
 
         host.Stop();
         client.Disconnect();
@@ -108,20 +113,42 @@ public class NetworkTests
         using var host = new GameHost();
         host.Start(0);
         int hostPort = host.Port;
+        
+        // Track host receiving operations
+        BoardOperation? hostReceivedOp = null;
+        host.OperationReceived += (sender, args) =>
+        {
+            hostReceivedOp = args.Operation;
+        };
 
         using var client = new GameClient("HostPlayer");
+        
+        // Start connection (ConnectAsync polls client events internally)
         var connectTask = client.ConnectAsync("localhost", hostPort);
         
-        // Pump events to establish connection
+        // Pump events on both host and client until connected
+        // Note: ConnectAsync polls client events, but we also need to poll host events
         for (int i = 0; i < 100; i++)
         {
             host.PollEvents();
+            // client.PollEvents() is called internally by ConnectAsync, but we call it here too for safety
             client.PollEvents();
             await Task.Delay(10);
             if (client.IsConnected) break;
         }
 
-        Assert.True(client.IsConnected);
+        await connectTask;
+
+        Assert.True(client.IsConnected, "Client should be connected");
+
+        for (int i = 0; i < 100 && host.PlayerRoster.Count == 0; i++)
+        {
+            host.PollEvents();
+            client.PollEvents();
+            await Task.Delay(10);
+        }
+
+        Assert.True(host.PlayerRoster.Count > 0, "Host should have at least one player in roster");
 
         var operationReceived = new ManualResetEventSlim(false);
         BoardOperation? receivedOp = null;
@@ -153,13 +180,72 @@ public class NetworkTests
         host.Stop();
         client.Disconnect();
 
-        Assert.True(received);
+        Assert.True(hostReceivedOp != null, "Host should have received the operation");
+        Assert.True(received, "Client should have received the broadcast");
         Assert.NotNull(receivedOp);
         // Verify it's the same AddElementOperation with the same element
         Assert.IsType<AddElementOperation>(receivedOp);
         var receivedAddOp = (AddElementOperation)receivedOp!;
         Assert.Equal(addOp.Element.Id, receivedAddOp.Element.Id);
         Assert.Equal(addOp.Element.Position, receivedAddOp.Element.Position);
+    }
+
+    [Fact]
+    public async Task GameClient_ConnectAsync_ReusesInFlightAttempt()
+    {
+        using var host = new GameHost();
+        host.Start(0);
+
+        using var client = new GameClient("TestPlayer");
+
+        var firstConnectTask = client.ConnectAsync("localhost", host.Port);
+        var secondConnectTask = client.ConnectAsync("localhost", host.Port);
+
+        Assert.Same(firstConnectTask, secondConnectTask);
+
+        for (int i = 0; i < 100; i++)
+        {
+            host.PollEvents();
+            client.PollEvents();
+            await Task.Delay(10);
+            if (client.IsConnected) break;
+        }
+
+        await firstConnectTask;
+        Assert.True(client.IsConnected);
+
+        host.Stop();
+        client.Disconnect();
+    }
+
+    [Fact]
+    public async Task GameClient_ConnectAsync_FailedAttemptCanBeRetried()
+    {
+        using var host = new GameHost();
+        host.Start(0);
+
+        using var client = new GameClient("TestPlayer");
+
+        var firstConnectTask = client.ConnectAsync("localhost", host.Port);
+        client.Disconnect();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => firstConnectTask);
+
+        var secondConnectTask = client.ConnectAsync("localhost", host.Port);
+
+        for (int i = 0; i < 100; i++)
+        {
+            host.PollEvents();
+            client.PollEvents();
+            await Task.Delay(10);
+            if (client.IsConnected) break;
+        }
+
+        await secondConnectTask;
+        Assert.True(client.IsConnected);
+
+        host.Stop();
+        client.Disconnect();
     }
 
     [Fact]
@@ -181,5 +267,28 @@ public class NetworkTests
         host.Stop();
 
         Assert.Null(exception);
+    }
+
+    [Fact]
+    public void GameHost_ReplaceBoardState_RebuildsAuthoritativeIndex()
+    {
+        using var host = new GameHost();
+        host.Start(0);
+
+        var element = new StrokeElement
+        {
+            Id = Guid.NewGuid(),
+            Position = new System.Numerics.Vector2(25, 40),
+            Points = [System.Numerics.Vector2.Zero]
+        };
+        var snapshot = new BoardState();
+        snapshot.Elements.Add(element);
+
+        host.ReplaceBoardState(snapshot);
+
+        var applied = host.TryApplyLocalOperation(new DeleteElementOperation(element.Id));
+
+        Assert.True(applied);
+        Assert.Empty(host.BoardState.Elements);
     }
 }

@@ -1,0 +1,14 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:canvas="clr-namespace:BFGA.Canvas;assembly=BFGA.Canvas"
+             x:Class="BFGA.App.Views.BoardView"
+             x:Name="root"
+             HorizontalAlignment="Stretch"
+             VerticalAlignment="Stretch">
+    <canvas:BoardViewport x:Name="viewport"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch"
+                          Board="{Binding Board, ElementName=root}"
+                          RemoteCursors="{Binding RemoteCursors, ElementName=root}"
+                          RemoteStrokePreviews="{Binding RemoteStrokePreviews, ElementName=root}" />
+</UserControl>
