@@ -1,7 +1,9 @@
 .opencode/
+.superpowers/
 .worktrees/
 
 .vs/
+.vscode/
 .idea/
 *.user
 *.suo
