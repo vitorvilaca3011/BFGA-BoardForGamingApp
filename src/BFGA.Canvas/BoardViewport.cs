@@ -26,6 +26,11 @@ public class BoardViewport : Border
             viewport._canvas.Board = newBoard;
         });
 
+        DotGridOpacityProperty.Changed.AddClassHandler<BoardViewport>((vp, e) =>
+        {
+            vp._canvas.DotGridOpacity = (float)e.NewValue!;
+        });
+
         RemoteCursorsProperty.Changed.AddClassHandler<BoardViewport>((viewport, e) =>
         {
             viewport._canvas.RemoteCursors = e.NewValue as IReadOnlyDictionary<Guid, RemoteCursorState>;
@@ -50,6 +55,9 @@ public class BoardViewport : Border
     public static readonly StyledProperty<IReadOnlyDictionary<Guid, RemoteStrokePreviewState>?> RemoteStrokePreviewsProperty =
         BoardCanvas.RemoteStrokePreviewsProperty.AddOwner<BoardViewport>();
 
+    public static readonly StyledProperty<float> DotGridOpacityProperty =
+        AvaloniaProperty.Register<BoardViewport, float>(nameof(DotGridOpacity), 0.1f);
+
     /// <summary>
     /// Gets or sets the board state rendered inside this viewport.
     /// </summary>
@@ -69,6 +77,12 @@ public class BoardViewport : Border
     {
         get => GetValue(RemoteStrokePreviewsProperty);
         set => SetValue(RemoteStrokePreviewsProperty, value);
+    }
+
+    public float DotGridOpacity
+    {
+        get => GetValue(DotGridOpacityProperty);
+        set => SetValue(DotGridOpacityProperty, value);
     }
 
     public BoardViewport()

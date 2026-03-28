@@ -13,7 +13,8 @@
                              VerticalAlignment="Stretch"
                              Board="{Binding MainViewModel.Board}"
                              RemoteCursors="{Binding MainViewModel.RemoteCursors}"
-                             RemoteStrokePreviews="{Binding MainViewModel.RemoteStrokePreviews}" />
+                             RemoteStrokePreviews="{Binding MainViewModel.RemoteStrokePreviews}"
+                             DotGridOpacity="{Binding MainViewModel.GridOpacity}" />
         </Border>
 
         <!-- Floating toolbar — top center -->

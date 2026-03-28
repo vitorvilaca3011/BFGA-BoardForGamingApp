@@ -24,6 +24,17 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
     public static readonly StyledProperty<IReadOnlyDictionary<Guid, RemoteStrokePreviewState>?> RemoteStrokePreviewsProperty =
         AvaloniaProperty.Register<BoardView, IReadOnlyDictionary<Guid, RemoteStrokePreviewState>?>(nameof(RemoteStrokePreviews));
 
+    public static readonly StyledProperty<float> DotGridOpacityProperty =
+        AvaloniaProperty.Register<BoardView, float>(nameof(DotGridOpacity), 0.1f);
+
+    static BoardView()
+    {
+        DotGridOpacityProperty.Changed.AddClassHandler<BoardView>((bv, e) =>
+        {
+            bv.viewport.DotGridOpacity = (float)e.NewValue!;
+        });
+    }
+
     public BoardState? Board
     {
         get => GetValue(BoardProperty);
@@ -40,6 +51,12 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
     {
         get => GetValue(RemoteStrokePreviewsProperty);
         set => SetValue(RemoteStrokePreviewsProperty, value);
+    }
+
+    public float DotGridOpacity
+    {
+        get => GetValue(DotGridOpacityProperty);
+        set => SetValue(DotGridOpacityProperty, value);
     }
 
     public BoardView()

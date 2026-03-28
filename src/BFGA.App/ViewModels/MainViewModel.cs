@@ -54,6 +54,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     private int _undoShadowCount;
     private int _redoShadowCount;
     private bool _isSettingsOpen;
+    private float _gridOpacity = 0.1f;
     private DateTime? _joinStartedAt;
     private readonly TimeSpan _joinTimeout;
     private readonly TimeSpan _fullSyncTimeout;
@@ -259,6 +260,12 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     {
         get => _isSettingsOpen;
         set => SetProperty(ref _isSettingsOpen, value);
+    }
+
+    public float GridOpacity
+    {
+        get => _gridOpacity;
+        set => SetProperty(ref _gridOpacity, Math.Clamp(value, 0f, 0.3f));
     }
 
     public bool IsBoardScreen => CurrentScreen is BoardScreenViewModel;

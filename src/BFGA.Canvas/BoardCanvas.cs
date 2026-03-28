@@ -21,6 +21,7 @@ public class BoardCanvas : Control
 {
     private readonly ImageDecodeCache _imageCache = new();
     private long _renderGeneration;
+    private float _dotGridOpacity = 0.1f;
 
     /// <summary>
     /// Avalonia styled property for the board state to render.
@@ -33,6 +34,16 @@ public class BoardCanvas : Control
 
     public static readonly StyledProperty<IReadOnlyDictionary<Guid, RemoteStrokePreviewState>?> RemoteStrokePreviewsProperty =
         AvaloniaProperty.Register<BoardCanvas, IReadOnlyDictionary<Guid, RemoteStrokePreviewState>?>(nameof(RemoteStrokePreviews));
+
+    public float DotGridOpacity
+    {
+        get => _dotGridOpacity;
+        set
+        {
+            _dotGridOpacity = Math.Clamp(value, 0f, 0.3f);
+            InvalidateVisual();
+        }
+    }
 
     static BoardCanvas()
     {
@@ -197,7 +208,12 @@ public class BoardCanvas : Control
 
                 var zoomScale = canvas.TotalMatrix.ScaleX;
                 var visibleBounds = DotGridHelper.GetVisibleBoardBounds(canvas.LocalClipBounds);
-                DotGridHelper.DrawDots(canvas, visibleBounds, Vector2.Zero, 24f, ThemeColors.DotGrid, 1.25f, zoomScale);
+                var dotColor = new SKColor(
+                    ThemeColors.DotGrid.Red,
+                    ThemeColors.DotGrid.Green,
+                    ThemeColors.DotGrid.Blue,
+                    (byte)(_owner._dotGridOpacity * 255));
+                DotGridHelper.DrawDots(canvas, visibleBounds, Vector2.Zero, 24f, dotColor, 1.25f, zoomScale);
 
                 // Draw elements sorted by ZIndex (lowest first, highest on top).
                 // Avoid allocating a new list when elements are already in order.
