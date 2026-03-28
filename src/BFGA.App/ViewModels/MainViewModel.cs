@@ -32,6 +32,8 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     private readonly AsyncRelayCommand _saveBoardCommand;
     private readonly AsyncRelayCommand _setHostModeCommand;
     private readonly AsyncRelayCommand _setJoinModeCommand;
+    private readonly AsyncRelayCommand _undoCommand;
+    private readonly AsyncRelayCommand _redoCommand;
     private readonly ConnectionScreenViewModel _connectionScreen;
     private readonly BoardScreenViewModel _boardScreen;
 
@@ -49,6 +51,8 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     private IGameClientSession? _client;
     private bool _isPolling;
     private bool _isAutosaving;
+    private int _undoShadowCount;
+    private int _redoShadowCount;
     private DateTime? _joinStartedAt;
     private readonly TimeSpan _joinTimeout;
     private readonly TimeSpan _fullSyncTimeout;
@@ -74,6 +78,8 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         _disconnectCommand = CreateShellCommand(DisconnectAsync, CanDisconnect, "Failed to disconnect: ");
         _loadBoardCommand = CreateShellCommand(LoadBoardAsync, CanLoadBoardCommand, "Failed to load board: ");
         _saveBoardCommand = CreateShellCommand(SaveBoardAsync, CanSaveBoardCommand, "Failed to save board: ");
+        _undoCommand = CreateShellCommand(UndoAsync, () => CanUndo, "Failed to undo: ");
+        _redoCommand = CreateShellCommand(RedoAsync, () => CanRedo, "Failed to redo: ");
         _setHostModeCommand = new AsyncRelayCommand(() =>
         {
             SelectedMode = ConnectionMode.Host;
@@ -339,6 +345,11 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     public ICommand SaveBoardCommand => _saveBoardCommand;
     public ICommand SetHostModeCommand => _setHostModeCommand;
     public ICommand SetJoinModeCommand => _setJoinModeCommand;
+    public AsyncRelayCommand UndoCommand => _undoCommand;
+    public AsyncRelayCommand RedoCommand => _redoCommand;
+
+    public bool CanUndo => Host is not null ? Host.CanUndo : _undoShadowCount > 0;
+    public bool CanRedo => Host is not null ? Host.CanRedo : _redoShadowCount > 0;
 
     public bool IsAutosaveTimerEnabled => _autosaveTimer.IsEnabled;
 
@@ -386,6 +397,13 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         if (Host is null && Client is null && _isPolling)
         {
             StopPolling();
+        }
+
+        // In host mode, notify undo/redo state changes after each poll tick
+        // (other players' operations can change what the host can undo)
+        if (Host is not null)
+        {
+            NotifyUndoRedoChanged();
         }
     }
 
@@ -634,7 +652,65 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
 
         Client?.SendOperation(operation);
 
+        // Track shadow undo counter for client mode
+        if (operation is AddElementOperation or UpdateElementOperation or DeleteElementOperation or MoveElementOperation)
+        {
+            _undoShadowCount++;
+            _redoShadowCount = 0;
+            NotifyUndoRedoChanged();
+        }
+
         return Task.CompletedTask;
+    }
+
+    private Task UndoAsync()
+    {
+        if (Host is not null)
+        {
+            if (Host.TryUndo())
+            {
+                SyncBoardFromHost();
+                NotifyUndoRedoChanged();
+            }
+        }
+        else if (Client is not null && _undoShadowCount > 0)
+        {
+            Client.SendOperation(new UndoOperation());
+            _undoShadowCount--;
+            _redoShadowCount++;
+            NotifyUndoRedoChanged();
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private Task RedoAsync()
+    {
+        if (Host is not null)
+        {
+            if (Host.TryRedo())
+            {
+                SyncBoardFromHost();
+                NotifyUndoRedoChanged();
+            }
+        }
+        else if (Client is not null && _redoShadowCount > 0)
+        {
+            Client.SendOperation(new RedoOperation());
+            _redoShadowCount--;
+            _undoShadowCount++;
+            NotifyUndoRedoChanged();
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void NotifyUndoRedoChanged()
+    {
+        OnPropertyChanged(nameof(CanUndo));
+        OnPropertyChanged(nameof(CanRedo));
+        _undoCommand.RaiseCanExecuteChanged();
+        _redoCommand.RaiseCanExecuteChanged();
     }
 
     public Task PublishLocalBoardOperation(BoardOperation operation)
@@ -645,6 +721,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
             {
                 Host.BroadcastOperation(operation);
                 SyncBoardFromHost();
+                NotifyUndoRedoChanged();
             }
         }
         else
@@ -693,6 +770,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         OnPropertyChanged(nameof(CanSwitchMode));
         OnPropertyChanged(nameof(CanLoadBoard));
         OnPropertyChanged(nameof(CanSaveBoard));
+        NotifyUndoRedoChanged();
     }
 
     private void UpdateStatusText()
@@ -776,6 +854,11 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         {
             Board = CloneBoardState(sync.BoardState);
         }
+
+        // Reset shadow undo/redo counters after full sync
+        _undoShadowCount = 0;
+        _redoShadowCount = 0;
+        NotifyUndoRedoChanged();
     }
 
     private static void ApplyAddElement(BoardState targetBoard, BoardElement element)
