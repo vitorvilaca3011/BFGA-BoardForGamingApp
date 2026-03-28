@@ -60,6 +60,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     private readonly TimeSpan _fullSyncTimeout;
     private Guid? _localClientId;
     private TaskCompletionSource<bool>? _pendingFullSyncRequest;
+    private readonly SettingsService _settingsService = new();
 
     public MainViewModel(
         IFileDialogService? fileDialogService = null,
@@ -106,6 +107,9 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
             Interval = TimeSpan.FromMinutes(1)
         };
         _autosaveTimer.Tick += async (_, _) => await HostAutosaveAsync().ConfigureAwait(false);
+
+        _settingsService.Load();
+        _gridOpacity = _settingsService.GridOpacity;
     }
 
     public ConnectionMode SelectedMode
@@ -265,7 +269,25 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     public float GridOpacity
     {
         get => _gridOpacity;
-        set => SetProperty(ref _gridOpacity, Math.Clamp(value, 0f, 0.3f));
+        set
+        {
+            if (SetProperty(ref _gridOpacity, Math.Clamp(value, 0f, 0.3f)))
+            {
+                _settingsService.GridOpacity = _gridOpacity;
+                _settingsService.SaveDebounced();
+                OnPropertyChanged(nameof(GridOpacityPercent));
+            }
+        }
+    }
+
+    public float GridOpacityPercent
+    {
+        get => _gridOpacity * 100f;
+        set
+        {
+            GridOpacity = value / 100f;
+            OnPropertyChanged();
+        }
     }
 
     public bool IsBoardScreen => CurrentScreen is BoardScreenViewModel;
@@ -606,6 +628,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         Host = null;
         Client = null;
         ResetCollaboratorState();
+        _settingsService.Dispose();
     }
 
     private bool CanStartHost() => ConnectionState == ShellConnectionState.Disconnected && SelectedMode == ConnectionMode.Host;

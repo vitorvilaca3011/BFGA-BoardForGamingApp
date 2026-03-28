@@ -1,0 +1,101 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:BFGA.App.ViewModels"
+             x:Class="BFGA.App.Views.SettingsPanel"
+             x:DataType="vm:BoardScreenViewModel"
+             IsVisible="{Binding MainViewModel.IsSettingsOpen}">
+    <Border Classes="settings-panel" Width="260" Padding="16">
+        <StackPanel Spacing="16">
+            <!-- Header -->
+            <DockPanel>
+                <TextBlock Text="SETTINGS"
+                           DockPanel.Dock="Left"
+                           FontFamily="{DynamicResource InterMediumFont}"
+                           FontSize="11"
+                           Foreground="{DynamicResource TextSecondary}"
+                           VerticalAlignment="Center" />
+                <Button DockPanel.Dock="Right"
+                        HorizontalAlignment="Right"
+                        Classes="whiteboard-tool-button"
+                        Width="24" Height="24"
+                        Command="{Binding ToggleSettingsCommand}"
+                        ToolTip.Tip="Close">
+                    <TextBlock Text="×"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               FontSize="14"
+                               FontFamily="{DynamicResource InterMediumFont}" />
+                </Button>
+            </DockPanel>
+
+            <!-- Grid Opacity -->
+            <StackPanel Spacing="4">
+                <DockPanel>
+                    <TextBlock Text="GRID OPACITY"
+                               FontFamily="{DynamicResource InterMediumFont}"
+                               FontSize="10"
+                               Foreground="{DynamicResource TextSecondary}" />
+                    <TextBlock DockPanel.Dock="Right"
+                               HorizontalAlignment="Right"
+                               FontFamily="{DynamicResource InterMediumFont}"
+                               FontSize="10"
+                               Foreground="{DynamicResource TextTertiary}">
+                        <TextBlock.Text>
+                            <MultiBinding StringFormat="{}{0:0}%">
+                                <Binding Path="MainViewModel.GridOpacityPercent" />
+                            </MultiBinding>
+                        </TextBlock.Text>
+                    </TextBlock>
+                </DockPanel>
+                <Slider Minimum="0" Maximum="30"
+                        Value="{Binding MainViewModel.GridOpacityPercent, Mode=TwoWay}"
+                        TickFrequency="1" />
+            </StackPanel>
+
+            <Border Height="1" Background="{DynamicResource BorderSubtle}" />
+
+            <!-- Language (placeholder) -->
+            <StackPanel Spacing="4">
+                <TextBlock Text="LANGUAGE"
+                           FontFamily="{DynamicResource InterMediumFont}"
+                           FontSize="10"
+                           Foreground="{DynamicResource TextSecondary}" />
+                <ComboBox SelectedIndex="0"
+                          IsEnabled="False"
+                          HorizontalAlignment="Stretch"
+                          FontSize="12">
+                    <ComboBoxItem Content="English" />
+                </ComboBox>
+            </StackPanel>
+
+            <!-- Default Image Folder (placeholder) -->
+            <StackPanel Spacing="4">
+                <TextBlock Text="DEFAULT IMAGE FOLDER"
+                           FontFamily="{DynamicResource InterMediumFont}"
+                           FontSize="10"
+                           Foreground="{DynamicResource TextSecondary}" />
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Content="Browse" IsEnabled="False"
+                            Classes="whiteboard-tool-button" Height="28" Margin="4,0,0,0" />
+                    <TextBox Watermark="Not configured" IsEnabled="False" FontSize="12" />
+                </DockPanel>
+            </StackPanel>
+
+            <!-- Autosave (placeholder) -->
+            <StackPanel Spacing="4">
+                <TextBlock Text="AUTOSAVE"
+                           FontFamily="{DynamicResource InterMediumFont}"
+                           FontSize="10"
+                           Foreground="{DynamicResource TextSecondary}" />
+                <DockPanel>
+                    <ToggleSwitch DockPanel.Dock="Left" IsChecked="True" IsEnabled="False" />
+                    <ComboBox SelectedIndex="1" IsEnabled="False" HorizontalAlignment="Right" FontSize="12">
+                        <ComboBoxItem Content="30s" />
+                        <ComboBoxItem Content="60s" />
+                        <ComboBoxItem Content="120s" />
+                    </ComboBox>
+                </DockPanel>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</UserControl>

@@ -18,6 +18,7 @@ public sealed class BoardScreenViewModel : ViewModelBase, IDisposable
     private readonly RelayCommand _lineToolCommand;
     private readonly RelayCommand _textToolCommand;
     private readonly RelayCommand _laserPointerToolCommand;
+    private readonly RelayCommand _toggleSettingsCommand;
     private BoardToolType _selectedTool = BoardToolType.Select;
     private SKColor _selectedStrokeColor = SKColors.White;
     private SKColor _selectedFillColor = SKColors.Transparent;
@@ -40,6 +41,7 @@ public sealed class BoardScreenViewModel : ViewModelBase, IDisposable
         _lineToolCommand = new RelayCommand(() => SelectedTool = BoardToolType.Line);
         _textToolCommand = new RelayCommand(() => SelectedTool = BoardToolType.Text);
         _laserPointerToolCommand = new RelayCommand(() => SelectedTool = BoardToolType.LaserPointer);
+        _toggleSettingsCommand = new RelayCommand(() => MainViewModel.IsSettingsOpen = !MainViewModel.IsSettingsOpen);
     }
 
     private void OnMainViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -133,6 +135,7 @@ public sealed class BoardScreenViewModel : ViewModelBase, IDisposable
     public RelayCommand LineToolCommand => _lineToolCommand;
     public RelayCommand TextToolCommand => _textToolCommand;
     public RelayCommand LaserPointerToolCommand => _laserPointerToolCommand;
+    public RelayCommand ToggleSettingsCommand => _toggleSettingsCommand;
 
     public bool IsSelectToolActive => SelectedTool == BoardToolType.Select;
 

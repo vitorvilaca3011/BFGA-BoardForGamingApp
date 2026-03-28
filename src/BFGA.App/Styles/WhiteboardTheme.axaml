@@ -160,6 +160,13 @@
         <Setter Property="CornerRadius" Value="12" />
     </Style>
 
+    <Style Selector="Border.settings-panel">
+        <Setter Property="Background" Value="{DynamicResource BgElevated}" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
     <Style Selector="Border.roster-avatar">
         <Setter Property="Width" Value="28" />
         <Setter Property="Height" Value="28" />
