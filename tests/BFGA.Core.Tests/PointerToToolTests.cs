@@ -11,13 +11,12 @@ namespace BFGA.Core.Tests;
 public class PointerToToolTests
 {
     [Fact]
-    public void BoardViewport_ConvertsCanvasPointsUsingStableOriginOffset()
+    public void BoardViewport_ConvertsScreenPointsUsingPan()
     {
         var viewport = new BoardViewport();
 
-        var boardPoint = viewport.CanvasPointToBoard(new Avalonia.Point(
-            BoardSurfaceHelper.StableOriginOffset.X + 25f,
-            BoardSurfaceHelper.StableOriginOffset.Y - 10f));
+        viewport.Pan = new Vector2(100f, 50f);
+        var boardPoint = viewport.ScreenToBoard(new Avalonia.Point(125f, 40f));
 
         Assert.Equal(new Vector2(25f, -10f), boardPoint);
     }

@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Rendering.SceneGraph;
 using Avalonia.Skia;
+using Avalonia.VisualTree;
 using BFGA.Canvas.Rendering;
 using BFGA.Core;
 using BFGA.Core.Models;
@@ -14,14 +15,15 @@ namespace BFGA.Canvas;
 
 /// <summary>
 /// A canvas control that renders board elements using SkiaSharp via Avalonia's
-/// <see cref="ICustomDrawOperation"/> mechanism. Designed to be wrapped by
-/// PanAndZoom.ZoomBorder for pan/zoom support.
+/// <see cref="ICustomDrawOperation"/> mechanism.
 /// </summary>
 public class BoardCanvas : Control
 {
     private readonly ImageDecodeCache _imageCache = new();
     private long _renderGeneration;
     private float _dotGridOpacity = 0.1f;
+    private float _zoom = 1.0f;
+    private Vector2 _pan;
 
     /// <summary>
     /// Avalonia styled property for the board state to render.
@@ -68,8 +70,36 @@ public class BoardCanvas : Control
 
     public BoardCanvas()
     {
-        Width = BoardSurfaceHelper.StableWorkspaceSize;
-        Height = BoardSurfaceHelper.StableWorkspaceSize;
+        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch;
+        VerticalAlignment = Avalonia.Layout.VerticalAlignment.Stretch;
+    }
+
+    public float Zoom
+    {
+        get => _zoom;
+        set
+        {
+            if (_zoom != value)
+            {
+                _zoom = value;
+                _renderGeneration++;
+                InvalidateVisual();
+            }
+        }
+    }
+
+    public Vector2 Pan
+    {
+        get => _pan;
+        set
+        {
+            if (_pan != value)
+            {
+                _pan = value;
+                _renderGeneration++;
+                InvalidateVisual();
+            }
+        }
     }
 
     /// <summary>
@@ -143,8 +173,11 @@ public class BoardCanvas : Control
         if (board is null)
             return;
 
-        var bounds = new Rect(0, 0, Width, Height);
-        var drawOp = new BoardDrawOperation(this, bounds, board);
+        var bounds = new Rect(0, 0, Bounds.Width, Bounds.Height);
+        if (bounds.Width <= 0 || bounds.Height <= 0)
+            return;
+
+        var drawOp = new BoardDrawOperation(this, bounds, board, _zoom, _pan);
         context.Custom(drawOp);
     }
 
@@ -156,13 +189,23 @@ public class BoardCanvas : Control
         private readonly BoardCanvas _owner;
         private readonly BoardState _board;
         private readonly long _renderGeneration;
+        private readonly float _zoom;
+        private readonly Vector2 _pan;
+        private readonly IReadOnlyDictionary<Guid, RemoteStrokePreviewState>? _remoteStrokePreviews;
+        private readonly IReadOnlyDictionary<Guid, RemoteCursorState>? _remoteCursors;
 
-        public BoardDrawOperation(BoardCanvas owner, Rect bounds, BoardState board)
+        public BoardDrawOperation(BoardCanvas owner, Rect bounds, BoardState board, float zoom, Vector2 pan)
         {
             _owner = owner;
             Bounds = bounds;
             _board = board;
             _renderGeneration = owner.RenderGeneration;
+            _zoom = zoom;
+            _pan = pan;
+            // Snapshot styled properties here on the UI thread — they cannot be
+            // read from the render thread (Avalonia throws "Call from invalid thread").
+            _remoteStrokePreviews = owner.RemoteStrokePreviews;
+            _remoteCursors = owner.RemoteCursors;
         }
 
         public Rect Bounds { get; }
@@ -178,7 +221,9 @@ public class BoardCanvas : Control
                 && Bounds.Equals(operation.Bounds)
                 && ReferenceEquals(_board, operation._board)
                 && ReferenceEquals(_owner, operation._owner)
-                && _renderGeneration == operation._renderGeneration;
+                && _renderGeneration == operation._renderGeneration
+                && _zoom == operation._zoom
+                && _pan == operation._pan;
         }
 
         public bool HitTest(Point p) => Bounds.Contains(p);
@@ -196,27 +241,24 @@ public class BoardCanvas : Control
                 return;
 
             canvas.Save();
-            canvas.Translate(BoardSurfaceHelper.StableOriginOffset.X, BoardSurfaceHelper.StableOriginOffset.Y);
+            canvas.Translate(_pan.X, _pan.Y);
+            canvas.Scale(_zoom, _zoom);
 
             try
             {
-                var workspace = new SKRect(0, 0, BoardSurfaceHelper.StableWorkspaceSize, BoardSurfaceHelper.StableWorkspaceSize);
+                var visibleBounds = canvas.LocalClipBounds;
                 using (var backgroundPaint = new SKPaint { Color = ThemeColors.BgSurface })
                 {
-                    canvas.DrawRect(workspace, backgroundPaint);
+                    canvas.DrawRect(visibleBounds, backgroundPaint);
                 }
 
-                var zoomScale = canvas.TotalMatrix.ScaleX;
-                var visibleBounds = DotGridHelper.GetVisibleBoardBounds(canvas.LocalClipBounds);
                 var dotColor = new SKColor(
                     ThemeColors.DotGrid.Red,
                     ThemeColors.DotGrid.Green,
                     ThemeColors.DotGrid.Blue,
                     (byte)(_owner._dotGridOpacity * 255));
-                DotGridHelper.DrawDots(canvas, visibleBounds, Vector2.Zero, 24f, dotColor, 1.25f, zoomScale);
+                DotGridHelper.DrawDots(canvas, visibleBounds, Vector2.Zero, 24f, dotColor, 1.25f, _zoom);
 
-                // Draw elements sorted by ZIndex (lowest first, highest on top).
-                // Avoid allocating a new list when elements are already in order.
                 var elements = _board.Elements;
                 var sortedElements = IsSortedByZIndex(elements)
                     ? elements
@@ -227,8 +269,8 @@ public class BoardCanvas : Control
                     ElementDrawingHelper.DrawElement(canvas, element, _owner.ImageCache);
                 }
 
-                DrawRemoteStrokePreviews(canvas, _owner.RemoteStrokePreviews);
-                DrawRemoteCursors(canvas, _owner.RemoteCursors);
+                DrawRemoteStrokePreviews(canvas, _remoteStrokePreviews);
+                DrawRemoteCursors(canvas, _remoteCursors);
             }
             finally
             {

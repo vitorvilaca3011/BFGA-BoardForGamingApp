@@ -1,51 +1,103 @@
+using System;
+using System.Collections.Generic;
+using System.Numerics;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.PanAndZoom;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using BFGA.Core;
 using BFGA.Canvas.Rendering;
-using System.Numerics;
 
 namespace BFGA.Canvas;
 
 /// <summary>
-/// A pan-and-zoom viewport that hosts a <see cref="BoardCanvas"/>.
-/// This is the primary control to place on a view; <see cref="BoardCanvas"/>
-/// is an internal rendering surface and should not be used directly.
+/// Hosts a BoardCanvas and manages zoom/pan state for the infinite canvas.
+/// Handles mouse-wheel zoom. Pan gestures are routed by the parent BoardView.
 /// </summary>
 public class BoardViewport : Border
 {
-    private readonly ZoomBorder _zoomBorder;
-    private readonly BoardCanvas _canvas;
-    private bool _initialCenterApplied;
-
-    static BoardViewport()
+    public sealed class ZoomBorderCompat
     {
-        BoardProperty.Changed.AddClassHandler<BoardViewport>((viewport, e) =>
-        {
-            var newBoard = e.NewValue as BoardState;
-            viewport._canvas.Board = newBoard;
-        });
+        private readonly BoardViewport _owner;
 
-        DotGridOpacityProperty.Changed.AddClassHandler<BoardViewport>((vp, e) =>
-        {
-            vp._canvas.DotGridOpacity = (float)e.NewValue!;
-        });
+        public ZoomBorderCompat(BoardViewport owner) => _owner = owner;
 
-        RemoteCursorsProperty.Changed.AddClassHandler<BoardViewport>((viewport, e) =>
+        public event EventHandler? ZoomChanged
         {
-            viewport._canvas.RemoteCursors = e.NewValue as IReadOnlyDictionary<Guid, RemoteCursorState>;
-        });
+            add => _owner.ZoomChanged += value;
+            remove => _owner.ZoomChanged -= value;
+        }
 
-        RemoteStrokePreviewsProperty.Changed.AddClassHandler<BoardViewport>((viewport, e) =>
-        {
-            viewport._canvas.RemoteStrokePreviews = e.NewValue as IReadOnlyDictionary<Guid, RemoteStrokePreviewState>;
-        });
+        public double ZoomX => _owner.Zoom;
+        public double ZoomY => _owner.Zoom;
+        public double MinZoomX { get; set; } = MinZoom;
+        public double MaxZoomX { get; set; } = MaxZoom;
+        public double MinZoomY { get; set; } = MinZoom;
+        public double MaxZoomY { get; set; } = MaxZoom;
+        public double ZoomSpeed { get; set; } = 1.15;
+        public Avalonia.Controls.Control Child => _owner.Canvas;
+
+        public void ZoomTo(double zoom, double centerX, double centerY, bool animate = false)
+            => _owner.SetZoom(zoom, centerX, centerY);
+
+        public void CenterOn(Point point, double zoom, bool animate = false)
+            => _owner.SetZoom(zoom, point.X, point.Y);
+
+        public void CenterOn(Point point, bool animate = false)
+            => _owner.Pan = new Vector2((float)point.X, (float)point.Y);
     }
 
-    /// <summary>
-    /// Avalonia styled property for the board state to render.
-    /// Forwards to the inner <see cref="BoardCanvas"/>.
-    /// </summary>
+    private readonly BoardCanvas _canvas;
+    private readonly ZoomBorderCompat _zoomBorder;
+    private bool _initialCenterApplied;
+
+    private double _zoom = 1.0;
+    private Vector2 _pan;
+
+    public const double MinZoom = 0.2;
+    public const double MaxZoom = 3.0;
+    private const double ZoomFactor = 1.15;
+
+    public BoardViewport()
+    {
+        _canvas = new BoardCanvas();
+        _zoomBorder = new ZoomBorderCompat(this);
+        Child = _canvas;
+        ClipToBounds = true;
+        Focusable = true;
+    }
+
+    public double Zoom
+    {
+        get => _zoom;
+        set
+        {
+            var clamped = Math.Clamp(value, MinZoom, MaxZoom);
+            if (_zoom != clamped)
+            {
+                _zoom = clamped;
+                SyncCanvasState();
+            }
+        }
+    }
+
+    public Vector2 Pan
+    {
+        get => _pan;
+        set
+        {
+            if (_pan != value)
+            {
+                _pan = value;
+                SyncCanvasState();
+            }
+        }
+    }
+
+    public BoardCanvas Canvas => _canvas;
+
+    public ZoomBorderCompat ZoomBorder => _zoomBorder;
+
     public static readonly StyledProperty<BoardState?> BoardProperty =
         BoardCanvas.BoardProperty.AddOwner<BoardViewport>();
 
@@ -58,9 +110,6 @@ public class BoardViewport : Border
     public static readonly StyledProperty<float> DotGridOpacityProperty =
         AvaloniaProperty.Register<BoardViewport, float>(nameof(DotGridOpacity), 0.1f);
 
-    /// <summary>
-    /// Gets or sets the board state rendered inside this viewport.
-    /// </summary>
     public BoardState? Board
     {
         get => GetValue(BoardProperty);
@@ -85,82 +134,119 @@ public class BoardViewport : Border
         set => SetValue(DotGridOpacityProperty, value);
     }
 
-    public BoardViewport()
+    public event EventHandler? ZoomChanged;
+
+    static BoardViewport()
     {
-        _canvas = new BoardCanvas();
-
-        _zoomBorder = new ZoomBorder
+        BoardProperty.Changed.AddClassHandler<BoardViewport>((vp, _) =>
         {
-            EnablePan = true,
-            EnableZoom = true,
-            MinZoomX = 0.2,
-            MaxZoomX = 3.0,
-            MinZoomY = 0.2,
-            MaxZoomY = 3.0,
-            ZoomSpeed = 1.2,
-            Child = _canvas
-        };
+            vp._canvas.Board = vp.Board;
+        });
 
-        Child = _zoomBorder;
-        ClipToBounds = true;
-        Focusable = true;
+        DotGridOpacityProperty.Changed.AddClassHandler<BoardViewport>((vp, e) =>
+        {
+            vp._canvas.DotGridOpacity = (float)e.NewValue!;
+        });
+
+        RemoteCursorsProperty.Changed.AddClassHandler<BoardViewport>((vp, e) =>
+        {
+            vp._canvas.RemoteCursors = e.NewValue as IReadOnlyDictionary<Guid, RemoteCursorState>;
+        });
+
+        RemoteStrokePreviewsProperty.Changed.AddClassHandler<BoardViewport>((vp, e) =>
+        {
+            vp._canvas.RemoteStrokePreviews = e.NewValue as IReadOnlyDictionary<Guid, RemoteStrokePreviewState>;
+        });
     }
 
-    /// <inheritdoc />
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
         LayoutUpdated += HandleLayoutUpdated;
-        TryCenterWorkspaceOrigin();
+        TryCenterOrigin();
     }
 
-    /// <summary>
-    /// Gets the inner <see cref="ZoomBorder"/> for advanced configuration.
-    /// </summary>
-    public ZoomBorder ZoomBorder => _zoomBorder;
-
-    public Vector2 CanvasPointToBoard(Point canvasPoint)
+    private void HandleLayoutUpdated(object? sender, EventArgs e)
     {
-        var canvasVector = new Vector2((float)canvasPoint.X, (float)canvasPoint.Y);
-        return canvasVector - BoardSurfaceHelper.StableOriginOffset;
+        TryCenterOrigin();
     }
 
-    public Point BoardPointToCanvas(Vector2 boardPoint)
+    /// <summary>Centers board (0,0) in the viewport on first layout.</summary>
+    private void TryCenterOrigin()
     {
-        var canvasPoint = BoardSurfaceHelper.BoardToCanvas(boardPoint, BoardSurfaceHelper.StableOriginOffset);
-        return new Point(canvasPoint.X, canvasPoint.Y);
-    }
+        if (_initialCenterApplied) return;
+        if (Bounds.Width <= 0 || Bounds.Height <= 0) return;
 
-    /// <summary>
-    /// Explicitly invalidates the inner canvas so the current board instance is repainted.
-    /// Call this after mutating the existing <see cref="BoardState"/> in place.
-    /// </summary>
-    public void InvalidateBoard() => _canvas.InvalidateBoard();
-
-    /// <summary>
-    /// Gets the inner <see cref="BoardCanvas"/>.
-    /// This remains public so tests and advanced integration scenarios can
-    /// inspect the hosted rendering surface directly.
-    /// </summary>
-    public BoardCanvas Canvas => _canvas;
-
-    private void HandleLayoutUpdated(object? sender, EventArgs e) => TryCenterWorkspaceOrigin();
-
-    private void TryCenterWorkspaceOrigin()
-    {
-        if (_initialCenterApplied || Bounds.Width <= 0 || Bounds.Height <= 0)
-            return;
-
-        _zoomBorder.CenterOn(new Point(BoardSurfaceHelper.StableOriginOffset.X, BoardSurfaceHelper.StableOriginOffset.Y), false);
+        _pan = new Vector2((float)(Bounds.Width / 2), (float)(Bounds.Height / 2));
+        _zoom = 1.0;
         _initialCenterApplied = true;
         LayoutUpdated -= HandleLayoutUpdated;
+        SyncCanvasState();
     }
 
-    /// <inheritdoc />
+    public Vector2 ScreenToBoard(Point screenPoint)
+    {
+        return new Vector2(
+            (float)((screenPoint.X - _pan.X) / _zoom),
+            (float)((screenPoint.Y - _pan.Y) / _zoom));
+    }
+
+    public Vector2 CanvasPointToBoard(Point canvasPoint) => ScreenToBoard(canvasPoint);
+
+    public Point BoardToScreen(Vector2 boardPoint)
+    {
+        return new Point(
+            boardPoint.X * _zoom + _pan.X,
+            boardPoint.Y * _zoom + _pan.Y);
+    }
+
+    public Point BoardPointToCanvas(Vector2 boardPoint) => BoardToScreen(boardPoint);
+
+    public void SetZoom(double newZoom, double centerX, double centerY)
+    {
+        newZoom = Math.Clamp(newZoom, MinZoom, MaxZoom);
+        if (Math.Abs(_zoom - newZoom) < 0.0001) return;
+
+        var ratio = newZoom / _zoom;
+        _pan = new Vector2(
+            (float)(centerX - (centerX - _pan.X) * ratio),
+            (float)(centerY - (centerY - _pan.Y) * ratio));
+        _zoom = newZoom;
+        SyncCanvasState();
+    }
+
+    public void PanBy(Vector2 delta)
+    {
+        Pan = _pan + delta;
+    }
+
+    public void InvalidateBoard() => _canvas.InvalidateBoard();
+
+    protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
+    {
+        base.OnPointerWheelChanged(e);
+
+        var pos = e.GetPosition(this);
+        var direction = e.Delta.Y > 0 ? 1 : -1;
+        var factor = direction > 0 ? ZoomFactor : 1.0 / ZoomFactor;
+        var newZoom = Math.Clamp(_zoom * factor, MinZoom, MaxZoom);
+
+        SetZoom(newZoom, pos.X, pos.Y);
+        e.Handled = true;
+    }
+
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
         LayoutUpdated -= HandleLayoutUpdated;
         base.OnDetachedFromVisualTree(e);
         _canvas.ClearImageCache();
+    }
+
+    private void SyncCanvasState()
+    {
+        _canvas.Zoom = (float)_zoom;
+        _canvas.Pan = _pan;
+        _canvas.InvalidateVisual();
+        ZoomChanged?.Invoke(this, EventArgs.Empty);
     }
 }

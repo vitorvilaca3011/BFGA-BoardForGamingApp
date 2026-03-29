@@ -1,6 +1,5 @@
 using System.Numerics;
 using System.Reflection;
-using Avalonia.Controls.PanAndZoom;
 using Avalonia;
 using Avalonia.Rendering.SceneGraph;
 using BFGA.Canvas;
@@ -81,78 +80,124 @@ public class CoordinateTransformTests
     }
 }
 
-public class BoardSurfaceExtentTests
+public class BoardSurfaceTests
 {
     [Fact]
-    public void BoardSurfaceMetrics_UsesStableWorkspace()
+    public void BoardSurfaceHelper_GetBoardBounds_IsAvailable()
     {
-        // Arrange
+        Assert.NotNull(typeof(BoardSurfaceHelper).GetMethod(nameof(BoardSurfaceHelper.GetBoardBounds)));
+    }
+
+    [Fact]
+    public void GetBoardBounds_EmptyBoard_ReturnsEmptyRect()
+    {
+        var board = new BoardState();
+        var bounds = BoardSurfaceHelper.GetBoardBounds(board);
+        Assert.Equal(SKRect.Empty, bounds);
+    }
+
+    [Fact]
+    public void GetBoardBounds_NullBoard_ReturnsEmptyRect()
+    {
+        var bounds = BoardSurfaceHelper.GetBoardBounds(null);
+        Assert.Equal(SKRect.Empty, bounds);
+    }
+
+    [Fact]
+    public void GetBoardBounds_SingleElement_ReturnsBounds()
+    {
         var board = new BoardState();
         board.Elements.Add(new ShapeElement
         {
             Id = Guid.NewGuid(),
-            Position = new Vector2(-25_000f, -10_000f),
-            Size = new Vector2(50_000f, 20_000f),
-            Type = ShapeType.Rectangle
+            Type = ShapeType.Rectangle,
+            Position = new Vector2(10, 20),
+            Size = new Vector2(100, 50)
         });
-
-        // Act
-        var metrics = BoardSurfaceHelper.GetSurfaceMetrics(board);
-        var worldOrigin = BoardSurfaceHelper.BoardToCanvas(Vector2.Zero, metrics.OriginOffset);
-
-        // Assert
-        Assert.Equal(new Vector2(BoardSurfaceHelper.StableWorkspaceSize, BoardSurfaceHelper.StableWorkspaceSize), metrics.SurfaceSize);
-        Assert.Equal(BoardSurfaceHelper.StableOriginOffset, metrics.OriginOffset);
-        Assert.Equal(metrics.OriginOffset, worldOrigin);
+        var bounds = BoardSurfaceHelper.GetBoardBounds(board);
+        Assert.Equal(10f, bounds.Left);
+        Assert.Equal(20f, bounds.Top);
+        Assert.Equal(110f, bounds.Right);
+        Assert.Equal(70f, bounds.Bottom);
     }
 
     [Fact]
-    public void BoardSurfaceMetrics_RemainStableAcrossContentChanges()
+    public void GetBoardBounds_MultipleElements_ReturnsUnion()
     {
-        // Arrange
         var board = new BoardState();
-        var initial = BoardSurfaceHelper.GetSurfaceMetrics(board);
-
         board.Elements.Add(new ShapeElement
         {
             Id = Guid.NewGuid(),
-            Position = new Vector2(-25_000f, -10_000f),
-            Size = new Vector2(50_000f, 20_000f),
-            Type = ShapeType.Rectangle
+            Type = ShapeType.Rectangle,
+            Position = new Vector2(-50, -50),
+            Size = new Vector2(100, 100)
         });
-
-        // Act
-        var afterContentChange = BoardSurfaceHelper.GetSurfaceMetrics(board);
-
-        // Assert
-        Assert.Equal(initial.SurfaceSize, afterContentChange.SurfaceSize);
-        Assert.Equal(initial.OriginOffset, afterContentChange.OriginOffset);
+        board.Elements.Add(new ShapeElement
+        {
+            Id = Guid.NewGuid(),
+            Type = ShapeType.Rectangle,
+            Position = new Vector2(200, 300),
+            Size = new Vector2(50, 50)
+        });
+        var bounds = BoardSurfaceHelper.GetBoardBounds(board);
+        Assert.Equal(-50f, bounds.Left);
+        Assert.Equal(-50f, bounds.Top);
+        Assert.Equal(250f, bounds.Right);
+        Assert.Equal(350f, bounds.Bottom);
     }
+}
 
+public class BoardCanvasInfiniteTests
+{
     [Fact]
-    public void CanvasToBoard_RoundTrip_PreservesFarCoordinates()
+    public void BoardCanvas_DoesNotSetFixedWidthOrHeight()
     {
-        // Arrange
-        var original = new Vector2(-48_500f, 72_250f);
-        var originOffset = new Vector2(1_000f, 2_000f);
-
-        // Act
-        var canvasPoint = BoardSurfaceHelper.BoardToCanvas(original, originOffset);
-        var roundTrip = BoardSurfaceHelper.CanvasToBoard(canvasPoint, originOffset);
-
-        // Assert
-        Assert.Equal(original, roundTrip);
-    }
-
-    [Fact]
-    public void BoardCanvas_UsesLargeHostedSurface()
-    {
-        // Arrange / Act
         var canvas = new BoardCanvas();
+        Assert.True(double.IsNaN(canvas.Width) || canvas.Width <= 0,
+            "BoardCanvas should not have a fixed Width");
+        Assert.True(double.IsNaN(canvas.Height) || canvas.Height <= 0,
+            "BoardCanvas should not have a fixed Height");
+    }
 
-        // Assert
-        Assert.Equal(BoardSurfaceHelper.StableWorkspaceSize, canvas.Width);
-        Assert.Equal(BoardSurfaceHelper.StableWorkspaceSize, canvas.Height);
+    [Fact]
+    public void BoardCanvas_DefaultZoomIsOne()
+    {
+        var canvas = new BoardCanvas();
+        Assert.Equal(1.0f, canvas.Zoom);
+    }
+
+    [Fact]
+    public void BoardCanvas_DefaultPanIsZero()
+    {
+        var canvas = new BoardCanvas();
+        Assert.Equal(Vector2.Zero, canvas.Pan);
+    }
+
+    [Fact]
+    public void BoardCanvas_SettingZoomInvalidatesVisual()
+    {
+        var canvas = new BoardCanvas();
+        var gen1 = GetRenderGeneration(canvas);
+        canvas.Zoom = 2.0f;
+        var gen2 = GetRenderGeneration(canvas);
+        Assert.NotEqual(gen1, gen2);
+    }
+
+    [Fact]
+    public void BoardCanvas_SettingPanInvalidatesVisual()
+    {
+        var canvas = new BoardCanvas();
+        var gen1 = GetRenderGeneration(canvas);
+        canvas.Pan = new Vector2(100, 200);
+        var gen2 = GetRenderGeneration(canvas);
+        Assert.NotEqual(gen1, gen2);
+    }
+
+    private static long GetRenderGeneration(BoardCanvas canvas)
+    {
+        var field = typeof(BoardCanvas).GetField("_renderGeneration",
+            BindingFlags.NonPublic | BindingFlags.Instance);
+        return (long)(field?.GetValue(canvas) ?? 0);
     }
 }
 
@@ -864,151 +909,145 @@ public class ElementBoundsTests
 public class BoardViewportTests
 {
     [Fact]
-    public void BoardViewport_HasZoomBorderChild()
+    public void Viewport_ContainsBoardCanvas()
     {
-        // Arrange & Act
-        var viewport = new BoardViewport();
-
-        // Assert: Child should be ZoomBorder
-        Assert.NotNull(viewport.Child);
-        Assert.IsType<Avalonia.Controls.PanAndZoom.ZoomBorder>(viewport.Child);
+        var vp = new BoardViewport();
+        Assert.NotNull(vp.Canvas);
+        Assert.Equal(vp.Canvas, vp.Child);
     }
 
     [Fact]
-    public void BoardViewport_ZoomBorderContainsBoardCanvas()
+    public void Viewport_DefaultZoomIsOne()
     {
-        // Arrange & Act
-        var viewport = new BoardViewport();
-        var zoomBorder = (Avalonia.Controls.PanAndZoom.ZoomBorder)viewport.Child!;
-
-        // Assert: ZoomBorder's child should be BoardCanvas
-        Assert.NotNull(zoomBorder.Child);
-        Assert.IsType<BoardCanvas>(zoomBorder.Child);
+        var vp = new BoardViewport();
+        Assert.Equal(1.0, vp.Zoom);
     }
 
     [Fact]
-    public void BoardViewport_HasCorrectDefaults()
+    public void Viewport_DefaultPanIsZero()
     {
-        // Arrange & Act
-        var viewport = new BoardViewport();
-
-        // Assert
-        Assert.True(viewport.ClipToBounds);
-        Assert.True(viewport.Focusable);
+        var vp = new BoardViewport();
+        Assert.Equal(Vector2.Zero, vp.Pan);
     }
 
     [Fact]
-    public void BoardViewport_ZoomBorderHasCorrectDefaults()
+    public void Viewport_ClipsToBounds()
     {
-        // Arrange & Act
-        var viewport = new BoardViewport();
-        var zoomBorder = (Avalonia.Controls.PanAndZoom.ZoomBorder)viewport.Child!;
-
-        // Assert
-        Assert.True(zoomBorder.EnablePan);
-        Assert.True(zoomBorder.EnableZoom);
-        Assert.Equal(1.2, zoomBorder.ZoomSpeed, 1);
+        var vp = new BoardViewport();
+        Assert.True(vp.ClipToBounds);
     }
 
     [Fact]
-    public void BoardViewport_BoardPropertyForwardsToCanvas()
+    public void Viewport_IsFocusable()
     {
-        // Arrange
-        var viewport = new BoardViewport();
+        var vp = new BoardViewport();
+        Assert.True(vp.Focusable);
+    }
+
+    [Fact]
+    public void ScreenToBoard_AtDefaultState_ReturnsScreenMinusPan()
+    {
+        var vp = new BoardViewport();
+        vp.Pan = new Vector2(400, 300);
+        var board = vp.ScreenToBoard(new Point(500, 400));
+        Assert.Equal(100f, board.X, 0.001f);
+        Assert.Equal(100f, board.Y, 0.001f);
+    }
+
+    [Fact]
+    public void ScreenToBoard_WithZoom_DividesByZoom()
+    {
+        var vp = new BoardViewport();
+        vp.Pan = new Vector2(100, 100);
+        vp.Zoom = 2.0;
+        var board = vp.ScreenToBoard(new Point(300, 300));
+        Assert.Equal(100f, board.X, 0.001f);
+        Assert.Equal(100f, board.Y, 0.001f);
+    }
+
+    [Fact]
+    public void BoardToScreen_RoundTrips()
+    {
+        var vp = new BoardViewport();
+        vp.Pan = new Vector2(200, 150);
+        vp.Zoom = 1.5;
+        var original = new Vector2(42.5f, -73.2f);
+        var screen = vp.BoardToScreen(original);
+        var roundTripped = vp.ScreenToBoard(screen);
+        Assert.Equal(original.X, roundTripped.X, 0.001f);
+        Assert.Equal(original.Y, roundTripped.Y, 0.001f);
+    }
+
+    [Fact]
+    public void SetZoom_ClampsToRange()
+    {
+        var vp = new BoardViewport();
+        vp.SetZoom(0.1, 0, 0);
+        Assert.Equal(0.2, vp.Zoom, 0.001);
+
+        vp.SetZoom(5.0, 0, 0);
+        Assert.Equal(3.0, vp.Zoom, 0.001);
+    }
+
+    [Fact]
+    public void SetZoom_KeepsCenterPointStable()
+    {
+        var vp = new BoardViewport();
+        vp.Pan = new Vector2(400, 300);
+        vp.Zoom = 1.0;
+
+        var boardBefore = vp.ScreenToBoard(new Point(500, 400));
+
+        vp.SetZoom(2.0, 500, 400);
+
+        var boardAfter = vp.ScreenToBoard(new Point(500, 400));
+        Assert.Equal(boardBefore.X, boardAfter.X, 0.001f);
+        Assert.Equal(boardBefore.Y, boardAfter.Y, 0.001f);
+    }
+
+    [Fact]
+    public void PanBy_AdjustsPan()
+    {
+        var vp = new BoardViewport();
+        vp.Pan = new Vector2(100, 100);
+        vp.PanBy(new Vector2(50, -30));
+        Assert.Equal(new Vector2(150, 70), vp.Pan);
+    }
+
+    [Fact]
+    public void ZoomChanged_FiresOnZoomChange()
+    {
+        var vp = new BoardViewport();
+        bool fired = false;
+        vp.ZoomChanged += (_, _) => fired = true;
+        vp.SetZoom(2.0, 0, 0);
+        Assert.True(fired);
+    }
+
+    [Fact]
+    public void ZoomChanged_FiresOnPanChange()
+    {
+        var vp = new BoardViewport();
+        bool fired = false;
+        vp.ZoomChanged += (_, _) => fired = true;
+        vp.PanBy(new Vector2(10, 10));
+        Assert.True(fired);
+    }
+
+    [Fact]
+    public void Board_Property_ForwardsToCanvas()
+    {
+        var vp = new BoardViewport();
         var board = new BoardState();
-        board.Elements.Add(new ShapeElement
-        {
-            Id = Guid.NewGuid(),
-            Position = new Vector2(10, 10),
-            Size = new Vector2(50, 50),
-            Type = ShapeType.Rectangle
-        });
-
-        // Act
-        viewport.Board = board;
-
-        // Assert: Inner canvas should have the same board
-        var zoomBorder = (Avalonia.Controls.PanAndZoom.ZoomBorder)viewport.Child!;
-        var canvas = (BoardCanvas)zoomBorder.Child!;
-        Assert.Same(board, canvas.Board);
+        vp.Board = board;
+        Assert.Same(board, vp.Canvas.Board);
     }
 
     [Fact]
-    public void BoardViewport_InvalidateBoard_ForwardsToCanvas()
+    public void InvalidateBoard_ForwardsToCanvas()
     {
-        // Arrange
-        var viewport = new BoardViewport();
-
-        // Act & Assert: should be callable without throwing and forward to canvas.
-        viewport.InvalidateBoard();
-    }
-
-    [Fact]
-    public void BoardCanvas_InvalidateBoard_IsPublic()
-    {
-        // Arrange
-        var canvas = new BoardCanvas();
-
-        // Act & Assert
-        canvas.InvalidateBoard();
-    }
-
-    [Fact]
-    public void BoardViewport_InternalCanvasAccessible()
-    {
-        // Arrange & Act
-        var viewport = new BoardViewport();
-
-        // Assert: Internal Canvas property should return the inner BoardCanvas
-        Assert.NotNull(viewport.Canvas);
-        Assert.IsType<BoardCanvas>(viewport.Canvas);
-    }
-
-    [Fact]
-    public void BoardViewport_InternalZoomBorderAccessible()
-    {
-        // Arrange & Act
-        var viewport = new BoardViewport();
-
-        // Assert: Internal ZoomBorder property should return the inner ZoomBorder
-        Assert.NotNull(viewport.ZoomBorder);
-        Assert.IsType<Avalonia.Controls.PanAndZoom.ZoomBorder>(viewport.ZoomBorder);
-    }
-
-    [Fact]
-    public void BoardViewport_CanCenterWorkspaceOrigin()
-    {
-        // Arrange
-        var viewport = new BoardViewport();
-
-        // Act
-        var centerPoint = new Point(BoardSurfaceHelper.StableOriginOffset.X, BoardSurfaceHelper.StableOriginOffset.Y);
-        viewport.ZoomBorder.CenterOn(centerPoint, false);
-
-        // Assert
-        Assert.NotNull(viewport.ZoomBorder);
-    }
-
-    [Fact]
-    public void BoardViewport_InitialCentering_SetsZoomToOneWhenSized()
-    {
-        // Arrange
-        var viewport = new BoardViewport();
-        viewport.Measure(new Size(800, 600));
-        viewport.Arrange(new Rect(0, 0, 800, 600));
-
-        var method = typeof(BoardViewport).GetMethod(
-            "TryCenterWorkspaceOrigin",
-            BindingFlags.Instance | BindingFlags.NonPublic);
-
-        Assert.NotNull(method);
-
-        // Act
-        method!.Invoke(viewport, null);
-
-        // Assert
-        Assert.Equal(1.0, viewport.ZoomBorder.ZoomX, 3);
-        Assert.Equal(1.0, viewport.ZoomBorder.ZoomY, 3);
+        var vp = new BoardViewport();
+        vp.InvalidateBoard();
     }
 }
 
@@ -1120,10 +1159,10 @@ public class ImageCacheLifecycleTests
         var drawOperationType = typeof(BoardCanvas).GetNestedType("BoardDrawOperation", BindingFlags.NonPublic)!;
         var ctor = drawOperationType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
             binder: null,
-            types: [typeof(BoardCanvas), typeof(Rect), typeof(BoardState)],
+            types: [typeof(BoardCanvas), typeof(Rect), typeof(BoardState), typeof(float), typeof(Vector2)],
             modifiers: null)!;
 
-        var first = (ICustomDrawOperation)ctor.Invoke([canvas, new Rect(0, 0, 100, 100), board]);
+        var first = (ICustomDrawOperation)ctor.Invoke([canvas, new Rect(0, 0, 100, 100), board, 1.0f, Vector2.Zero]);
         board.Elements.Add(new ShapeElement
         {
             Id = Guid.NewGuid(),
@@ -1132,10 +1171,50 @@ public class ImageCacheLifecycleTests
             Type = ShapeType.Rectangle
         });
         canvas.InvalidateBoard();
-        var second = (ICustomDrawOperation)ctor.Invoke([canvas, new Rect(0, 0, 100, 100), board]);
+        var second = (ICustomDrawOperation)ctor.Invoke([canvas, new Rect(0, 0, 100, 100), board, 1.0f, Vector2.Zero]);
 
         // Assert
         Assert.False(first.Equals(second));
+    }
+
+    [Fact]
+    public void BoardDrawOperation_Equals_DifferentZoom_ReturnsFalse()
+    {
+        var canvas = new BoardCanvas();
+        var board = new BoardState();
+        var bounds = new Rect(0, 0, 800, 600);
+
+        var ctor = typeof(BoardCanvas)
+            .GetNestedType("BoardDrawOperation", BindingFlags.NonPublic)!
+            .GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+                binder: null,
+                types: [typeof(BoardCanvas), typeof(Rect), typeof(BoardState), typeof(float), typeof(Vector2)],
+                modifiers: null)!;
+
+        var op1 = ctor.Invoke([canvas, bounds, board, 1.0f, Vector2.Zero]);
+        var op2 = ctor.Invoke([canvas, bounds, board, 2.0f, Vector2.Zero]);
+
+        Assert.False(op1!.Equals(op2));
+    }
+
+    [Fact]
+    public void BoardDrawOperation_Equals_DifferentPan_ReturnsFalse()
+    {
+        var canvas = new BoardCanvas();
+        var board = new BoardState();
+        var bounds = new Rect(0, 0, 800, 600);
+
+        var ctor = typeof(BoardCanvas)
+            .GetNestedType("BoardDrawOperation", BindingFlags.NonPublic)!
+            .GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+                binder: null,
+                types: [typeof(BoardCanvas), typeof(Rect), typeof(BoardState), typeof(float), typeof(Vector2)],
+                modifiers: null)!;
+
+        var op1 = ctor.Invoke([canvas, bounds, board, 1.0f, Vector2.Zero]);
+        var op2 = ctor.Invoke([canvas, bounds, board, 1.0f, new Vector2(10, 20)]);
+
+        Assert.False(op1!.Equals(op2));
     }
 
     [Fact]
