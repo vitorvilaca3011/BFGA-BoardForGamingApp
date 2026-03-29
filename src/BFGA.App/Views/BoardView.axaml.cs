@@ -133,6 +133,8 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
     private BoardScreenViewModel? _boardScreenViewModel;
     private BoardToolController? _toolController;
     private int _moveLogThrottleCounter;
+    private bool _isPanning;
+    private Point _lastPanPosition;
 
     private void HandleDataContextChanged(object? sender, EventArgs e)
     {
@@ -194,6 +196,18 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
     {
         StartPointerGesture();
         LogPointerEvent("pointer-pressed", e);
+
+        var isHandTool = _toolController?.CurrentTool == BoardToolType.Hand;
+        var isMiddleButton = e.GetCurrentPoint(viewport).Properties.IsMiddleButtonPressed;
+        if (isHandTool || isMiddleButton)
+        {
+            _isPanning = true;
+            _lastPanPosition = e.GetPosition(viewport);
+            e.Pointer.Capture(viewport);
+            e.Handled = true;
+            return;
+        }
+
         if (!TryHandlePointer(e, PointerPhase.Pressed))
             return;
 
@@ -206,6 +220,18 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
         if (e.Pointer.Captured != viewport)
             return;
 
+        if (_isPanning)
+        {
+            var currentPos = e.GetPosition(viewport);
+            var delta = new System.Numerics.Vector2(
+                (float)(currentPos.X - _lastPanPosition.X),
+                (float)(currentPos.Y - _lastPanPosition.Y));
+            viewport.PanBy(delta);
+            _lastPanPosition = currentPos;
+            e.Handled = true;
+            return;
+        }
+
         var shouldLog = ShouldLogMoveEvent();
 
         if (TryHandlePointer(e, PointerPhase.Moved, shouldLog))
@@ -217,6 +243,15 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
         LogPointerEvent("pointer-released", e);
         if (e.Pointer.Captured != viewport)
             return;
+
+        if (_isPanning)
+        {
+            _isPanning = false;
+            e.Pointer.Capture(null);
+            e.Handled = true;
+            StartPointerGesture();
+            return;
+        }
 
         try
         {
@@ -238,9 +273,6 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
         try
         {
             SyncToolController(logThisPhase);
-
-            if (_toolController.CurrentTool == BoardToolType.Hand)
-                return false;
 
             var boardPoint = viewport.ScreenToBoard(e.GetPosition(viewport));
             var viewportPoint = e.GetPosition(viewport);
