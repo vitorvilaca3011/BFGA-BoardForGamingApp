@@ -21,7 +21,7 @@ public class DotGridRenderingTests
     public void GetDotPositions_UsesVisibleBoundsOnly()
     {
         var visible = DotGridHelper.GetDotPositions(new SKRect(200, 200, 260, 260), new Vector2(0, 0), 20f).ToList();
-        var full = DotGridHelper.GetDotPositions(new SKRect(0, 0, 200_000, 200_000), new Vector2(0, 0), 20f).ToList();
+        var full = DotGridHelper.GetDotPositions(new SKRect(-960, -540, 960, 540), new Vector2(0, 0), 20f).ToList();
 
         Assert.True(visible.Count < full.Count);
         Assert.All(visible, dot =>
@@ -43,9 +43,9 @@ public class DotGridRenderingTests
     {
         var visibleBounds = DotGridHelper.GetVisibleBoardBounds(new SKRect(300, 300, 500, 500));
         var visibleDots = DotGridHelper.GetDotPositions(visibleBounds, Vector2.Zero, 20f, 2f).ToList();
-        var fullDots = DotGridHelper.GetDotPositions(new SKRect(0, 0, 200_000, 200_000), Vector2.Zero, 20f, 2f).ToList();
+        var fullDots = DotGridHelper.GetDotPositions(new SKRect(-960, -540, 960, 540), Vector2.Zero, 20f, 2f).ToList();
 
-        Assert.True(visibleDots.Count < fullDots.Count / 1000);
+        Assert.True(visibleDots.Count < fullDots.Count / 10);
         Assert.All(visibleDots, dot =>
         {
             Assert.InRange(dot.X, 300f, 500f);
