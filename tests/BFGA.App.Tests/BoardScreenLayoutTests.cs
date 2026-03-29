@@ -69,7 +69,17 @@ public class BoardScreenLayoutTests
         Assert.Contains("Classes.active=\"{Binding IsLaserPointerToolActive}\"", toolbarXaml);
         Assert.Contains("views:BoardView", xaml);
         Assert.Contains("KeyDown=\"OnKeyDown\"", mainWindowXaml);
-        Assert.Contains("PathIcon", toolbarXaml);
+        Assert.DoesNotContain("PathIcon", toolbarXaml);
+        Assert.Contains("<Path", toolbarXaml);
+        Assert.DoesNotContain("PathIcon", bottomBarXaml);
+        Assert.Contains("<Path", bottomBarXaml);
+        Assert.DoesNotContain("PathIcon Data=\"{StaticResource IconMinimize}\"", mainWindowXaml);
+        Assert.DoesNotContain("PathIcon Data=\"{StaticResource IconClose}\"", mainWindowXaml);
+        Assert.Contains("Classes=\"stroke-icon\"", toolbarXaml);
+        Assert.Contains("Classes=\"stroke-icon\"", bottomBarXaml);
+        Assert.Contains("Classes=\"stroke-icon\"", mainWindowXaml);
+        Assert.Contains("Path.stroke-icon", themeXaml);
+        Assert.Contains("Stroke\" Value=\"{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}\"", themeXaml);
         Assert.Contains("Slider", bottomBarXaml);
         Assert.Contains("ZoomInCommand", bottomBarXaml);
         Assert.Contains("ZoomOutCommand", bottomBarXaml);
@@ -210,17 +220,10 @@ public class BoardScreenLayoutTests
         var viewportField = typeof(BoardView).GetField("viewport", BindingFlags.Instance | BindingFlags.NonPublic);
         Assert.NotNull(viewportField);
 
-        var viewport = viewportField!.GetValue(boardView);
+        var viewport = (BoardViewport)viewportField!.GetValue(boardView)!;
         Assert.NotNull(viewport);
 
-        var zoomBorderProperty = viewport!.GetType().GetProperty("ZoomBorder");
-        Assert.NotNull(zoomBorderProperty);
-
-        var zoomBorder = zoomBorderProperty!.GetValue(viewport);
-        Assert.NotNull(zoomBorder);
-
-        zoomBorder!.GetType().GetMethod("Zoom", [typeof(double), typeof(double), typeof(double), typeof(bool)])!
-            .Invoke(zoomBorder, [2.5d, 0d, 0d, true]);
+        viewport.SetZoom(2.5, 0, 0);
 
         Assert.InRange(boardView.ZoomLevel, 2.4, 2.6);
         Assert.Contains("250%", boardView.ZoomLabel);
@@ -229,12 +232,8 @@ public class BoardScreenLayoutTests
     [Fact]
     public void BoardViewport_ConstrainsRealZoomRange()
     {
-        var viewport = new BoardViewport();
-
-        Assert.Equal(0.2, viewport.ZoomBorder.MinZoomX);
-        Assert.Equal(3.0, viewport.ZoomBorder.MaxZoomX);
-        Assert.Equal(0.2, viewport.ZoomBorder.MinZoomY);
-        Assert.Equal(3.0, viewport.ZoomBorder.MaxZoomY);
+        Assert.Equal(0.2, BoardViewport.MinZoom, 0.001);
+        Assert.Equal(3.0, BoardViewport.MaxZoom, 0.001);
     }
 
     private static void AssertThemeBrush(BFGA.App.App app, string key, SKColor expectedColor)

@@ -65,7 +65,7 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
         ZoomInCommand = new RelayCommand(ZoomIn);
         ZoomOutCommand = new RelayCommand(ZoomOut);
         ZoomResetCommand = new RelayCommand(ResetZoom);
-        viewport.ZoomBorder.ZoomChanged += HandleZoomChanged;
+        viewport.ZoomChanged += HandleZoomChanged;
         viewport.PointerPressed += HandlePointerPressed;
         viewport.PointerMoved += HandlePointerMoved;
         viewport.PointerReleased += HandlePointerReleased;
@@ -110,10 +110,9 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
         var clampedZoom = Math.Clamp(zoom, 0.2, 3.0);
         _isUpdatingZoomLevel = true;
         _zoomFactor = clampedZoom;
-        var zoomBorder = viewport.ZoomBorder;
         var centerX = viewport.Bounds.Width / 2.0;
         var centerY = viewport.Bounds.Height / 2.0;
-        zoomBorder.ZoomTo(clampedZoom, centerX, centerY, true);
+        viewport.SetZoom(clampedZoom, centerX, centerY);
 
         NotifyPropertyChanged(nameof(ZoomLabel));
         NotifyPropertyChanged(nameof(ZoomLevel));
@@ -125,8 +124,7 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
         if (_isUpdatingZoomLevel)
             return;
 
-        var zoomBorder = viewport.ZoomBorder;
-        var clampedZoom = Math.Clamp(zoomBorder.ZoomX, 0.2, 3.0);
+        var clampedZoom = Math.Clamp(viewport.Zoom, 0.2, 3.0);
         _zoomFactor = clampedZoom;
         NotifyPropertyChanged(nameof(ZoomLevel));
         NotifyPropertyChanged(nameof(ZoomLabel));
@@ -134,6 +132,7 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
 
     private BoardScreenViewModel? _boardScreenViewModel;
     private BoardToolController? _toolController;
+    private int _moveLogThrottleCounter;
 
     private void HandleDataContextChanged(object? sender, EventArgs e)
     {
@@ -165,6 +164,9 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
     }
 
     private void SyncToolController()
+        => SyncToolController(logThisPhase: true);
+
+    private void SyncToolController(bool logThisPhase)
     {
         var boardScreen = _boardScreenViewModel;
         if (boardScreen is null)
@@ -180,11 +182,18 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
         _toolController.StrokeWidth = boardScreen.StrokeWidth;
         _toolController.Opacity = boardScreen.Opacity;
 
-        _toolController.SetTool(boardScreen.SelectedTool);
+        if (_toolController.CurrentTool != boardScreen.SelectedTool)
+            _toolController.SetTool(boardScreen.SelectedTool);
+        if (logThisPhase)
+        {
+            mainViewModel.LogBoardDebug("sync-tool", () => $"selected={boardScreen.SelectedTool} controller={_toolController.CurrentTool} elements={activeBoard.Elements.Count} stroke={boardScreen.SelectedStrokeColor} fill={boardScreen.SelectedFillColor} width={boardScreen.StrokeWidth:0.##} opacity={boardScreen.Opacity:0.##}");
+        }
     }
 
     private void HandlePointerPressed(object? sender, PointerPressedEventArgs e)
     {
+        StartPointerGesture();
+        LogPointerEvent("pointer-pressed", e);
         if (!TryHandlePointer(e, PointerPhase.Pressed))
             return;
 
@@ -197,12 +206,15 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
         if (e.Pointer.Captured != viewport)
             return;
 
-        if (TryHandlePointer(e, PointerPhase.Moved))
+        var shouldLog = ShouldLogMoveEvent();
+
+        if (TryHandlePointer(e, PointerPhase.Moved, shouldLog))
             e.Handled = true;
     }
 
     private void HandlePointerReleased(object? sender, PointerReleasedEventArgs e)
     {
+        LogPointerEvent("pointer-released", e);
         if (e.Pointer.Captured != viewport)
             return;
 
@@ -214,49 +226,136 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
         finally
         {
             e.Pointer.Capture(null);
+            StartPointerGesture();
         }
     }
 
-    private bool TryHandlePointer(PointerEventArgs e, PointerPhase phase)
+    private bool TryHandlePointer(PointerEventArgs e, PointerPhase phase, bool logThisPhase = true)
     {
         if (_boardScreenViewModel is null || _toolController is null)
             return false;
 
-        SyncToolController();
-
-        if (_toolController.CurrentTool == BoardToolType.Hand)
-            return false;
-
-        var boardPoint = viewport.CanvasPointToBoard(e.GetPosition(viewport.Canvas));
-        var result = phase switch
+        try
         {
-            PointerPhase.Pressed => _toolController.HandlePointerDown(boardPoint, e.KeyModifiers.HasFlag(KeyModifiers.Shift), e.KeyModifiers.HasFlag(KeyModifiers.Control)),
-            PointerPhase.Moved => _toolController.HandlePointerMove(boardPoint, e.KeyModifiers.HasFlag(KeyModifiers.Shift), e.KeyModifiers.HasFlag(KeyModifiers.Control)),
-            PointerPhase.Released => _toolController.HandlePointerUp(boardPoint, e.KeyModifiers.HasFlag(KeyModifiers.Shift), e.KeyModifiers.HasFlag(KeyModifiers.Control)),
-            _ => ToolResult.None
-        };
+            SyncToolController(logThisPhase);
 
-        if (result.BoardChanged)
-        {
-            viewport.InvalidateBoard();
-        }
+            if (_toolController.CurrentTool == BoardToolType.Hand)
+                return false;
 
-        if (result.HasOperations)
-        {
-            foreach (var operation in result.Operations)
+            var boardPoint = viewport.ScreenToBoard(e.GetPosition(viewport));
+            var viewportPoint = e.GetPosition(viewport);
+            var zoom = viewport.Zoom;
+            var mainViewModel = _boardScreenViewModel.MainViewModel;
+            if (logThisPhase)
             {
-                _boardScreenViewModel.MainViewModel.PublishLocalBoardOperation(operation);
+                mainViewModel.LogBoardDebug($"pointer-{phase.ToString().ToLowerInvariant()}", () => $"tool={_toolController.CurrentTool} zoom={zoom:0.00} viewport=({viewportPoint.X:0.##},{viewportPoint.Y:0.##}) board=({boardPoint.X:0.##},{boardPoint.Y:0.##})");
             }
 
-            if (_boardScreenViewModel.MainViewModel.Host is not null)
+            var result = phase switch
             {
-                _boardScreenViewModel.MainViewModel.SyncBoardFromHost();
-                _toolController.SetBoard(_boardScreenViewModel.MainViewModel.Board);
-            }
-        }
+                PointerPhase.Pressed => _toolController.HandlePointerDown(boardPoint, e.KeyModifiers.HasFlag(KeyModifiers.Shift), e.KeyModifiers.HasFlag(KeyModifiers.Control)),
+                PointerPhase.Moved => _toolController.HandlePointerMove(boardPoint, e.KeyModifiers.HasFlag(KeyModifiers.Shift), e.KeyModifiers.HasFlag(KeyModifiers.Control)),
+                PointerPhase.Released => _toolController.HandlePointerUp(boardPoint, e.KeyModifiers.HasFlag(KeyModifiers.Shift), e.KeyModifiers.HasFlag(KeyModifiers.Control)),
+                _ => ToolResult.None
+            };
 
-        return result.Handled;
+            if (logThisPhase)
+            {
+                mainViewModel.LogBoardDebug($"tool-result-{phase.ToString().ToLowerInvariant()}", () => $"handled={result.Handled} boardChanged={result.BoardChanged} operations={result.Operations.Count}");
+            }
+
+            if (result.BoardChanged)
+            {
+                if (logThisPhase)
+                {
+                    mainViewModel.LogBoardDebug($"invalidate-{phase.ToString().ToLowerInvariant()}", () => "board-changed=true action=invalidate");
+                }
+                viewport.InvalidateBoard();
+            }
+            else
+            {
+                if (logThisPhase)
+                {
+                    mainViewModel.LogBoardDebug($"invalidate-{phase.ToString().ToLowerInvariant()}", () => "board-changed=false action=skip");
+                }
+            }
+
+            if (result.HasOperations)
+            {
+                foreach (var operation in result.Operations)
+                {
+                    _boardScreenViewModel.MainViewModel.PublishLocalBoardOperation(operation);
+                }
+
+                if (_boardScreenViewModel.MainViewModel.Host is not null)
+                {
+                    _boardScreenViewModel.MainViewModel.SyncBoardFromHost();
+                    _toolController.SetBoard(_boardScreenViewModel.MainViewModel.Board);
+                    if (logThisPhase)
+                    {
+                        mainViewModel.LogBoardDebug($"publish-{phase.ToString().ToLowerInvariant()}", () => $"operations={result.Operations.Count} action=host-resync");
+                    }
+                }
+                else
+                {
+                    if (logThisPhase)
+                    {
+                        mainViewModel.LogBoardDebug($"publish-{phase.ToString().ToLowerInvariant()}", () => $"operations={result.Operations.Count} action=published");
+                    }
+                }
+            }
+
+            if (!result.HasOperations)
+            {
+                if (logThisPhase)
+                {
+                    mainViewModel.LogBoardDebug($"publish-{phase.ToString().ToLowerInvariant()}", () => "operations=0 action=skip");
+                }
+            }
+
+            return result.Handled;
+        }
+        catch (Exception ex)
+        {
+            _boardScreenViewModel.MainViewModel.LogBoardDebug($"pointer-error-{phase.ToString().ToLowerInvariant()}", () => ex.ToString());
+            throw;
+        }
     }
+
+    private void LogPointerEvent(string eventName, PointerEventArgs e)
+    {
+        LogPointerEvent(eventName, () =>
+        {
+            var viewportPoint = e.GetPosition(viewport);
+            var boardPoint = viewport.ScreenToBoard(viewportPoint);
+            return $"zoom={viewport.Zoom:0.00} viewport=({viewportPoint.X:0.##},{viewportPoint.Y:0.##}) board=({boardPoint.X:0.##},{boardPoint.Y:0.##})";
+        });
+    }
+
+    internal void LogPointerEvent(string eventName, Func<string> messageFactory)
+    {
+        if (_boardScreenViewModel is null)
+        {
+            return;
+        }
+
+        var mainViewModel = _boardScreenViewModel.MainViewModel;
+        if (!mainViewModel.IsBoardDebugLoggingEnabled)
+        {
+            return;
+        }
+
+        mainViewModel.LogBoardDebug(eventName, messageFactory);
+    }
+
+    private bool ShouldLogMoveEvent()
+    {
+        var shouldLog = _moveLogThrottleCounter % 12 == 0;
+        _moveLogThrottleCounter++;
+        return shouldLog;
+    }
+
+    private void StartPointerGesture() => _moveLogThrottleCounter = 0;
 
     private enum PointerPhase
     {

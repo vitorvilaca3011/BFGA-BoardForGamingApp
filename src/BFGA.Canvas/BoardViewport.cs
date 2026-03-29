@@ -16,39 +16,7 @@ namespace BFGA.Canvas;
 /// </summary>
 public class BoardViewport : Border
 {
-    public sealed class ZoomBorderCompat
-    {
-        private readonly BoardViewport _owner;
-
-        public ZoomBorderCompat(BoardViewport owner) => _owner = owner;
-
-        public event EventHandler? ZoomChanged
-        {
-            add => _owner.ZoomChanged += value;
-            remove => _owner.ZoomChanged -= value;
-        }
-
-        public double ZoomX => _owner.Zoom;
-        public double ZoomY => _owner.Zoom;
-        public double MinZoomX { get; set; } = MinZoom;
-        public double MaxZoomX { get; set; } = MaxZoom;
-        public double MinZoomY { get; set; } = MinZoom;
-        public double MaxZoomY { get; set; } = MaxZoom;
-        public double ZoomSpeed { get; set; } = 1.15;
-        public Avalonia.Controls.Control Child => _owner.Canvas;
-
-        public void ZoomTo(double zoom, double centerX, double centerY, bool animate = false)
-            => _owner.SetZoom(zoom, centerX, centerY);
-
-        public void CenterOn(Point point, double zoom, bool animate = false)
-            => _owner.SetZoom(zoom, point.X, point.Y);
-
-        public void CenterOn(Point point, bool animate = false)
-            => _owner.Pan = new Vector2((float)point.X, (float)point.Y);
-    }
-
     private readonly BoardCanvas _canvas;
-    private readonly ZoomBorderCompat _zoomBorder;
     private bool _initialCenterApplied;
 
     private double _zoom = 1.0;
@@ -61,7 +29,6 @@ public class BoardViewport : Border
     public BoardViewport()
     {
         _canvas = new BoardCanvas();
-        _zoomBorder = new ZoomBorderCompat(this);
         Child = _canvas;
         ClipToBounds = true;
         Focusable = true;
@@ -95,8 +62,6 @@ public class BoardViewport : Border
     }
 
     public BoardCanvas Canvas => _canvas;
-
-    public ZoomBorderCompat ZoomBorder => _zoomBorder;
 
     public static readonly StyledProperty<BoardState?> BoardProperty =
         BoardCanvas.BoardProperty.AddOwner<BoardViewport>();
@@ -191,16 +156,12 @@ public class BoardViewport : Border
             (float)((screenPoint.Y - _pan.Y) / _zoom));
     }
 
-    public Vector2 CanvasPointToBoard(Point canvasPoint) => ScreenToBoard(canvasPoint);
-
     public Point BoardToScreen(Vector2 boardPoint)
     {
         return new Point(
             boardPoint.X * _zoom + _pan.X,
             boardPoint.Y * _zoom + _pan.Y);
     }
-
-    public Point BoardPointToCanvas(Vector2 boardPoint) => BoardToScreen(boardPoint);
 
     public void SetZoom(double newZoom, double centerX, double centerY)
     {
