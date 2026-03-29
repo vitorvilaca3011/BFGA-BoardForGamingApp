@@ -13,55 +13,71 @@ namespace BFGA.Core.Tests;
 public class CoordinateTransformTests
 {
     [Fact]
-    public void ScreenToBoard_RoundTrip_ReturnsOriginalPoint()
+    public void ScreenToBoard_AtDefaultZoomAndPan_SubtractsPan()
     {
-        // Arrange
-        var original = new Vector2(100f, 200f);
-        var panOffset = new Vector2(50f, 30f);
-        float zoom = 2.0f;
-        var originOffset = new Vector2(10f, 20f);
+        var screen = new Vector2(500, 400);
+        var pan = new Vector2(200, 150);
+        float zoom = 1.0f;
 
-        // Act
-        var boardPoint = CoordinateTransformHelper.ScreenToBoard(original, panOffset, zoom, originOffset);
-        var backToScreen = CoordinateTransformHelper.BoardToScreen(boardPoint, panOffset, zoom, originOffset);
+        var board = CoordinateTransformHelper.ScreenToBoard(screen, pan, zoom);
 
-        // Assert
-        Assert.Equal(original.X, backToScreen.X, 4);
-        Assert.Equal(original.Y, backToScreen.Y, 4);
+        Assert.Equal(300f, board.X);
+        Assert.Equal(250f, board.Y);
     }
 
     [Fact]
-    public void ScreenToBoard_WithZeroPan_AppliesZoomOnly()
+    public void BoardToScreen_AtDefaultZoomAndPan_AddsPan()
     {
-        // Arrange
-        var screenPoint = new Vector2(200f, 300f);
-        var panOffset = Vector2.Zero;
-        float zoom = 2.0f;
-        var originOffset = Vector2.Zero;
+        var board = new Vector2(300, 250);
+        var pan = new Vector2(200, 150);
+        float zoom = 1.0f;
 
-        // Act
-        var boardPoint = CoordinateTransformHelper.ScreenToBoard(screenPoint, panOffset, zoom, originOffset);
+        var screen = CoordinateTransformHelper.BoardToScreen(board, pan, zoom);
 
-        // Assert: screen / zoom = board when no pan
-        Assert.Equal(100f, boardPoint.X, 4);
-        Assert.Equal(150f, boardPoint.Y, 4);
+        Assert.Equal(500f, screen.X);
+        Assert.Equal(400f, screen.Y);
     }
 
     [Fact]
-    public void BoardToScreen_WithPanAndZoom_TransformsCorrectly()
+    public void RoundTrip_PreservesCoordinates()
     {
-        // Arrange
-        var boardPoint = new Vector2(50f, 75f);
-        var panOffset = new Vector2(10f, 20f);
-        float zoom = 1.5f;
-        var originOffset = new Vector2(5f, 7f);
+        var original = new Vector2(42.5f, -73.2f);
+        var pan = new Vector2(300, 200);
+        float zoom = 2.5f;
 
-        // Act
-        var screenPoint = CoordinateTransformHelper.BoardToScreen(boardPoint, panOffset, zoom, originOffset);
+        var screen = CoordinateTransformHelper.BoardToScreen(original, pan, zoom);
+        var roundTripped = CoordinateTransformHelper.ScreenToBoard(screen, pan, zoom);
 
-        // Assert: (board + origin) * zoom + pan = screen
-        Assert.Equal(92.5f, screenPoint.X, 4);  // (50 + 5) * 1.5 + 10
-        Assert.Equal(143f, screenPoint.Y, 4); // (75 + 7) * 1.5 + 20
+        Assert.Equal(original.X, roundTripped.X, 0.001f);
+        Assert.Equal(original.Y, roundTripped.Y, 0.001f);
+    }
+
+    [Fact]
+    public void ScreenToBoard_WithZoom_DividesByZoom()
+    {
+        var screen = new Vector2(400, 300);
+        var pan = new Vector2(100, 100);
+        float zoom = 2.0f;
+
+        var board = CoordinateTransformHelper.ScreenToBoard(screen, pan, zoom);
+
+        // (400-100)/2 = 150, (300-100)/2 = 100
+        Assert.Equal(150f, board.X);
+        Assert.Equal(100f, board.Y);
+    }
+
+    [Fact]
+    public void BoardToScreen_WithZoom_MultipliesByZoom()
+    {
+        var board = new Vector2(150, 100);
+        var pan = new Vector2(100, 100);
+        float zoom = 2.0f;
+
+        var screen = CoordinateTransformHelper.BoardToScreen(board, pan, zoom);
+
+        // 150*2+100 = 400, 100*2+100 = 300
+        Assert.Equal(400f, screen.X);
+        Assert.Equal(300f, screen.Y);
     }
 }
 
@@ -971,6 +987,28 @@ public class BoardViewportTests
 
         // Assert
         Assert.NotNull(viewport.ZoomBorder);
+    }
+
+    [Fact]
+    public void BoardViewport_InitialCentering_SetsZoomToOneWhenSized()
+    {
+        // Arrange
+        var viewport = new BoardViewport();
+        viewport.Measure(new Size(800, 600));
+        viewport.Arrange(new Rect(0, 0, 800, 600));
+
+        var method = typeof(BoardViewport).GetMethod(
+            "TryCenterWorkspaceOrigin",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+
+        Assert.NotNull(method);
+
+        // Act
+        method!.Invoke(viewport, null);
+
+        // Assert
+        Assert.Equal(1.0, viewport.ZoomBorder.ZoomX, 3);
+        Assert.Equal(1.0, viewport.ZoomBorder.ZoomY, 3);
     }
 }
 
