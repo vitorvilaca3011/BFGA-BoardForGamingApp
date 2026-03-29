@@ -21,9 +21,13 @@
     <StreamGeometry x:Key="ToolIconEraser">M10.5,21 H18 M7,21 L20.5,7.5 A2.12,2.12 0 0 0 17,4 L3.5,17.5 A2.12,2.12 0 0 0 7,21 Z M2,21 H7 M13,7.5 L17,11.5</StreamGeometry>
     <StreamGeometry x:Key="ToolIconLaser">M12,12 m-1,0 a1,1 0 1,0 2,0 a1,1 0 1,0 -2,0 M12,2 V5 M12,19 V22 M2,12 H5 M19,12 H22 M4.93,4.93 L7.05,7.05 M16.95,16.95 L19.07,19.07 M4.93,19.07 L7.05,16.95 M16.95,7.05 L19.07,4.93</StreamGeometry>
 
-    <!-- Bottom bar icons -->
+<!-- Bottom bar icons -->
     <StreamGeometry x:Key="IconUndo">M3,7 V13 H9 M3,13 A9,6 0 0 1 21,13</StreamGeometry>
     <StreamGeometry x:Key="IconRedo">M21,7 V13 H15 M21,13 A9,6 0 0 0 3,13</StreamGeometry>
-    <StreamGeometry x:Key="IconZoomIn">M11,4 A7,7 0 1 0 11,18 A7,7 0 0 0 11,4 M21,21 L16.65,16.65 M8,11 H14 M11,8 V14</StreamGeometry>
-    <StreamGeometry x:Key="IconZoomOut">M11,4 A7,7 0 1 0 11,18 A7,7 0 0 0 11,4 M21,21 L16.65,16.65 M8,11 H14</StreamGeometry>
+    <StreamGeometry x:Key="IconZoomIn">M11,4 A7,7 0 1 0 11,18 A7,7 0 1 0 11,4 M21,21 L16.65,16.65 M8,11 H14 M11,8 V14</StreamGeometry>
+    <StreamGeometry x:Key="IconZoomOut">M11,4 A7,7 0 1 0 11,18 A7,7 0 1 0 11,4 M21,21 L16.65,16.65 M8,11 H14</StreamGeometry>
+
+    <!-- Title bar icons -->
+    <StreamGeometry x:Key="IconMinimize">M4,12 L20,12</StreamGeometry>
+    <StreamGeometry x:Key="IconClose">M18,6 L6,18 M6,6 L18,18</StreamGeometry>
 </ResourceDictionary>

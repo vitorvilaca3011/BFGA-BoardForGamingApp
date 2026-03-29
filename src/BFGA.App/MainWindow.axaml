@@ -53,22 +53,23 @@
                                 Click="OnSettingsClick"
                                 IsVisible="{Binding IsBoardScreen}"
                                 ToolTip.Tip="Settings">
-                            <PathIcon Data="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z M12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"
-                                     Width="14" Height="14" />
+                            <Path Classes="stroke-icon"
+                                  Data="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z M12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"
+                                  Width="14" Height="14" />
                         </Button>
 
                         <!-- Minimize -->
                         <Button Classes="title-bar-button"
                                 Click="OnMinimizeClick"
                                 ToolTip.Tip="Minimize">
-                            <PathIcon Data="M4,12 L20,12" Width="14" Height="14" />
+                            <Path Classes="stroke-icon" Data="{StaticResource IconMinimize}" Width="14" Height="14" />
                         </Button>
 
                         <!-- Close -->
                         <Button Classes="title-bar-button close-button"
                                 Click="OnCloseClick"
                                 ToolTip.Tip="Close">
-                            <PathIcon Data="M18,6 L6,18 M6,6 L18,18" Width="14" Height="14" />
+                            <Path Classes="stroke-icon" Data="{StaticResource IconClose}" Width="14" Height="14" />
                         </Button>
                     </StackPanel>
 
@@ -78,11 +79,7 @@
             </Border>
 
             <!-- Main content -->
-            <TransitioningContentControl Content="{Binding CurrentScreen}">
-                <TransitioningContentControl.PageTransition>
-                    <CrossFade Duration="0:0:0.3" />
-                </TransitioningContentControl.PageTransition>
-            </TransitioningContentControl>
+            <ContentControl Content="{Binding CurrentScreen}" />
         </DockPanel>
     </Grid>
 </Window>

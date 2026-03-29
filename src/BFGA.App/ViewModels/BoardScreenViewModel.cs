@@ -81,6 +81,7 @@ public sealed class BoardScreenViewModel : ViewModelBase, IDisposable
             OnPropertyChanged(nameof(IsLaserPointerToolActive));
             OnPropertyChanged(nameof(IsPropertyPanelVisible));
             OnPropertyChanged(nameof(ShowFillSection));
+            MainViewModel.LogBoardDebug("selected-tool", () => $"tool={_selectedTool}");
         }
     }
 

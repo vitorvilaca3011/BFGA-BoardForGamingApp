@@ -14,7 +14,7 @@
                     Classes="whiteboard-tool-button"
                     Width="28" Height="28"
                     ToolTip.Tip="Undo (Ctrl+Z)">
-                <PathIcon Data="{StaticResource IconUndo}" Width="14" Height="14" />
+                <Path Classes="stroke-icon" Data="{StaticResource IconUndo}" Width="14" Height="14" />
             </Button>
             <!-- Redo -->
             <Button Command="{Binding MainViewModel.RedoCommand}"
@@ -22,7 +22,7 @@
                     Classes="whiteboard-tool-button"
                     Width="28" Height="28"
                     ToolTip.Tip="Redo (Ctrl+Y)">
-                <PathIcon Data="{StaticResource IconRedo}" Width="14" Height="14" />
+                <Path Classes="stroke-icon" Data="{StaticResource IconRedo}" Width="14" Height="14" />
             </Button>
 
             <!-- Divider -->
@@ -33,7 +33,7 @@
                     Classes="whiteboard-tool-button"
                     Width="28" Height="28"
                     ToolTip.Tip="Zoom out">
-                <PathIcon Data="{StaticResource IconZoomOut}" Width="14" Height="14" />
+                <Path Classes="stroke-icon" Data="{StaticResource IconZoomOut}" Width="14" Height="14" />
             </Button>
 
             <!-- Zoom slider -->
@@ -54,7 +54,7 @@
                     Classes="whiteboard-tool-button"
                     Width="28" Height="28"
                     ToolTip.Tip="Zoom in">
-                <PathIcon Data="{StaticResource IconZoomIn}" Width="14" Height="14" />
+                <Path Classes="stroke-icon" Data="{StaticResource IconZoomIn}" Width="14" Height="14" />
             </Button>
         </StackPanel>
     </Border>

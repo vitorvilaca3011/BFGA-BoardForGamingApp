@@ -14,6 +14,7 @@ using System.Reflection;
 
 namespace BFGA.App.Tests;
 
+[Collection("BFGA_BOARD_DEBUG_LOG")]
 public class MainViewModelTests
 {
     [Fact]
@@ -175,8 +176,19 @@ public class MainViewModelTests
 
         Assert.Contains("DataTemplate DataType=\"vm:ConnectionScreenViewModel\"", xaml);
         Assert.Contains("DataTemplate DataType=\"vm:BoardScreenViewModel\"", xaml);
-        Assert.Contains("TransitioningContentControl Content=\"{Binding CurrentScreen}\"", xaml);
+        Assert.Contains("ContentControl Content=\"{Binding CurrentScreen}\"", xaml);
         Assert.Contains("<Grid Margin=\"0\">", xaml);
+    }
+
+    [Fact]
+    public void MainWindow_ShellNavigation_DoesNotUseTransitioningContentControlOrCrossFade()
+    {
+        var xaml = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "BFGA.App", "MainWindow.axaml"));
+
+        Assert.Contains("ContentControl Content=\"{Binding CurrentScreen}\"", xaml);
+        Assert.DoesNotContain("TransitioningContentControl Content=\"{Binding CurrentScreen}\"", xaml);
+        Assert.DoesNotContain("TransitioningContentControl.PageTransition", xaml);
+        Assert.DoesNotContain("<CrossFade", xaml);
     }
 
     [Fact]
@@ -190,6 +202,138 @@ public class MainViewModelTests
         Assert.Contains("connection-input", themeXaml);
         Assert.Contains("connection-primary-btn", themeXaml);
         Assert.Contains("connection-secondary-btn", themeXaml);
+    }
+
+    [Fact]
+    public void Constructor_OptInCreatesBoardDebugLogUnderDocumentsRoot()
+    {
+        var documentsRoot = Path.Combine(Path.GetTempPath(), $"bfga-mainvm-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(documentsRoot);
+
+        var previous = Environment.GetEnvironmentVariable("BFGA_BOARD_DEBUG_LOG");
+        Environment.SetEnvironmentVariable("BFGA_BOARD_DEBUG_LOG", "1");
+
+        try
+        {
+            var sut = new MainViewModel(documentsFolderProvider: () => documentsRoot);
+            var screen = new BoardScreenViewModel(sut);
+
+            screen.SelectedTool = BoardToolType.Pen;
+
+            sut.Dispose();
+            screen.Dispose();
+
+            var logDirectory = Path.Combine(documentsRoot, "BFGA", "logs");
+            var files = Directory.GetFiles(logDirectory, "*.log");
+
+            Assert.Single(files);
+            Assert.Contains("selected-tool", File.ReadAllText(files[0]));
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("BFGA_BOARD_DEBUG_LOG", previous);
+        }
+    }
+
+    [Fact]
+    public void Constructor_WhenDisabledDoesNotCreateBoardDebugLogFolder()
+    {
+        var documentsRoot = Path.Combine(Path.GetTempPath(), $"bfga-mainvm-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(documentsRoot);
+
+        var previous = Environment.GetEnvironmentVariable("BFGA_BOARD_DEBUG_LOG");
+        Environment.SetEnvironmentVariable("BFGA_BOARD_DEBUG_LOG", null);
+
+        try
+        {
+            var providerInvoked = false;
+            var sut = new MainViewModel(documentsFolderProvider: () =>
+            {
+                providerInvoked = true;
+                return documentsRoot;
+            });
+            var screen = new BoardScreenViewModel(sut);
+
+            screen.SelectedTool = BoardToolType.Pen;
+
+            Assert.False(providerInvoked);
+            Assert.False(Directory.Exists(Path.Combine(documentsRoot, "BFGA")));
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("BFGA_BOARD_DEBUG_LOG", previous);
+        }
+    }
+
+    [Fact]
+    public void Dispose_DisablesBoardDebugLogging()
+    {
+        var documentsRoot = Path.Combine(Path.GetTempPath(), $"bfga-mainvm-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(documentsRoot);
+
+        var previous = Environment.GetEnvironmentVariable("BFGA_BOARD_DEBUG_LOG");
+        Environment.SetEnvironmentVariable("BFGA_BOARD_DEBUG_LOG", "1");
+
+        try
+        {
+            var sut = new MainViewModel(documentsFolderProvider: () => documentsRoot);
+            var screen = new BoardScreenViewModel(sut);
+
+            screen.SelectedTool = BoardToolType.Pen;
+            var logFile = Directory.GetFiles(Path.Combine(documentsRoot, "BFGA", "logs"), "*.log").Single();
+            var before = ReadAllTextShared(logFile);
+
+            sut.Dispose();
+
+            screen.SelectedTool = BoardToolType.Rectangle;
+
+            var after = ReadAllTextShared(logFile);
+            Assert.Equal(before, after);
+
+            screen.Dispose();
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("BFGA_BOARD_DEBUG_LOG", previous);
+        }
+    }
+
+    [Fact]
+    public void Dispose_PreventsLazyBoardDebugFactoryFromRunning()
+    {
+        var documentsRoot = Path.Combine(Path.GetTempPath(), $"bfga-mainvm-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(documentsRoot);
+
+        var previous = Environment.GetEnvironmentVariable("BFGA_BOARD_DEBUG_LOG");
+        Environment.SetEnvironmentVariable("BFGA_BOARD_DEBUG_LOG", "1");
+
+        try
+        {
+            var sut = new MainViewModel(documentsFolderProvider: () => documentsRoot);
+            sut.Dispose();
+
+            var invoked = false;
+            typeof(MainViewModel)
+                .GetMethod("LogBoardDebug", BindingFlags.Instance | BindingFlags.NonPublic, [typeof(string), typeof(Func<string>)])!
+                .Invoke(sut, ["after-dispose", new Func<string>(() =>
+                {
+                    invoked = true;
+                    return "should-not-run";
+                })]);
+
+            Assert.False(invoked);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("BFGA_BOARD_DEBUG_LOG", previous);
+        }
+    }
+
+    private static string ReadAllTextShared(string path)
+    {
+        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        using var reader = new StreamReader(stream);
+        return reader.ReadToEnd();
     }
 
     [Fact]
@@ -797,8 +941,9 @@ public class MainViewModelTests
         await sut.StartHostAsync();
 
         typeof(BoardView)
-            .GetMethod("SyncToolController", BindingFlags.Instance | BindingFlags.NonPublic)!
-            .Invoke(boardView, null);
+            .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
+            .Single(method => method.Name == "SyncToolController" && method.GetParameters().Length == 1)
+            .Invoke(boardView, [true]);
 
         var controllerField = typeof(BoardView).GetField("_toolController", BindingFlags.Instance | BindingFlags.NonPublic)!;
         var controller = controllerField.GetValue(boardView)!;

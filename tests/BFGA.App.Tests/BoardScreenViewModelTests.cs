@@ -1,8 +1,11 @@
 using BFGA.App.ViewModels;
 using BFGA.Canvas.Tools;
+using BFGA.App.Services;
+using System.IO;
 
 namespace BFGA.App.Tests;
 
+[Collection("BFGA_BOARD_DEBUG_LOG")]
 public class BoardScreenViewModelTests
 {
     [Fact]
@@ -60,5 +63,41 @@ public class BoardScreenViewModelTests
         Assert.Contains(nameof(BoardScreenViewModel.IsLineToolActive), changed);
         Assert.Contains(nameof(BoardScreenViewModel.IsTextToolActive), changed);
         Assert.Contains(nameof(BoardScreenViewModel.IsLaserPointerToolActive), changed);
+    }
+
+    [Fact]
+    public void SelectedTool_SuccessfulChangeLogsOnce()
+    {
+        var documentsRoot = Path.Combine(Path.GetTempPath(), $"bfga-board-screen-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(documentsRoot);
+
+        var previous = Environment.GetEnvironmentVariable("BFGA_BOARD_DEBUG_LOG");
+        Environment.SetEnvironmentVariable("BFGA_BOARD_DEBUG_LOG", "1");
+
+        try
+        {
+            var sut = new MainViewModel(documentsFolderProvider: () => documentsRoot);
+            var screen = new BoardScreenViewModel(sut);
+
+            screen.SelectedTool = BoardToolType.Rectangle;
+
+            sut.Dispose();
+
+            var logFile = Directory.GetFiles(Path.Combine(documentsRoot, "BFGA", "logs"), "*.log").Single();
+            var contents = ReadAllTextShared(logFile);
+
+            Assert.Equal(1, contents.Split("[selected-tool]", StringSplitOptions.RemoveEmptyEntries).Length - 1);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("BFGA_BOARD_DEBUG_LOG", previous);
+        }
+    }
+
+    private static string ReadAllTextShared(string path)
+    {
+        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        using var reader = new StreamReader(stream);
+        return reader.ReadToEnd();
     }
 }

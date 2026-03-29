@@ -22,6 +22,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     private readonly IFileDialogService? _fileDialogService;
     private readonly IGameSessionFactory _sessionFactory;
     private readonly Func<string> _documentsFolderProvider;
+    private readonly BoardDebugLogger? _boardDebugLogger;
     private readonly DispatcherTimer _pollTimer;
     private readonly DispatcherTimer _autosaveTimer;
     private readonly AsyncRelayCommand _startHostCommand;
@@ -51,6 +52,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     private IGameClientSession? _client;
     private bool _isPolling;
     private bool _isAutosaving;
+    private bool _isDisposed;
     private int _undoShadowCount;
     private int _redoShadowCount;
     private bool _isSettingsOpen;
@@ -74,6 +76,10 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         _joinTimeout = joinTimeout ?? TimeSpan.FromSeconds(5);
         _fullSyncTimeout = fullSyncTimeout ?? TimeSpan.FromSeconds(5);
         _documentsFolderProvider = documentsFolderProvider ?? (() => Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
+        if (Environment.GetEnvironmentVariable("BFGA_BOARD_DEBUG_LOG") == "1")
+        {
+            _boardDebugLogger = BoardDebugLogger.CreateIfEnabled(_documentsFolderProvider(), enabled: true);
+        }
 
         _startHostCommand = CreateShellCommand(StartHostAsync, CanStartHost, "Failed to start host: ");
         _stopHostCommand = CreateShellCommand(StopHostAsync, CanStopHost, "Failed to stop host: ");
@@ -456,7 +462,10 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
 
             host = _sessionFactory.CreateHost();
             host.ReplaceBoardState(Board);
-            host.Start(HostPort);
+
+            // Run the synchronous socket bind off the UI thread so it doesn't freeze
+            StatusText = $"Starting host on port {HostPort}...";
+            await Task.Run(() => host.Start(HostPort)).ConfigureAwait(true);
 
             Host = host;
             SyncBoardFromHost();
@@ -620,7 +629,14 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
 
     public void Dispose()
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+
+        _isDisposed = true;
         _boardScreen.Dispose();
+        _boardDebugLogger?.Dispose();
         StopPolling();
         StopAutosave();
         Host?.Dispose();
@@ -630,6 +646,21 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         ResetCollaboratorState();
         _settingsService.Dispose();
     }
+
+    internal void LogBoardDebug(string eventName, string message)
+        => LogBoardDebug(eventName, () => message);
+
+    internal void LogBoardDebug(string eventName, Func<string> messageFactory)
+    {
+        if (!IsBoardDebugLoggingEnabled)
+        {
+            return;
+        }
+
+        _boardDebugLogger.Write(eventName, messageFactory());
+    }
+
+    internal bool IsBoardDebugLoggingEnabled => !_isDisposed && _boardDebugLogger is not null;
 
     private bool CanStartHost() => ConnectionState == ShellConnectionState.Disconnected && SelectedMode == ConnectionMode.Host;
     private bool CanStopHost() => Host is not null;

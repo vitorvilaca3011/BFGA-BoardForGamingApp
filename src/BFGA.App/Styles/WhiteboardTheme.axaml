@@ -40,6 +40,17 @@
         <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
     </Style>
 
+    <Style Selector="Path.stroke-icon">
+        <Setter Property="Width" Value="16" />
+        <Setter Property="Height" Value="16" />
+        <Setter Property="Stretch" Value="Uniform" />
+        <Setter Property="Fill" Value="Transparent" />
+        <Setter Property="Stroke" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+        <Setter Property="StrokeThickness" Value="1.75" />
+        <Setter Property="StrokeLineCap" Value="Round" />
+        <Setter Property="StrokeJoin" Value="Round" />
+    </Style>
+
     <Style Selector="UserControl.whiteboard-toolbar">
         <Setter Property="Width" Value="NaN" />
     </Style>
@@ -52,7 +63,7 @@
         <Setter Property="BorderThickness" Value="1" />
     </Style>
 
-    <!-- Floating toolbar buttons (32x32) -->
+    <!-- Floating toolbar buttons (32x32) - chromeless template -->
     <Style Selector="Button.whiteboard-float-tool-button">
         <Setter Property="Width" Value="32" />
         <Setter Property="Height" Value="32" />
@@ -60,10 +71,26 @@
         <Setter Property="Margin" Value="0" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="CornerRadius" Value="6" />
         <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border x:Name="PART_Background"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{TemplateBinding CornerRadius}">
+                    <ContentPresenter Content="{TemplateBinding Content}"
+                                      ContentTemplate="{TemplateBinding ContentTemplate}"
+                                      Padding="{TemplateBinding Padding}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
         <Setter Property="Transitions">
             <Transitions>
                 <BrushTransition Property="Background" Duration="0:0:0.15" />
@@ -73,13 +100,19 @@
     </Style>
 
     <Style Selector="Button.whiteboard-float-tool-button:pointerover">
-        <Setter Property="Background" Value="{DynamicResource BgOverlay}" />
         <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
     </Style>
 
+    <Style Selector="Button.whiteboard-float-tool-button:pointerover /template/ Border#PART_Background">
+        <Setter Property="Background" Value="{DynamicResource BgOverlay}" />
+    </Style>
+
     <Style Selector="Button.whiteboard-float-tool-button.active">
-        <Setter Property="Background" Value="#1A1A2A" />
         <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+    </Style>
+
+    <Style Selector="Button.whiteboard-float-tool-button.active /template/ Border#PART_Background">
+        <Setter Property="Background" Value="#1A1A2A" />
     </Style>
 
     <Style Selector="Border.whiteboard-toolbar-panel">
@@ -111,22 +144,32 @@
         <Setter Property="Margin" Value="0" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border x:Name="PART_Background"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{TemplateBinding CornerRadius}">
+                    <ContentPresenter Content="{TemplateBinding Content}"
+                                      ContentTemplate="{TemplateBinding ContentTemplate}"
+                                      Padding="{TemplateBinding Padding}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
     </Style>
 
     <Style Selector="Button.whiteboard-tool-button:pointerover">
-        <Setter Property="Background" Value="{DynamicResource BgOverlay}" />
         <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
     </Style>
 
-    <Style Selector="Button.whiteboard-tool-button">
-        <Setter Property="Transitions">
-            <Transitions>
-                <BrushTransition Property="Background" Duration="0:0:0.15" />
-                <BrushTransition Property="Foreground" Duration="0:0:0.15" />
-            </Transitions>
-        </Setter>
+    <Style Selector="Button.whiteboard-tool-button:pointerover /template/ Border#PART_Background">
+        <Setter Property="Background" Value="{DynamicResource BgOverlay}" />
     </Style>
 
     <Style Selector="Button.whiteboard-tool-button.active">
