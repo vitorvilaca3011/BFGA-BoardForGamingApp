@@ -141,6 +141,7 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
         if (_boardScreenViewModel is not null)
         {
             _boardScreenViewModel.PropertyChanged -= HandleBoardScreenPropertyChanged;
+            _boardScreenViewModel.ImageImportRequested -= HandleImageImportRequested;
         }
 
         _boardScreenViewModel = DataContext as BoardScreenViewModel;
@@ -148,6 +149,7 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
         if (_boardScreenViewModel is not null)
         {
             _boardScreenViewModel.PropertyChanged += HandleBoardScreenPropertyChanged;
+            _boardScreenViewModel.ImageImportRequested += HandleImageImportRequested;
         }
 
         SyncToolController();
@@ -162,6 +164,36 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
             or nameof(BoardScreenViewModel.Opacity))
         {
             SyncToolController();
+        }
+
+        if (e.PropertyName is nameof(BoardScreenViewModel.SelectedTool))
+        {
+            UpdateCursorForTool();
+        }
+    }
+
+    private void UpdateCursorForTool()
+    {
+        try
+        {
+            var tool = _boardScreenViewModel?.SelectedTool ?? BoardToolType.Select;
+            viewport.Cursor = new Cursor(tool switch
+            {
+                BoardToolType.Hand => StandardCursorType.Hand,
+                BoardToolType.Pen => StandardCursorType.Cross,
+                BoardToolType.Rectangle => StandardCursorType.Cross,
+                BoardToolType.Ellipse => StandardCursorType.Cross,
+                BoardToolType.Arrow => StandardCursorType.Cross,
+                BoardToolType.Line => StandardCursorType.Cross,
+                BoardToolType.Eraser => StandardCursorType.Cross,
+                BoardToolType.Text => StandardCursorType.Ibeam,
+                BoardToolType.Image => StandardCursorType.Hand,
+                _ => StandardCursorType.Arrow
+            });
+        }
+        catch (InvalidOperationException)
+        {
+            // ICursorFactory not available (e.g. headless test environment)
         }
     }
 
@@ -413,4 +445,209 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
         => _propertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
     private double GetZoomPercent() => GetZoomFactor() * 100.0;
+
+    private async void HandleImageImportRequested(object? sender, EventArgs e)
+    {
+        await ImportImageFromFileAsync();
+    }
+
+    public async Task ImportImageFromFileAsync()
+    {
+        if (_boardScreenViewModel is null || _toolController is null)
+            return;
+
+        var mainViewModel = _boardScreenViewModel.MainViewModel;
+        var fileDialogService = mainViewModel.FileDialogService;
+        if (fileDialogService is null)
+            return;
+
+        try
+        {
+            var imagePath = await fileDialogService.OpenImagePathAsync();
+            if (string.IsNullOrEmpty(imagePath))
+                return;
+
+            var imageData = await System.IO.File.ReadAllBytesAsync(imagePath);
+            if (imageData.Length == 0)
+                return;
+
+            var fileName = System.IO.Path.GetFileName(imagePath);
+            PlaceImageOnBoard(imageData, fileName);
+        }
+        catch (Exception ex)
+        {
+            mainViewModel.LogBoardDebug("image-import-error", () => ex.ToString());
+        }
+    }
+
+    public async Task CopySelectedImageToClipboardAsync()
+    {
+        if (_boardScreenViewModel is null || _toolController is null)
+            return;
+
+        // Find the selected element
+        var activeId = _toolController.Selection.ActiveElementId;
+        if (activeId is null)
+            return;
+
+        var element = _toolController.Board.Elements.FirstOrDefault(e => e.Id == activeId);
+        if (element is not BFGA.Core.Models.ImageElement imageElement)
+            return;
+
+        if (imageElement.ImageData is null || imageElement.ImageData.Length == 0)
+            return;
+
+        var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+        if (clipboard is null)
+            return;
+
+        try
+        {
+#pragma warning disable CS0618
+            var dataObject = new Avalonia.Input.DataObject();
+            dataObject.Set("image/png", imageElement.ImageData);
+            await clipboard.SetDataObjectAsync(dataObject);
+#pragma warning restore CS0618
+        }
+        catch (Exception ex)
+        {
+            _boardScreenViewModel.MainViewModel.LogBoardDebug("image-copy-error", () => ex.ToString());
+        }
+    }
+
+    public async Task ImportImageFromClipboardAsync()
+    {
+        if (_boardScreenViewModel is null || _toolController is null)
+            return;
+
+        var mainViewModel = _boardScreenViewModel.MainViewModel;
+
+        try
+        {
+            var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+            if (clipboard is null)
+                return;
+
+#pragma warning disable CS0618
+            var formats = await clipboard.GetFormatsAsync();
+#pragma warning restore CS0618
+            if (formats is null)
+                return;
+
+            byte[]? imageData = null;
+            string fileName = "clipboard.png";
+
+            // Try to get image data from clipboard
+            var imageFormat = formats.FirstOrDefault(f =>
+                f.Contains("image", StringComparison.OrdinalIgnoreCase) ||
+                f.Contains("png", StringComparison.OrdinalIgnoreCase) ||
+                f.Contains("bitmap", StringComparison.OrdinalIgnoreCase));
+
+            if (imageFormat is not null)
+            {
+#pragma warning disable CS0618
+                var data = await clipboard.GetDataAsync(imageFormat);
+#pragma warning restore CS0618
+                if (data is byte[] bytes)
+                    imageData = bytes;
+                else if (data is System.IO.Stream stream)
+                {
+                    using var ms = new System.IO.MemoryStream();
+                    await stream.CopyToAsync(ms);
+                    imageData = ms.ToArray();
+                }
+            }
+
+            // Try file drop list as fallback
+            if (imageData is null)
+            {
+                var fileFormats = new[] { "Files", "FileNames", "text/uri-list" };
+                foreach (var ff in fileFormats)
+                {
+                    if (!formats.Contains(ff))
+                        continue;
+
+#pragma warning disable CS0618
+                    var data = await clipboard.GetDataAsync(ff);
+#pragma warning restore CS0618
+                    if (data is IEnumerable<string> filePaths)
+                    {
+                        var path = filePaths.FirstOrDefault(p =>
+                            p.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
+                            p.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
+                            p.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase) ||
+                            p.EndsWith(".bmp", StringComparison.OrdinalIgnoreCase) ||
+                            p.EndsWith(".gif", StringComparison.OrdinalIgnoreCase) ||
+                            p.EndsWith(".webp", StringComparison.OrdinalIgnoreCase));
+                        if (path is not null && System.IO.File.Exists(path))
+                        {
+                            imageData = await System.IO.File.ReadAllBytesAsync(path);
+                            fileName = System.IO.Path.GetFileName(path);
+                        }
+                    }
+
+                    if (imageData is not null)
+                        break;
+                }
+            }
+
+            if (imageData is null || imageData.Length == 0)
+                return;
+
+            PlaceImageOnBoard(imageData, fileName);
+        }
+        catch (Exception ex)
+        {
+            mainViewModel.LogBoardDebug("clipboard-paste-error", () => ex.ToString());
+        }
+    }
+
+    private void PlaceImageOnBoard(byte[] imageData, string fileName)
+    {
+        if (_boardScreenViewModel is null || _toolController is null)
+            return;
+
+        var mainViewModel = _boardScreenViewModel.MainViewModel;
+
+        // Determine size from image dimensions or use a default
+        var defaultSize = new System.Numerics.Vector2(300, 200);
+        using var codec = SkiaSharp.SKCodec.Create(new System.IO.MemoryStream(imageData));
+        if (codec is not null)
+        {
+            var info = codec.Info;
+            defaultSize = new System.Numerics.Vector2(info.Width, info.Height);
+            // Limit to reasonable size (max 800px on longest side)
+            var maxSide = Math.Max(defaultSize.X, defaultSize.Y);
+            if (maxSide > 800)
+            {
+                var scale = 800f / maxSide;
+                defaultSize *= scale;
+            }
+        }
+
+        // Place at center of viewport in board coordinates
+        var viewportCenter = new Avalonia.Point(viewport.Bounds.Width / 2, viewport.Bounds.Height / 2);
+        var boardCenter = viewport.ScreenToBoard(viewportCenter);
+        var position = new System.Numerics.Vector2(
+            boardCenter.X - defaultSize.X / 2,
+            boardCenter.Y - defaultSize.Y / 2);
+
+        SyncToolController();
+        var imageElement = _toolController.PlaceImage(imageData, fileName, position, defaultSize);
+
+        // Publish the operation
+        var operation = new AddElementOperation(imageElement);
+        mainViewModel.PublishLocalBoardOperation(operation);
+
+        if (mainViewModel.Host is not null)
+        {
+            mainViewModel.SyncBoardFromHost();
+            _toolController.SetBoard(mainViewModel.Board);
+        }
+
+        viewport.InvalidateBoard();
+
+        // Switch back to Select tool
+        _boardScreenViewModel.SelectedTool = BoardToolType.Select;
+    }
 }

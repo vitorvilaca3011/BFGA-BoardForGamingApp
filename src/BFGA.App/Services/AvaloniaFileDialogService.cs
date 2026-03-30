@@ -43,4 +43,19 @@ public sealed class AvaloniaFileDialogService : IFileDialogService
 
         return file?.TryGetLocalPath();
     }
+
+    public async Task<string?> OpenImagePathAsync()
+    {
+        var files = await _owner.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Open Image",
+            AllowMultiple = false,
+            FileTypeFilter = new[]
+            {
+                new FilePickerFileType("Images") { Patterns = new[] { "*.png", "*.jpg", "*.jpeg", "*.bmp", "*.gif", "*.webp" } }
+            }
+        }).ConfigureAwait(true);
+
+        return files.Count > 0 ? files[0].TryGetLocalPath() : null;
+    }
 }

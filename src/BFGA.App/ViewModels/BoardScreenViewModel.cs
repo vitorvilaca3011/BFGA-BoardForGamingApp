@@ -35,7 +35,7 @@ public sealed class BoardScreenViewModel : ViewModelBase, IDisposable
         _penToolCommand = new RelayCommand(() => SelectedTool = BoardToolType.Pen);
         _rectangleToolCommand = new RelayCommand(() => SelectedTool = BoardToolType.Rectangle);
         _ellipseToolCommand = new RelayCommand(() => SelectedTool = BoardToolType.Ellipse);
-        _imageToolCommand = new RelayCommand(() => SelectedTool = BoardToolType.Image);
+        _imageToolCommand = new RelayCommand(() => ImageImportRequested?.Invoke(this, EventArgs.Empty));
         _eraserToolCommand = new RelayCommand(() => SelectedTool = BoardToolType.Eraser);
         _arrowToolCommand = new RelayCommand(() => SelectedTool = BoardToolType.Arrow);
         _lineToolCommand = new RelayCommand(() => SelectedTool = BoardToolType.Line);
@@ -56,6 +56,8 @@ public sealed class BoardScreenViewModel : ViewModelBase, IDisposable
     }
 
     public MainViewModel MainViewModel { get; }
+
+    public event EventHandler? ImageImportRequested;
 
     public BoardToolType SelectedTool
     {

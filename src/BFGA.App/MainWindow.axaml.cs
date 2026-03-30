@@ -1,11 +1,14 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Input;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.VisualTree;
 using BFGA.App.Services;
 using BFGA.App.ViewModels;
+using BFGA.App.Views;
 
 namespace BFGA.App;
 
@@ -101,6 +104,18 @@ public partial class MainWindow : Window
             e.Handled = true;
             return;
         }
+        if (e.Key == Key.C && e.KeyModifiers == KeyModifiers.Control)
+        {
+            _ = CopyImageFromCanvasAsync(boardScreen);
+            e.Handled = true;
+            return;
+        }
+        if (e.Key == Key.V && e.KeyModifiers == KeyModifiers.Control)
+        {
+            _ = PasteImageFromClipboardAsync(boardScreen);
+            e.Handled = true;
+            return;
+        }
 
         if (!TryHandleToolShortcut(boardScreen, e.Key, e.KeyModifiers))
         {
@@ -124,6 +139,24 @@ public partial class MainWindow : Window
     private void OnCloseClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         Close();
+    }
+
+    private async Task CopyImageFromCanvasAsync(BoardScreenViewModel boardScreen)
+    {
+        var boardView = this.GetVisualDescendants().OfType<BoardView>().FirstOrDefault();
+        if (boardView is null)
+            return;
+
+        await boardView.CopySelectedImageToClipboardAsync();
+    }
+
+    private async Task PasteImageFromClipboardAsync(BoardScreenViewModel boardScreen)
+    {
+        var boardView = this.GetVisualDescendants().OfType<BoardView>().FirstOrDefault();
+        if (boardView is null)
+            return;
+
+        await boardView.ImportImageFromClipboardAsync();
     }
 
     public static bool TryHandleToolShortcut(BoardScreenViewModel boardScreen, Key key, KeyModifiers modifiers)

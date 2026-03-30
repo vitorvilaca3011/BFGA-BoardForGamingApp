@@ -156,8 +156,8 @@ public static class ElementDrawingHelper
 
         if (imageCache is not null)
         {
-            var cachedBitmap = imageCache.GetOrAdd(image.Id, image.ImageData);
-            if (cachedBitmap is null)
+            var cachedImage = imageCache.GetOrAdd(image.Id, image.ImageData);
+            if (cachedImage is null)
             {
                 DrawPlaceholderRect(canvas, image);
                 if (supportsRotation)
@@ -165,12 +165,14 @@ public static class ElementDrawingHelper
                 return;
             }
 
-            DrawBitmap(canvas, image, cachedBitmap);
+            DrawSkImage(canvas, image, cachedImage);
             if (supportsRotation)
                 canvas.Restore();
             return;
         }
 
+        // No cache: decode inline. Use SKImage (not SKBitmap) to avoid the native
+        // sk_image_new_from_bitmap crash on the Windows WinUI compositor.
         using var bitmap = SKBitmap.Decode(image.ImageData);
         if (bitmap is null)
         {
@@ -181,16 +183,24 @@ public static class ElementDrawingHelper
             return;
         }
 
-        DrawBitmap(canvas, image, bitmap);
+        using var skImage = SKImage.FromBitmap(bitmap);
+        if (skImage is null)
+        {
+            DrawPlaceholderRect(canvas, image);
+            if (supportsRotation)
+                canvas.Restore();
+            return;
+        }
+
+        DrawSkImage(canvas, image, skImage);
         if (supportsRotation)
             canvas.Restore();
     }
 
-    private static void DrawBitmap(SKCanvas canvas, ImageElement image, SKBitmap bitmap)
+    private static void DrawSkImage(SKCanvas canvas, ImageElement image, SKImage skImage)
     {
         var destRect = ElementBoundsHelper.CreateNormalizedRect(image.Position, image.Size);
-
-        canvas.DrawBitmap(bitmap, destRect);
+        canvas.DrawImage(skImage, destRect);
     }
 
     /// <summary>

@@ -118,6 +118,8 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         _gridOpacity = _settingsService.GridOpacity;
     }
 
+    public IFileDialogService? FileDialogService => _fileDialogService;
+
     public ConnectionMode SelectedMode
     {
         get => _selectedMode;

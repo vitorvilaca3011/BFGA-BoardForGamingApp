@@ -1268,6 +1268,8 @@ public class MainViewModelTests
             SaveRequests.Add(suggestedFileName);
             return Task.FromResult<string?>(_filePath);
         }
+
+        public Task<string?> OpenImagePathAsync() => Task.FromResult<string?>(null);
     }
 
     private sealed class ThrowingFileDialogService : IFileDialogService
@@ -1275,6 +1277,8 @@ public class MainViewModelTests
         public Task<string?> OpenBoardPathAsync() => throw new InvalidOperationException("dialog failure");
 
         public Task<string?> SaveBoardPathAsync(string suggestedFileName) => throw new InvalidOperationException("dialog failure");
+
+        public Task<string?> OpenImagePathAsync() => throw new InvalidOperationException("dialog failure");
     }
 
     private sealed class FakeGameSessionFactory : IGameSessionFactory

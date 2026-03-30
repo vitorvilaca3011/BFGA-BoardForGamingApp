@@ -529,5 +529,5 @@ public sealed class BoardToolController
         => a.Left <= b.Right && a.Right >= b.Left && a.Top <= b.Bottom && a.Bottom >= b.Top;
 
     private static SKColor ApplyOpacity(SKColor color, float opacity)
-        => color.WithAlpha((byte)(opacity * 255));
+        => color.WithAlpha((byte)(color.Alpha / 255f * opacity * 255));
 }

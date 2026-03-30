@@ -6,4 +6,5 @@ public interface IFileDialogService
 {
     Task<string?> OpenBoardPathAsync();
     Task<string?> SaveBoardPathAsync(string suggestedFileName);
+    Task<string?> OpenImagePathAsync();
 }
