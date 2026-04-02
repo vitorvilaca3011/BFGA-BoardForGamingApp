@@ -266,7 +266,7 @@ public class BoardCanvas : Control
 
                 foreach (var element in sortedElements)
                 {
-                    ElementDrawingHelper.DrawElement(canvas, element, _owner.ImageCache);
+                    ElementDrawingHelper.DrawElement(canvas, element, null);
                 }
 
                 DrawRemoteStrokePreviews(canvas, _remoteStrokePreviews);

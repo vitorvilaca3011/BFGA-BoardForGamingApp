@@ -171,19 +171,9 @@ public static class ElementDrawingHelper
             return;
         }
 
-        // No cache: decode inline. Use SKImage (not SKBitmap) to avoid the native
-        // sk_image_new_from_bitmap crash on the Windows WinUI compositor.
-        using var bitmap = SKBitmap.Decode(image.ImageData);
-        if (bitmap is null)
-        {
-            // Graceful fallback: draw a dashed placeholder rectangle
-            DrawPlaceholderRect(canvas, image);
-            if (supportsRotation)
-                canvas.Restore();
-            return;
-        }
-
-        using var skImage = SKImage.FromBitmap(bitmap);
+        // No cache: decode inline. Use SKImage.FromEncodedData (not SKBitmap) to avoid
+        // the sk_image_new_from_bitmap crash on the Windows WinUI compositor.
+        using var skImage = DecodeToSkImage(image.ImageData);
         if (skImage is null)
         {
             DrawPlaceholderRect(canvas, image);
@@ -201,6 +191,24 @@ public static class ElementDrawingHelper
     {
         var destRect = ElementBoundsHelper.CreateNormalizedRect(image.Position, image.Size);
         canvas.DrawImage(skImage, destRect);
+    }
+
+    /// <summary>
+    /// Decodes raw image bytes into an SKImage using the safest available path.
+    /// Prefers SKImage.FromEncodedData to avoid pixel-format mismatches with GPU backends.
+    /// </summary>
+    private static SKImage? DecodeToSkImage(byte[] imageData)
+    {
+        var image = SKImage.FromEncodedData(imageData);
+        if (image is not null)
+            return image;
+
+        // Fallback for formats not handled by FromEncodedData.
+        using var bitmap = SKBitmap.Decode(imageData);
+        if (bitmap is null)
+            return null;
+
+        return SKImage.FromBitmap(bitmap);
     }
 
     /// <summary>

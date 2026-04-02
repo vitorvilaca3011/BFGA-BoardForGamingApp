@@ -9,7 +9,7 @@
         x:Class="BFGA.App.MainWindow"
         x:DataType="vm:MainViewModel"
         Title="BFGA"
-        Width="1400" Height="900"
+        Width="1600" Height="1000"
         CanResize="False"
         ExtendClientAreaToDecorationsHint="True"
         ExtendClientAreaTitleBarHeightHint="40"

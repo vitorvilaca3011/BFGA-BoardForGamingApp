@@ -82,11 +82,19 @@ public sealed class ImageDecodeCache
 
     /// <summary>
     /// Decodes raw image bytes into an SKImage.
-    /// Uses SKBitmap.Decode + SKImage.FromBitmap so the image is rasterised up-front
-    /// and safe to pass to SKCanvas.DrawImage on any thread.
+    /// Uses SKImage.FromEncodedData so the image is decoded in the format required by
+    /// the active GPU/software backend, avoiding the sk_image_new_from_bitmap crash on
+    /// Windows WinUI compositor when pixel formats are incompatible.
     /// </summary>
     private static SKImage? DecodeToImage(byte[] imageData)
     {
+        // SKImage.FromEncodedData lets Skia decode the compressed bytes (PNG/JPEG/etc.)
+        // directly into a backend-compatible format, skipping the SKBitmap pixel layout.
+        var image = SKImage.FromEncodedData(imageData);
+        if (image is not null)
+            return image;
+
+        // Fallback: decode through SKBitmap for formats SKImage doesn't handle directly.
         using var bitmap = SKBitmap.Decode(imageData);
         if (bitmap is null)
             return null;
