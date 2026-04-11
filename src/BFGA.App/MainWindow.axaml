@@ -2,7 +2,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:chrome="using:Avalonia.Controls.Chrome"
         xmlns:views="clr-namespace:BFGA.App.Views"
         xmlns:vm="clr-namespace:BFGA.App.ViewModels"
         mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="900"
@@ -52,22 +51,24 @@
                                 Click="OnSettingsClick"
                                 IsVisible="{Binding IsBoardScreen}"
                                 ToolTip.Tip="Settings">
-                            <Path Classes="stroke-icon settings-icon"
-                                  Data="{StaticResource IconSettings}" />
+                            <TextBlock Classes="title-bar-glyph settings-glyph"
+                                       Text="&#xE713;" />
                         </Button>
 
                         <!-- Minimize -->
                         <Button Classes="title-bar-button"
                                 Click="OnMinimizeClick"
                                 ToolTip.Tip="Minimize">
-                            <Path Classes="stroke-icon minimize-icon" Data="{StaticResource IconMinimize}" />
+                            <TextBlock Classes="title-bar-glyph window-control-glyph"
+                                       Text="&#xE921;" />
                         </Button>
 
                         <!-- Close -->
                         <Button Classes="title-bar-button close-button"
                                 Click="OnCloseClick"
                                 ToolTip.Tip="Close">
-                            <Path Classes="stroke-icon close-icon" Data="{StaticResource IconClose}" />
+                            <TextBlock Classes="title-bar-glyph window-control-glyph"
+                                       Text="&#xE8BB;" />
                         </Button>
                     </StackPanel>
 
