@@ -72,6 +72,12 @@ public class BoardViewport : Border
     public static readonly StyledProperty<IReadOnlyDictionary<Guid, RemoteStrokePreviewState>?> RemoteStrokePreviewsProperty =
         BoardCanvas.RemoteStrokePreviewsProperty.AddOwner<BoardViewport>();
 
+    public static readonly StyledProperty<SelectionOverlayState?> SelectionOverlayProperty =
+        BoardCanvas.SelectionOverlayProperty.AddOwner<BoardViewport>();
+
+    public static readonly StyledProperty<EraserPreviewState?> EraserPreviewProperty =
+        BoardCanvas.EraserPreviewProperty.AddOwner<BoardViewport>();
+
     public static readonly StyledProperty<float> DotGridOpacityProperty =
         AvaloniaProperty.Register<BoardViewport, float>(nameof(DotGridOpacity), 0.1f);
 
@@ -91,6 +97,18 @@ public class BoardViewport : Border
     {
         get => GetValue(RemoteStrokePreviewsProperty);
         set => SetValue(RemoteStrokePreviewsProperty, value);
+    }
+
+    public SelectionOverlayState? SelectionOverlay
+    {
+        get => GetValue(SelectionOverlayProperty);
+        set => SetValue(SelectionOverlayProperty, value);
+    }
+
+    public EraserPreviewState? EraserPreview
+    {
+        get => GetValue(EraserPreviewProperty);
+        set => SetValue(EraserPreviewProperty, value);
     }
 
     public float DotGridOpacity
@@ -121,6 +139,16 @@ public class BoardViewport : Border
         RemoteStrokePreviewsProperty.Changed.AddClassHandler<BoardViewport>((vp, e) =>
         {
             vp._canvas.RemoteStrokePreviews = e.NewValue as IReadOnlyDictionary<Guid, RemoteStrokePreviewState>;
+        });
+
+        SelectionOverlayProperty.Changed.AddClassHandler<BoardViewport>((vp, e) =>
+        {
+            vp._canvas.SelectionOverlay = e.NewValue as SelectionOverlayState;
+        });
+
+        EraserPreviewProperty.Changed.AddClassHandler<BoardViewport>((vp, e) =>
+        {
+            vp._canvas.EraserPreview = e.NewValue is EraserPreviewState preview ? preview : null;
         });
     }
 

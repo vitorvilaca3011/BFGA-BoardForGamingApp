@@ -37,6 +37,12 @@ public class BoardCanvas : Control
     public static readonly StyledProperty<IReadOnlyDictionary<Guid, RemoteStrokePreviewState>?> RemoteStrokePreviewsProperty =
         AvaloniaProperty.Register<BoardCanvas, IReadOnlyDictionary<Guid, RemoteStrokePreviewState>?>(nameof(RemoteStrokePreviews));
 
+    public static readonly StyledProperty<SelectionOverlayState?> SelectionOverlayProperty =
+        AvaloniaProperty.Register<BoardCanvas, SelectionOverlayState?>(nameof(SelectionOverlay));
+
+    public static readonly StyledProperty<EraserPreviewState?> EraserPreviewProperty =
+        AvaloniaProperty.Register<BoardCanvas, EraserPreviewState?>(nameof(EraserPreview));
+
     public float DotGridOpacity
     {
         get => _dotGridOpacity;
@@ -66,6 +72,8 @@ public class BoardCanvas : Control
 
         RemoteCursorsProperty.Changed.AddClassHandler<BoardCanvas>((canvas, _) => canvas.OnOverlayChanged());
         RemoteStrokePreviewsProperty.Changed.AddClassHandler<BoardCanvas>((canvas, _) => canvas.OnOverlayChanged());
+        SelectionOverlayProperty.Changed.AddClassHandler<BoardCanvas>((canvas, _) => canvas.OnOverlayChanged());
+        EraserPreviewProperty.Changed.AddClassHandler<BoardCanvas>((canvas, _) => canvas.OnOverlayChanged());
     }
 
     public BoardCanvas()
@@ -122,6 +130,18 @@ public class BoardCanvas : Control
     {
         get => GetValue(RemoteStrokePreviewsProperty);
         set => SetValue(RemoteStrokePreviewsProperty, value);
+    }
+
+    public SelectionOverlayState? SelectionOverlay
+    {
+        get => GetValue(SelectionOverlayProperty);
+        set => SetValue(SelectionOverlayProperty, value);
+    }
+
+    public EraserPreviewState? EraserPreview
+    {
+        get => GetValue(EraserPreviewProperty);
+        set => SetValue(EraserPreviewProperty, value);
     }
 
     /// <summary>
@@ -193,6 +213,8 @@ public class BoardCanvas : Control
         private readonly Vector2 _pan;
         private readonly IReadOnlyDictionary<Guid, RemoteStrokePreviewState>? _remoteStrokePreviews;
         private readonly IReadOnlyDictionary<Guid, RemoteCursorState>? _remoteCursors;
+        private readonly SelectionOverlayState? _selectionOverlay;
+        private readonly EraserPreviewState? _eraserPreview;
 
         public BoardDrawOperation(BoardCanvas owner, Rect bounds, BoardState board, float zoom, Vector2 pan)
         {
@@ -206,6 +228,8 @@ public class BoardCanvas : Control
             // read from the render thread (Avalonia throws "Call from invalid thread").
             _remoteStrokePreviews = owner.RemoteStrokePreviews;
             _remoteCursors = owner.RemoteCursors;
+            _selectionOverlay = owner.SelectionOverlay;
+            _eraserPreview = owner.EraserPreview;
         }
 
         public Rect Bounds { get; }
@@ -223,7 +247,8 @@ public class BoardCanvas : Control
                 && ReferenceEquals(_owner, operation._owner)
                 && _renderGeneration == operation._renderGeneration
                 && _zoom == operation._zoom
-                && _pan == operation._pan;
+                && _pan == operation._pan
+                && Equals(_selectionOverlay, operation._selectionOverlay);
         }
 
         public bool HitTest(Point p) => Bounds.Contains(p);
@@ -269,6 +294,8 @@ public class BoardCanvas : Control
                     ElementDrawingHelper.DrawElement(canvas, element, null);
                 }
 
+                SelectionOverlayRenderer.Draw(canvas, _board, _selectionOverlay, _zoom);
+                DrawEraserPreview(canvas, _eraserPreview, _zoom);
                 DrawRemoteStrokePreviews(canvas, _remoteStrokePreviews);
                 DrawRemoteCursors(canvas, _remoteCursors);
             }
@@ -287,6 +314,14 @@ public class BoardCanvas : Control
             {
                 CollaboratorOverlayHelper.DrawRemoteStrokePreview(canvas, preview);
             }
+        }
+
+        private static void DrawEraserPreview(SKCanvas canvas, EraserPreviewState? preview, float zoom)
+        {
+            if (preview is null)
+                return;
+
+            EraserPreviewRenderer.Draw(canvas, preview.Value, zoom);
         }
 
         private static void DrawRemoteCursors(SKCanvas canvas, IReadOnlyDictionary<Guid, RemoteCursorState>? cursors)

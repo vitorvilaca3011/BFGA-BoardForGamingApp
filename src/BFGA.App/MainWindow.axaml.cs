@@ -21,7 +21,7 @@ public partial class MainWindow : Window
         InitializeComponent();
         if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime)
         {
-            DataContext = new MainViewModel(new AvaloniaFileDialogService(this));
+            DataContext = new MainViewModel(new AvaloniaFileDialogService(this), new AvaloniaClipboardService(this), new AvaloniaTextPromptService(this));
             if (DataContext is MainViewModel viewModel)
             {
                 viewModel.StartPolling();
@@ -110,9 +110,19 @@ public partial class MainWindow : Window
             e.Handled = true;
             return;
         }
-        if (e.Key == Key.V && e.KeyModifiers == KeyModifiers.Control)
+
+        var focusedElement = TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement();
+        if (TryHandleBoardShortcutAsync(
+            e.Key,
+            e.KeyModifiers,
+            focusedElement,
+            () =>
+            {
+                var boardView = this.GetVisualDescendants().OfType<BoardView>().FirstOrDefault();
+                boardView?.DeleteSelection();
+            },
+            () => PasteImageFromClipboardAsync(boardScreen)).GetAwaiter().GetResult())
         {
-            _ = PasteImageFromClipboardAsync(boardScreen);
             e.Handled = true;
             return;
         }
@@ -157,6 +167,40 @@ public partial class MainWindow : Window
             return;
 
         await boardView.ImportImageFromClipboardAsync();
+    }
+
+    public static bool TryHandleDeleteShortcut(Key key, KeyModifiers modifiers)
+        => key == Key.Delete && modifiers == KeyModifiers.None;
+
+    public static bool TryHandlePasteShortcut(Key key, KeyModifiers modifiers)
+        => key == Key.V && modifiers == KeyModifiers.Control;
+
+    public static bool ShouldSuppressBoardShortcuts(IInputElement? focusedElement)
+        => focusedElement is TextBox;
+
+    public static async Task<bool> TryHandleBoardShortcutAsync(
+        Key key,
+        KeyModifiers modifiers,
+        IInputElement? focusedElement,
+        Action deleteSelection,
+        Func<Task> pasteImage)
+    {
+        if (ShouldSuppressBoardShortcuts(focusedElement))
+            return false;
+
+        if (TryHandleDeleteShortcut(key, modifiers))
+        {
+            deleteSelection();
+            return true;
+        }
+
+        if (TryHandlePasteShortcut(key, modifiers))
+        {
+            await pasteImage();
+            return true;
+        }
+
+        return false;
     }
 
     public static bool TryHandleToolShortcut(BoardScreenViewModel boardScreen, Key key, KeyModifiers modifiers)

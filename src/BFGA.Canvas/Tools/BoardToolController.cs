@@ -10,6 +10,7 @@ namespace BFGA.Canvas.Tools;
 public sealed class BoardToolController
 {
     private const float RotationEpsilon = 0.0001f;
+    private const float EraserRadius = 10f;
 
     private enum GestureMode
     {
@@ -20,10 +21,12 @@ public sealed class BoardToolController
         Shape
     }
 
-    private readonly SelectionState _selection = new();
+private readonly SelectionState _selection = new();
     private readonly Dictionary<Guid, Vector2> _interactionStartPositions = new();
     private readonly Dictionary<Guid, float> _interactionStartRotations = new();
+    private readonly HashSet<Guid> _erasedElementIds = new();
     private GestureMode _gestureMode = GestureMode.None;
+    private bool _eraserGestureActive;
     private Vector2 _anchor;
     private Vector2 _current;
     private SKRect _interactionStartBounds;
@@ -40,6 +43,10 @@ public sealed class BoardToolController
 
     public SelectionState Selection => _selection;
 
+    public bool IsSelectingBox => _gestureMode == GestureMode.SelectBox;
+
+    public SKRect? GetSelectionBoxRect() => IsSelectingBox ? CreateRect(_anchor, _current) : null;
+
     public BoardToolType CurrentTool { get; private set; } = BoardToolType.Select;
 
     public SKColor StrokeColor { get; set; } = SKColors.White;
@@ -52,12 +59,14 @@ public sealed class BoardToolController
 
     public ShapeType ShapeType { get; set; } = ShapeType.Rectangle;
 
-    public void SetTool(BoardToolType tool)
+public void SetTool(BoardToolType tool)
     {
         CurrentTool = tool;
         _gestureMode = GestureMode.None;
         _activeStroke = null;
         _activeShape = null;
+        _eraserGestureActive = false;
+        _erasedElementIds.Clear();
     }
 
     public void SetBoard(BoardState board)
@@ -67,13 +76,15 @@ public sealed class BoardToolController
         if (ReferenceEquals(Board, board))
             return;
 
-        Board = board;
+Board = board;
         PreserveSelection(selectedIds);
         _gestureMode = GestureMode.None;
         _activeStroke = null;
         _activeShape = null;
+        _eraserGestureActive = false;
         _interactionStartPositions.Clear();
         _interactionStartRotations.Clear();
+        _erasedElementIds.Clear();
     }
 
     private void PreserveSelection(IReadOnlyCollection<Guid> selectedIds)
@@ -105,6 +116,12 @@ public sealed class BoardToolController
             case BoardToolType.Ellipse:
                 ShapeType = ShapeType.Ellipse;
                 return HandleShapeDown(position);
+            case BoardToolType.Line:
+                ShapeType = ShapeType.Line;
+                return HandleShapeDown(position);
+            case BoardToolType.Arrow:
+                ShapeType = ShapeType.Arrow;
+                return HandleShapeDown(position);
             case BoardToolType.Eraser:
                 return HandleEraserDown(position);
             case BoardToolType.Image:
@@ -118,12 +135,13 @@ public sealed class BoardToolController
     {
         _current = position;
 
-        return _gestureMode switch
+return _gestureMode switch
         {
             GestureMode.SelectBox => ToolResult.HandledOnly,
             GestureMode.Manipulate => HandleManipulationMove(position),
             GestureMode.Pen => HandlePenMove(position),
             GestureMode.Shape => HandleShapeMove(position),
+            GestureMode.None when _eraserGestureActive => HandleEraserMove(position),
             _ => ToolResult.None
         };
     }
@@ -132,12 +150,13 @@ public sealed class BoardToolController
     {
         _current = position;
 
-        return _gestureMode switch
+return _gestureMode switch
         {
             GestureMode.SelectBox => FinishSelectBox(position),
             GestureMode.Manipulate => FinishManipulation(position),
             GestureMode.Pen => FinishPen(position),
             GestureMode.Shape => FinishShape(position),
+            GestureMode.None when _eraserGestureActive => FinishEraser(position),
             _ => ToolResult.None
         };
     }
@@ -156,6 +175,45 @@ public sealed class BoardToolController
 
         Board.Elements.Add(image);
         return image;
+    }
+
+    public TextElement PlaceText(string text, Vector2 position, SKColor color, float fontSize, string fontFamily)
+    {
+        var textElement = new TextElement
+        {
+            Id = Guid.NewGuid(),
+            Position = position,
+            Text = text,
+            Color = color,
+            FontSize = fontSize,
+            FontFamily = fontFamily,
+            ZIndex = GetNextZIndex()
+        };
+
+        Board.Elements.Add(textElement);
+        return textElement;
+    }
+
+    public ToolResult DeleteSelectedElements()
+    {
+        if (_selection.SelectedElementIds.Count == 0)
+            return ToolResult.None;
+
+        var operations = new List<BoardOperation>();
+        var ids = _selection.SelectedElementIds.ToArray();
+
+        foreach (var id in ids)
+        {
+            var element = Board.Elements.FirstOrDefault(e => e.Id == id);
+            if (element is null)
+                continue;
+
+            Board.Elements.Remove(element);
+            operations.Add(new DeleteElementOperation(id));
+        }
+
+        _selection.Clear();
+        return operations.Count == 0 ? ToolResult.None : new ToolResult(true, true, operations);
     }
 
     public IReadOnlyList<SelectionHandle> GetSelectionHandles()
@@ -296,7 +354,8 @@ public sealed class BoardToolController
             Type = ShapeType,
             StrokeColor = ApplyOpacity(StrokeColor, Opacity),
             FillColor = ApplyOpacity(FillColor, Opacity),
-            StrokeWidth = StrokeWidth
+            StrokeWidth = StrokeWidth,
+            ZIndex = GetNextZIndex()
         };
 
         Board.Elements.Add(_activeShape);
@@ -309,8 +368,13 @@ public sealed class BoardToolController
         if (_activeShape is null)
             return ToolResult.None;
 
-        var newPosition = new Vector2(MathF.Min(_anchor.X, position.X), MathF.Min(_anchor.Y, position.Y));
-        var newSize = new Vector2(MathF.Abs(position.X - _anchor.X), MathF.Abs(position.Y - _anchor.Y));
+        var isDirectionalShape = _activeShape.Type is ShapeType.Line or ShapeType.Arrow;
+        var newPosition = isDirectionalShape
+            ? _anchor
+            : new Vector2(MathF.Min(_anchor.X, position.X), MathF.Min(_anchor.Y, position.Y));
+        var newSize = isDirectionalShape
+            ? position - _anchor
+            : new Vector2(MathF.Abs(position.X - _anchor.X), MathF.Abs(position.Y - _anchor.Y));
         if (_activeShape.Position == newPosition && _activeShape.Size == newSize)
             return ToolResult.HandledOnly;
 
@@ -326,8 +390,6 @@ public sealed class BoardToolController
 
         if (shape is not null && !(shape.Position == _anchor && shape.Size == Vector2.Zero))
         {
-            shape.ZIndex = GetNextZIndex();
-
             _gestureMode = GestureMode.None;
             _activeShape = null;
             return new ToolResult(result.Handled, true, [new AddElementOperation(shape)]);
@@ -341,15 +403,48 @@ public sealed class BoardToolController
         return ToolResult.HandledOnly;
     }
 
-    private ToolResult HandleEraserDown(Vector2 position)
+private ToolResult HandleEraserDown(Vector2 position)
     {
-        var hit = HitTestHelper.GetTopmostHit(Board, position);
-        if (hit is null)
+        _selection.Clear();
+        _eraserGestureActive = true;
+        return EraseAt(position);
+    }
+
+    private ToolResult HandleEraserMove(Vector2 position)
+    {
+        return EraseAt(position);
+    }
+
+private ToolResult FinishEraser(Vector2 position)
+    {
+        var result = EraseAt(position);
+        _eraserGestureActive = false;
+        _erasedElementIds.Clear();
+        return result;
+    }
+
+    private ToolResult EraseAt(Vector2 position)
+    {
+        var hits = HitTestHelper.GetHitsInCircle(Board, position, EraserRadius)
+            .Where(element => !_erasedElementIds.Contains(element.Id))
+            .ToList();
+
+        if (hits.Count == 0)
             return ToolResult.HandledOnly;
 
-        Board.Elements.Remove(hit);
-        _selection.Clear();
-        return new ToolResult(true, true, [new DeleteElementOperation(hit.Id)]);
+        var operations = new List<BoardOperation>(hits.Count);
+        foreach (var hit in hits)
+        {
+            if (!Board.Elements.Remove(hit))
+                continue;
+
+            _erasedElementIds.Add(hit.Id);
+            operations.Add(new DeleteElementOperation(hit.Id));
+        }
+
+        return operations.Count == 0
+            ? ToolResult.HandledOnly
+            : new ToolResult(true, true, operations);
     }
 
     private BoardElement? GetSelectedElement()

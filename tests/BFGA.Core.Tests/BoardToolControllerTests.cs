@@ -3,6 +3,7 @@ using System.Reflection;
 using BFGA.Canvas.Tools;
 using BFGA.Core;
 using BFGA.Core.Models;
+using BFGA.Network.Protocol;
 using SkiaSharp;
 
 namespace BFGA.Core.Tests;
@@ -500,6 +501,114 @@ public class BoardToolControllerTests
         controller.HandlePointerUp(new Vector2(50, 50));
 
         Assert.Empty(board.Elements);
+    }
+
+    [Fact]
+    public void EraserBrush_Down_RemovesAllIntersectingElements()
+    {
+        var board = new BoardState();
+        var first = new ShapeElement { Id = Guid.NewGuid(), Type = ShapeType.Rectangle, Position = new Vector2(20, 20), Size = new Vector2(12, 12) };
+        var second = new ShapeElement { Id = Guid.NewGuid(), Type = ShapeType.Rectangle, Position = new Vector2(28, 20), Size = new Vector2(12, 12) };
+        board.Elements.Add(first);
+        board.Elements.Add(second);
+
+        var controller = new BoardToolController(board);
+        controller.SetTool(BoardToolType.Eraser);
+
+var result = controller.HandlePointerDown(new Vector2(26, 26));
+
+        Assert.True(result.Handled);
+        Assert.True(result.BoardChanged);
+        Assert.Empty(board.Elements);
+        Assert.Equal(2, result.Operations.Count);
+    }
+
+    [Fact]
+    public void EraserBrush_Drag_DeletesNewHitsOnlyOnce()
+    {
+        var board = new BoardState();
+        var first = new ShapeElement { Id = Guid.NewGuid(), Type = ShapeType.Rectangle, Position = new Vector2(10, 10), Size = new Vector2(12, 12) };
+        var second = new ShapeElement { Id = Guid.NewGuid(), Type = ShapeType.Rectangle, Position = new Vector2(28, 10), Size = new Vector2(12, 12) };
+        var third = new ShapeElement { Id = Guid.NewGuid(), Type = ShapeType.Rectangle, Position = new Vector2(46, 10), Size = new Vector2(12, 12) };
+        board.Elements.Add(first);
+        board.Elements.Add(second);
+        board.Elements.Add(third);
+
+        var controller = new BoardToolController(board);
+        controller.SetTool(BoardToolType.Eraser);
+
+        controller.HandlePointerDown(new Vector2(16, 16));
+        var moveResult = controller.HandlePointerMove(new Vector2(34, 16));
+        var repeatResult = controller.HandlePointerMove(new Vector2(16, 16));
+
+Assert.DoesNotContain(board.Elements, element => element.Id == first.Id);
+        Assert.DoesNotContain(board.Elements, element => element.Id == second.Id);
+        Assert.Contains(board.Elements, element => element.Id == third.Id);
+        Assert.True(moveResult.Handled);
+Assert.True(moveResult.BoardChanged);
+        Assert.Equal(second.Id, Assert.IsType<DeleteElementOperation>(Assert.Single(moveResult.Operations)).ElementId);
+        Assert.True(repeatResult.Handled);
+        Assert.False(repeatResult.BoardChanged);
+        Assert.Empty(repeatResult.Operations);
+    }
+
+    [Fact]
+    public void EraserBrush_MoveWithoutDown_DoesNotErase()
+    {
+        var board = new BoardState();
+        var shape = new ShapeElement { Id = Guid.NewGuid(), Type = ShapeType.Rectangle, Position = new Vector2(10, 10), Size = new Vector2(12, 12) };
+        board.Elements.Add(shape);
+
+        var controller = new BoardToolController(board);
+        controller.SetTool(BoardToolType.Eraser);
+
+        // Move without prior HandlePointerDown - should not erase
+        var moveResult = controller.HandlePointerMove(new Vector2(16, 16));
+        var upResult = controller.HandlePointerUp(new Vector2(16, 16));
+
+        Assert.Single(board.Elements); // Element still exists
+        Assert.False(moveResult.Handled);
+        Assert.False(moveResult.BoardChanged);
+        Assert.False(upResult.Handled);
+        Assert.False(upResult.BoardChanged);
+    }
+
+    [Fact]
+    public void DeleteSelectedElements_RemovesEverySelectedElement()
+    {
+        var board = new BoardState();
+        var first = new ShapeElement { Id = Guid.NewGuid(), Type = ShapeType.Rectangle, Size = new Vector2(20, 20) };
+        var second = new ShapeElement { Id = Guid.NewGuid(), Type = ShapeType.Ellipse, Position = new Vector2(30, 30), Size = new Vector2(10, 10) };
+        board.Elements.Add(first);
+        board.Elements.Add(second);
+
+        var controller = new BoardToolController(board);
+        controller.Selection.SelectMany([first.Id, second.Id]);
+
+        var result = controller.DeleteSelectedElements();
+
+        Assert.Empty(board.Elements);
+        Assert.Empty(controller.Selection.SelectedElementIds);
+        Assert.Collection(result.Operations,
+            operation => Assert.Equal(first.Id, Assert.IsType<DeleteElementOperation>(operation).ElementId),
+            operation => Assert.Equal(second.Id, Assert.IsType<DeleteElementOperation>(operation).ElementId));
+    }
+
+    [Fact]
+    public void PlaceText_AddsTextElementWithProvidedContent()
+    {
+        var board = new BoardState();
+        var controller = new BoardToolController(board);
+
+        var text = controller.PlaceText("hello", new Vector2(50, 60), SKColors.White, 24f, "Inter");
+
+        var element = Assert.Single(board.Elements.OfType<TextElement>());
+        Assert.Same(text, element);
+        Assert.Equal("hello", element.Text);
+        Assert.Equal(new Vector2(50, 60), element.Position);
+        Assert.Equal(SKColors.White, element.Color);
+        Assert.Equal(24f, element.FontSize);
+        Assert.Equal("Inter", element.FontFamily);
     }
 
     private static (BoardState board, BoardToolController controller, ShapeElement target) CreateControllerWithRectangle()

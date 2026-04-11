@@ -77,8 +77,16 @@ public class BoardScreenLayoutTests
         Assert.DoesNotContain("PathIcon Data=\"{StaticResource IconClose}\"", mainWindowXaml);
         Assert.Contains("Classes=\"stroke-icon\"", toolbarXaml);
         Assert.Contains("Classes=\"stroke-icon\"", bottomBarXaml);
-        Assert.Contains("Classes=\"stroke-icon\"", mainWindowXaml);
+        Assert.Contains("Classes=\"stroke-icon settings-icon\"", mainWindowXaml);
+        Assert.Contains("Classes=\"stroke-icon minimize-icon\"", mainWindowXaml);
+        Assert.Contains("Data=\"{StaticResource IconSettings}\"", mainWindowXaml);
+        Assert.DoesNotContain("M12.22 2h-.44", mainWindowXaml);
+        Assert.DoesNotContain("Width=\"14\" Height=\"14\"", mainWindowXaml);
         Assert.Contains("Path.stroke-icon", themeXaml);
+        Assert.Contains("Path.settings-icon", themeXaml);
+        Assert.Contains("Path.minimize-icon", themeXaml);
+        Assert.Contains("HorizontalAlignment\" Value=\"Center\"", themeXaml);
+        Assert.Contains("VerticalAlignment\" Value=\"Center\"", themeXaml);
         Assert.Contains("Stroke\" Value=\"{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}\"", themeXaml);
         Assert.Contains("Slider", bottomBarXaml);
         Assert.Contains("ZoomInCommand", bottomBarXaml);
@@ -166,6 +174,8 @@ public class BoardScreenLayoutTests
         Assert.Contains("Slider", bottomBar);
         Assert.Contains("ZoomLabel", bottomBar);
         Assert.Contains("ZoomInCommand", bottomBar);
+        var toolIcons = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "BFGA.App", "Assets", "ToolIcons.axaml"));
+        Assert.Contains("IconSettings", toolIcons);
     }
 
     [Fact]

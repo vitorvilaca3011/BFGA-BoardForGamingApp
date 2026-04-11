@@ -69,6 +69,27 @@ public static class HitTestHelper
         return null;
     }
 
+    /// <summary>
+    /// Finds all elements that intersect a circular brush area.
+    /// </summary>
+    public static IReadOnlyList<BoardElement> GetHitsInCircle(BoardState board, Vector2 center, float radius)
+    {
+        var radiusSq = radius * radius;
+        var elements = board.Elements;
+        var sorted = IsSortedByZIndex(elements)
+            ? elements
+            : elements.OrderBy(e => e.ZIndex).ToList();
+
+        var hits = new List<BoardElement>();
+        foreach (var element in sorted)
+        {
+            if (CircleIntersectsBounds(center, radiusSq, ElementBoundsHelper.GetBounds(element)))
+                hits.Add(element);
+        }
+
+        return hits;
+    }
+
     private static bool IsSortedByZIndex(IReadOnlyList<BoardElement> elements)
     {
         for (int i = 1; i < elements.Count; i++)
@@ -77,6 +98,15 @@ public static class HitTestHelper
                 return false;
         }
         return true;
+    }
+
+    private static bool CircleIntersectsBounds(Vector2 center, float radiusSq, SkiaSharp.SKRect bounds)
+    {
+        var clampedX = Math.Clamp(center.X, bounds.Left, bounds.Right);
+        var clampedY = Math.Clamp(center.Y, bounds.Top, bounds.Bottom);
+        var dx = center.X - clampedX;
+        var dy = center.Y - clampedY;
+        return dx * dx + dy * dy <= radiusSq;
     }
 
     /// <summary>

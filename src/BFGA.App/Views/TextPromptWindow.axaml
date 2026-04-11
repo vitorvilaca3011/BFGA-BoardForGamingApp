@@ -1,0 +1,17 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="BFGA.App.Views.TextPromptWindow"
+        Width="420"
+        Height="180"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Title="Add Text">
+    <StackPanel Margin="16" Spacing="12">
+        <TextBlock x:Name="PromptTextBlock" Text="Enter text" />
+        <TextBox x:Name="InputTextBox" Watermark="Text" />
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button Content="Cancel" Click="OnCancelClick" />
+            <Button Content="OK" Click="OnOkClick" />
+        </StackPanel>
+    </StackPanel>
+</Window>

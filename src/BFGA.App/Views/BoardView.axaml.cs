@@ -27,11 +27,19 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
     public static readonly StyledProperty<float> DotGridOpacityProperty =
         AvaloniaProperty.Register<BoardView, float>(nameof(DotGridOpacity), 0.1f);
 
+    public static readonly StyledProperty<EraserPreviewState?> EraserPreviewProperty =
+        AvaloniaProperty.Register<BoardView, EraserPreviewState?>(nameof(EraserPreview));
+
     static BoardView()
     {
         DotGridOpacityProperty.Changed.AddClassHandler<BoardView>((bv, e) =>
         {
             bv.viewport.DotGridOpacity = (float)e.NewValue!;
+        });
+
+        BoardProperty.Changed.AddClassHandler<BoardView>((bv, _) =>
+        {
+            bv.HandleBoardChanged();
         });
     }
 
@@ -59,6 +67,12 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
         set => SetValue(DotGridOpacityProperty, value);
     }
 
+    public EraserPreviewState? EraserPreview
+    {
+        get => GetValue(EraserPreviewProperty);
+        set => SetValue(EraserPreviewProperty, value);
+    }
+
     public BoardView()
     {
         InitializeComponent();
@@ -69,6 +83,7 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
         viewport.PointerPressed += HandlePointerPressed;
         viewport.PointerMoved += HandlePointerMoved;
         viewport.PointerReleased += HandlePointerReleased;
+        viewport.PointerExited += HandlePointerExited;
         DataContextChanged += HandleDataContextChanged;
         SyncToolController();
     }
@@ -135,6 +150,7 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
     private int _moveLogThrottleCounter;
     private bool _isPanning;
     private Point _lastPanPosition;
+    private PointerPhase _currentPointerPhase;
 
     private void HandleDataContextChanged(object? sender, EventArgs e)
     {
@@ -168,6 +184,7 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
 
         if (e.PropertyName is nameof(BoardScreenViewModel.SelectedTool))
         {
+            SyncEraserPreview(null, false);
             UpdateCursorForTool();
         }
     }
@@ -218,13 +235,16 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
 
         if (_toolController.CurrentTool != boardScreen.SelectedTool)
             _toolController.SetTool(boardScreen.SelectedTool);
+
+        SyncSelectionOverlay();
+
         if (logThisPhase)
         {
             mainViewModel.LogBoardDebug("sync-tool", () => $"selected={boardScreen.SelectedTool} controller={_toolController.CurrentTool} elements={activeBoard.Elements.Count} stroke={boardScreen.SelectedStrokeColor} fill={boardScreen.SelectedFillColor} width={boardScreen.StrokeWidth:0.##} opacity={boardScreen.Opacity:0.##}");
         }
     }
 
-    private void HandlePointerPressed(object? sender, PointerPressedEventArgs e)
+    private async void HandlePointerPressed(object? sender, PointerPressedEventArgs e)
     {
         StartPointerGesture();
         LogPointerEvent("pointer-pressed", e);
@@ -237,6 +257,16 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
             _lastPanPosition = e.GetPosition(viewport);
             e.Pointer.Capture(viewport);
             e.Handled = true;
+            return;
+        }
+
+        if (_toolController?.CurrentTool == BoardToolType.Text)
+        {
+            var boardPoint = viewport.ScreenToBoard(e.GetPosition(viewport));
+            var result = await PlaceTextFromPromptAsync(boardPoint);
+            ApplyToolResult(result, "pressed", logThisPhase: true);
+            if (result.Handled)
+                e.Handled = true;
             return;
         }
 
@@ -264,6 +294,8 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
             return;
         }
 
+        SyncEraserPreview(viewport.ScreenToBoard(e.GetPosition(viewport)), true);
+
         var shouldLog = ShouldLogMoveEvent();
 
         if (TryHandlePointer(e, PointerPhase.Moved, shouldLog))
@@ -287,14 +319,37 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
 
         try
         {
+            SyncEraserPreview(viewport.ScreenToBoard(e.GetPosition(viewport)), true);
             if (TryHandlePointer(e, PointerPhase.Released))
                 e.Handled = true;
         }
         finally
         {
             e.Pointer.Capture(null);
+            SyncEraserPreview(null, false);
             StartPointerGesture();
         }
+    }
+
+    private void HandleBoardChanged()
+    {
+        if (_toolController is null)
+            return;
+
+        var board = Board;
+        if (board is null)
+        {
+            viewport.SelectionOverlay = null;
+            return;
+        }
+
+        _toolController.SetBoard(board);
+        SyncSelectionOverlay();
+    }
+
+    private void HandlePointerExited(object? sender, PointerEventArgs e)
+    {
+        SyncEraserPreview(null, false);
     }
 
     private bool TryHandlePointer(PointerEventArgs e, PointerPhase phase, bool logThisPhase = true)
@@ -323,59 +378,9 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
                 _ => ToolResult.None
             };
 
-            if (logThisPhase)
-            {
-                mainViewModel.LogBoardDebug($"tool-result-{phase.ToString().ToLowerInvariant()}", () => $"handled={result.Handled} boardChanged={result.BoardChanged} operations={result.Operations.Count}");
-            }
+            _currentPointerPhase = phase;
 
-            if (result.BoardChanged)
-            {
-                if (logThisPhase)
-                {
-                    mainViewModel.LogBoardDebug($"invalidate-{phase.ToString().ToLowerInvariant()}", () => "board-changed=true action=invalidate");
-                }
-                viewport.InvalidateBoard();
-            }
-            else
-            {
-                if (logThisPhase)
-                {
-                    mainViewModel.LogBoardDebug($"invalidate-{phase.ToString().ToLowerInvariant()}", () => "board-changed=false action=skip");
-                }
-            }
-
-            if (result.HasOperations)
-            {
-                foreach (var operation in result.Operations)
-                {
-                    _boardScreenViewModel.MainViewModel.PublishLocalBoardOperation(operation);
-                }
-
-                if (_boardScreenViewModel.MainViewModel.Host is not null)
-                {
-                    _boardScreenViewModel.MainViewModel.SyncBoardFromHost();
-                    _toolController.SetBoard(_boardScreenViewModel.MainViewModel.Board);
-                    if (logThisPhase)
-                    {
-                        mainViewModel.LogBoardDebug($"publish-{phase.ToString().ToLowerInvariant()}", () => $"operations={result.Operations.Count} action=host-resync");
-                    }
-                }
-                else
-                {
-                    if (logThisPhase)
-                    {
-                        mainViewModel.LogBoardDebug($"publish-{phase.ToString().ToLowerInvariant()}", () => $"operations={result.Operations.Count} action=published");
-                    }
-                }
-            }
-
-            if (!result.HasOperations)
-            {
-                if (logThisPhase)
-                {
-                    mainViewModel.LogBoardDebug($"publish-{phase.ToString().ToLowerInvariant()}", () => "operations=0 action=skip");
-                }
-            }
+            ApplyToolResult(result, phase.ToString().ToLowerInvariant(), logThisPhase);
 
             return result.Handled;
         }
@@ -384,6 +389,128 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
             _boardScreenViewModel.MainViewModel.LogBoardDebug($"pointer-error-{phase.ToString().ToLowerInvariant()}", () => ex.ToString());
             throw;
         }
+    }
+
+    public void DeleteSelection()
+    {
+        if (_boardScreenViewModel is null || _toolController is null)
+            return;
+
+        SyncToolController();
+        var result = _toolController.DeleteSelectedElements();
+        ApplyToolResult(result, "delete-selection", logThisPhase: true);
+    }
+
+    private async Task<ToolResult> PlaceTextFromPromptAsync(System.Numerics.Vector2 position)
+    {
+        if (_boardScreenViewModel is null || _toolController is null)
+            return ToolResult.None;
+
+        var mainViewModel = _boardScreenViewModel.MainViewModel;
+        var promptService = mainViewModel.TextPromptService;
+        if (promptService is null)
+            return ToolResult.None;
+
+        var text = await promptService.PromptAsync("Add Text", "Enter text", "Text");
+        if (string.IsNullOrWhiteSpace(text))
+            return ToolResult.None;
+
+        var baseColor = _boardScreenViewModel.SelectedStrokeColor;
+        var color = new SkiaSharp.SKColor(baseColor.Red, baseColor.Green, baseColor.Blue, (byte)Math.Round(255 * _boardScreenViewModel.Opacity));
+
+        var textElement = _toolController.PlaceText(text, position, color, 24f, "Inter");
+        _toolController.Selection.Select(textElement.Id);
+        _boardScreenViewModel.SelectedTool = BoardToolType.Select;
+
+        return new ToolResult(true, true, [new AddElementOperation(textElement)]);
+    }
+
+    private void SyncEraserPreview(System.Numerics.Vector2? boardPoint, bool isActive)
+    {
+        if (_toolController?.CurrentTool != BoardToolType.Eraser || !isActive || boardPoint is null)
+        {
+            EraserPreview = null;
+            return;
+        }
+
+        EraserPreview = new EraserPreviewState(boardPoint.Value, 10f, true);
+    }
+
+    private void ApplyToolResult(ToolResult result, string operationName, bool logThisPhase)
+    {
+        if (_boardScreenViewModel is null || _toolController is null)
+            return;
+
+        var mainViewModel = _boardScreenViewModel.MainViewModel;
+
+        if (logThisPhase)
+        {
+            mainViewModel.LogBoardDebug($"tool-result-{operationName}", () => $"handled={result.Handled} boardChanged={result.BoardChanged} operations={result.Operations.Count}");
+        }
+
+        if (result.BoardChanged)
+        {
+            if (logThisPhase)
+            {
+                mainViewModel.LogBoardDebug($"invalidate-{operationName}", () => "board-changed=true action=invalidate");
+            }
+
+            viewport.InvalidateBoard();
+        }
+        else if (logThisPhase)
+        {
+            mainViewModel.LogBoardDebug($"invalidate-{operationName}", () => "board-changed=false action=skip");
+        }
+
+        if (result.HasOperations)
+        {
+            foreach (var operation in result.Operations)
+            {
+                mainViewModel.PublishLocalBoardOperation(operation);
+            }
+
+            if (mainViewModel.Host is not null)
+            {
+                mainViewModel.SyncBoardFromHost();
+                _toolController.SetBoard(mainViewModel.Board);
+                SyncSelectionOverlay();
+                if (logThisPhase)
+                {
+                    mainViewModel.LogBoardDebug($"publish-{operationName}", () => $"operations={result.Operations.Count} action=host-resync");
+                }
+            }
+            else if (logThisPhase)
+            {
+                mainViewModel.LogBoardDebug($"publish-{operationName}", () => $"operations={result.Operations.Count} action=published");
+            }
+        }
+        else if (logThisPhase)
+        {
+            mainViewModel.LogBoardDebug($"publish-{operationName}", () => "operations=0 action=skip");
+        }
+
+        SyncSelectionOverlay();
+    }
+
+    private void SyncSelectionOverlay()
+    {
+        if (_toolController is null)
+        {
+            viewport.SelectionOverlay = null;
+            return;
+        }
+
+        if (_toolController.CurrentTool != BoardToolType.Select)
+        {
+            viewport.SelectionOverlay = null;
+            return;
+        }
+
+        viewport.SelectionOverlay = new SelectionOverlayState(
+            _toolController.Selection.SelectedElementIds.ToArray(),
+            _toolController.Selection.ActiveElementId,
+            _toolController.GetSelectionHandles(),
+            _toolController.GetSelectionBoxRect());
     }
 
     private void LogPointerEvent(string eventName, PointerEventArgs e)
@@ -485,6 +612,10 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
         if (_boardScreenViewModel is null || _toolController is null)
             return;
 
+        var clipboardService = _boardScreenViewModel.MainViewModel.ClipboardService;
+        if (clipboardService is null)
+            return;
+
         // Find the selected element
         var activeId = _toolController.Selection.ActiveElementId;
         if (activeId is null)
@@ -497,17 +628,9 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
         if (imageElement.ImageData is null || imageElement.ImageData.Length == 0)
             return;
 
-        var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
-        if (clipboard is null)
-            return;
-
         try
         {
-#pragma warning disable CS0618
-            var dataObject = new Avalonia.Input.DataObject();
-            dataObject.Set("image/png", imageElement.ImageData);
-            await clipboard.SetDataObjectAsync(dataObject);
-#pragma warning restore CS0618
+            await clipboardService.WriteImageAsync(imageElement.ImageData, imageElement.OriginalFileName);
         }
         catch (Exception ex)
         {
@@ -521,80 +644,17 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
             return;
 
         var mainViewModel = _boardScreenViewModel.MainViewModel;
+        var clipboardService = mainViewModel.ClipboardService;
+        if (clipboardService is null)
+            return;
 
         try
         {
-            var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
-            if (clipboard is null)
+            var clipboardImage = await clipboardService.ReadImageAsync();
+            if (clipboardImage is null)
                 return;
 
-#pragma warning disable CS0618
-            var formats = await clipboard.GetFormatsAsync();
-#pragma warning restore CS0618
-            if (formats is null)
-                return;
-
-            byte[]? imageData = null;
-            string fileName = "clipboard.png";
-
-            // Try to get image data from clipboard
-            var imageFormat = formats.FirstOrDefault(f =>
-                f.Contains("image", StringComparison.OrdinalIgnoreCase) ||
-                f.Contains("png", StringComparison.OrdinalIgnoreCase) ||
-                f.Contains("bitmap", StringComparison.OrdinalIgnoreCase));
-
-            if (imageFormat is not null)
-            {
-#pragma warning disable CS0618
-                var data = await clipboard.GetDataAsync(imageFormat);
-#pragma warning restore CS0618
-                if (data is byte[] bytes)
-                    imageData = bytes;
-                else if (data is System.IO.Stream stream)
-                {
-                    using var ms = new System.IO.MemoryStream();
-                    await stream.CopyToAsync(ms);
-                    imageData = ms.ToArray();
-                }
-            }
-
-            // Try file drop list as fallback
-            if (imageData is null)
-            {
-                var fileFormats = new[] { "Files", "FileNames", "text/uri-list" };
-                foreach (var ff in fileFormats)
-                {
-                    if (!formats.Contains(ff))
-                        continue;
-
-#pragma warning disable CS0618
-                    var data = await clipboard.GetDataAsync(ff);
-#pragma warning restore CS0618
-                    if (data is IEnumerable<string> filePaths)
-                    {
-                        var path = filePaths.FirstOrDefault(p =>
-                            p.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
-                            p.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
-                            p.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase) ||
-                            p.EndsWith(".bmp", StringComparison.OrdinalIgnoreCase) ||
-                            p.EndsWith(".gif", StringComparison.OrdinalIgnoreCase) ||
-                            p.EndsWith(".webp", StringComparison.OrdinalIgnoreCase));
-                        if (path is not null && System.IO.File.Exists(path))
-                        {
-                            imageData = await System.IO.File.ReadAllBytesAsync(path);
-                            fileName = System.IO.Path.GetFileName(path);
-                        }
-                    }
-
-                    if (imageData is not null)
-                        break;
-                }
-            }
-
-            if (imageData is null || imageData.Length == 0)
-                return;
-
-            PlaceImageOnBoard(imageData, fileName);
+            PlaceImageOnBoard(clipboardImage.ImageData, clipboardImage.FileName);
         }
         catch (Exception ex)
         {
@@ -626,7 +686,9 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
         }
 
         // Place at center of viewport in board coordinates
-        var viewportCenter = new Avalonia.Point(viewport.Bounds.Width / 2, viewport.Bounds.Height / 2);
+        var viewportWidth = viewport.Bounds.Width > 0 ? viewport.Bounds.Width : viewport.Width;
+        var viewportHeight = viewport.Bounds.Height > 0 ? viewport.Bounds.Height : viewport.Height;
+        var viewportCenter = new Avalonia.Point(viewportWidth / 2, viewportHeight / 2);
         var boardCenter = viewport.ScreenToBoard(viewportCenter);
         var position = new System.Numerics.Vector2(
             boardCenter.X - defaultSize.X / 2,
@@ -634,6 +696,7 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
 
         SyncToolController();
         var imageElement = _toolController.PlaceImage(imageData, fileName, position, defaultSize);
+        _toolController.Selection.Select(imageElement.Id);
 
         // Publish the operation
         var operation = new AddElementOperation(imageElement);
@@ -643,6 +706,7 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
         {
             mainViewModel.SyncBoardFromHost();
             _toolController.SetBoard(mainViewModel.Board);
+            SyncSelectionOverlay();
         }
 
         viewport.InvalidateBoard();

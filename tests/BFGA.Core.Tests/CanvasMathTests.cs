@@ -1335,6 +1335,34 @@ public class ImageCacheLifecycleTests
         Assert.NotEqual(SKColors.Transparent, bitmap.GetPixel(20, 15));
     }
 
+    [Fact]
+    public void Draw_EraserPreview_RendersVisibleCircle()
+    {
+        using var bitmap = new SKBitmap(80, 80);
+        using var canvas = new SKCanvas(bitmap);
+        canvas.Clear(SKColors.Transparent);
+
+        var preview = new EraserPreviewState(new Vector2(40, 40), 18f, true);
+
+        EraserPreviewRenderer.Draw(canvas, preview, zoom: 1f);
+
+        Assert.True(CountOpaquePixels(bitmap, 20, 20, 60, 60) > 0);
+    }
+
+    [Fact]
+    public void Draw_EraserPreview_Inactive_DoesNotRender()
+    {
+        using var bitmap = new SKBitmap(80, 80);
+        using var canvas = new SKCanvas(bitmap);
+        canvas.Clear(SKColors.Transparent);
+
+        var preview = new EraserPreviewState(new Vector2(40, 40), 18f, false);
+
+        EraserPreviewRenderer.Draw(canvas, preview, zoom: 1f);
+
+        Assert.Equal(0, CountOpaquePixels(bitmap, 20, 20, 60, 60));
+    }
+
     private static byte[] CreatePngBytes()
     {
         return CreatePngBytes(SKColors.Red);
@@ -1348,5 +1376,20 @@ public class ImageCacheLifecycleTests
         using var image = SKImage.FromBitmap(bitmap);
         using var data = image.Encode(SKEncodedImageFormat.Png, 100);
         return data.ToArray();
+    }
+
+    private static int CountOpaquePixels(SKBitmap bitmap, int left, int top, int right, int bottom)
+    {
+        var count = 0;
+        for (var y = top; y <= bottom; y++)
+        {
+            for (var x = left; x <= right; x++)
+            {
+                if (bitmap.GetPixel(x, y).Alpha > 0)
+                    count++;
+            }
+        }
+
+        return count;
     }
 }
