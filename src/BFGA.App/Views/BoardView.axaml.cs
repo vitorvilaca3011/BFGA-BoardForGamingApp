@@ -194,19 +194,7 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
         try
         {
             var tool = _boardScreenViewModel?.SelectedTool ?? BoardToolType.Select;
-            viewport.Cursor = new Cursor(tool switch
-            {
-                BoardToolType.Hand => StandardCursorType.Hand,
-                BoardToolType.Pen => StandardCursorType.Cross,
-                BoardToolType.Rectangle => StandardCursorType.Cross,
-                BoardToolType.Ellipse => StandardCursorType.Cross,
-                BoardToolType.Arrow => StandardCursorType.Cross,
-                BoardToolType.Line => StandardCursorType.Cross,
-                BoardToolType.Eraser => StandardCursorType.Cross,
-                BoardToolType.Text => StandardCursorType.Ibeam,
-                BoardToolType.Image => StandardCursorType.Hand,
-                _ => StandardCursorType.Arrow
-            });
+            viewport.Cursor = BoardCursorFactory.Create(tool);
         }
         catch (InvalidOperationException)
         {

@@ -11,13 +11,13 @@
                     Classes.active="{Binding IsSelectToolActive}"
                     Command="{Binding SelectToolCommand}"
                     ToolTip.Tip="Select (V)">
-                <Path Classes="stroke-icon" Data="{StaticResource ToolIconSelect}" Width="16" Height="16" />
+                <Path Classes="toolbar-solid-icon" Data="{StaticResource ToolIconSelect}" Width="16" Height="16" Margin="4,0,0,0" />
             </Button>
             <Button Classes="whiteboard-float-tool-button"
                     Classes.active="{Binding IsHandToolActive}"
                     Command="{Binding HandToolCommand}"
                     ToolTip.Tip="Hand (H)">
-                <Path Classes="stroke-icon" Data="{StaticResource ToolIconHand}" Width="16" Height="16" />
+                <Path Classes="toolbar-solid-icon" Data="{StaticResource ToolIconHand}" Width="16" Height="16" Margin="4,0,0,0"/>
             </Button>
 
             <Border Width="1" Height="20" Background="{DynamicResource BorderDefault}" Margin="4,0" />
@@ -52,6 +52,12 @@
 
             <!-- Freehand -->
             <Button Classes="whiteboard-float-tool-button"
+                    Classes.active="{Binding IsEraserToolActive}"
+                    Command="{Binding EraserToolCommand}"
+                    ToolTip.Tip="Eraser (X)">
+                <Path Classes="toolbar-solid-icon" Data="{StaticResource ToolIconEraser}" Width="16" Height="16" />
+            </Button>
+            <Button Classes="whiteboard-float-tool-button"
                     Classes.active="{Binding IsPenToolActive}"
                     Command="{Binding PenToolCommand}"
                     ToolTip.Tip="Pen (P)">
@@ -77,12 +83,6 @@
             <Border Width="1" Height="20" Background="{DynamicResource BorderDefault}" Margin="4,0" />
 
             <!-- Utility -->
-            <Button Classes="whiteboard-float-tool-button"
-                    Classes.active="{Binding IsEraserToolActive}"
-                    Command="{Binding EraserToolCommand}"
-                    ToolTip.Tip="Eraser (X)">
-                <Path Classes="stroke-icon" Data="{StaticResource ToolIconEraser}" Width="16" Height="16" />
-            </Button>
             <Button Classes="whiteboard-float-tool-button"
                     Classes.active="{Binding IsLaserPointerToolActive}"
                     Command="{Binding LaserPointerToolCommand}"

@@ -49,12 +49,12 @@ public class BoardScreenLayoutTests
             "ToolIconArrow",
             "ToolIconLine",
             "BorderDefault",
+            "ToolIconEraser",
             "ToolIconPen",
             "BorderDefault",
             "ToolIconText",
             "ToolIconImage",
             "BorderDefault",
-            "ToolIconEraser",
             "ToolIconLaser");
         Assert.Contains("Classes.active=\"{Binding IsSelectToolActive}\"", toolbarXaml);
         Assert.Contains("Classes.active=\"{Binding IsHandToolActive}\"", toolbarXaml);
@@ -77,17 +77,20 @@ public class BoardScreenLayoutTests
         Assert.DoesNotContain("PathIcon Data=\"{StaticResource IconClose}\"", mainWindowXaml);
         Assert.Contains("Classes=\"stroke-icon\"", toolbarXaml);
         Assert.Contains("Classes=\"stroke-icon\"", bottomBarXaml);
-        Assert.Contains("Classes=\"stroke-icon settings-icon\"", mainWindowXaml);
-        Assert.Contains("Classes=\"stroke-icon minimize-icon\"", mainWindowXaml);
-        Assert.Contains("Data=\"{StaticResource IconSettings}\"", mainWindowXaml);
+        Assert.Contains("Classes=\"title-bar-glyph settings-glyph\"", mainWindowXaml);
+        Assert.Contains("Classes=\"title-bar-glyph window-control-glyph\"", mainWindowXaml);
+        Assert.Contains("Text=\"&#xE713;\"", mainWindowXaml);
+        Assert.Contains("Text=\"&#xE921;\"", mainWindowXaml);
+        Assert.Contains("Text=\"&#xE8BB;\"", mainWindowXaml);
         Assert.DoesNotContain("M12.22 2h-.44", mainWindowXaml);
         Assert.DoesNotContain("Width=\"14\" Height=\"14\"", mainWindowXaml);
         Assert.Contains("Path.stroke-icon", themeXaml);
-        Assert.Contains("Path.settings-icon", themeXaml);
-        Assert.Contains("Path.minimize-icon", themeXaml);
+        Assert.Contains("TextBlock.title-bar-glyph", themeXaml);
+        Assert.Contains("TextBlock.settings-glyph", themeXaml);
+        Assert.Contains("TextBlock.window-control-glyph", themeXaml);
         Assert.Contains("HorizontalAlignment\" Value=\"Center\"", themeXaml);
         Assert.Contains("VerticalAlignment\" Value=\"Center\"", themeXaml);
-        Assert.Contains("Stroke\" Value=\"{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}\"", themeXaml);
+        Assert.Contains("Foreground\" Value=\"{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}\"", themeXaml);
         Assert.Contains("Slider", bottomBarXaml);
         Assert.Contains("ZoomInCommand", bottomBarXaml);
         Assert.Contains("ZoomOutCommand", bottomBarXaml);
