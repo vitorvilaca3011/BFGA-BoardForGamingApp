@@ -19,9 +19,8 @@ namespace BFGA.App.ViewModels;
 
 public sealed class MainViewModel : ViewModelBase, IDisposable
 {
-    private readonly IFileDialogService? _fileDialogService;
+private readonly IFileDialogService? _fileDialogService;
     private readonly IClipboardService? _clipboardService;
-    private readonly ITextPromptService? _textPromptService;
     private readonly IGameSessionFactory _sessionFactory;
     private readonly Func<string> _documentsFolderProvider;
     private readonly BoardDebugLogger? _boardDebugLogger;
@@ -66,7 +65,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     private TaskCompletionSource<bool>? _pendingFullSyncRequest;
     private readonly SettingsService _settingsService = new();
 
-    public MainViewModel(
+public MainViewModel(
         IFileDialogService? fileDialogService,
         IGameSessionFactory? sessionFactory,
         TimeSpan? joinTimeout = null,
@@ -77,20 +76,8 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     }
 
     public MainViewModel(
-        IFileDialogService? fileDialogService,
-        IClipboardService? clipboardService,
-        IGameSessionFactory? sessionFactory,
-        TimeSpan? joinTimeout = null,
-        TimeSpan? fullSyncTimeout = null,
-        Func<string>? documentsFolderProvider = null)
-        : this(fileDialogService, clipboardService, null, sessionFactory, joinTimeout, fullSyncTimeout, documentsFolderProvider)
-    {
-    }
-
-    public MainViewModel(
         IFileDialogService? fileDialogService = null,
         IClipboardService? clipboardService = null,
-        ITextPromptService? textPromptService = null,
         IGameSessionFactory? sessionFactory = null,
         TimeSpan? joinTimeout = null,
         TimeSpan? fullSyncTimeout = null,
@@ -98,7 +85,6 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     {
         _fileDialogService = fileDialogService;
         _clipboardService = clipboardService;
-        _textPromptService = textPromptService;
         _sessionFactory = sessionFactory ?? new NetworkGameSessionFactory();
         _joinTimeout = joinTimeout ?? TimeSpan.FromSeconds(5);
         _fullSyncTimeout = fullSyncTimeout ?? TimeSpan.FromSeconds(5);
@@ -147,9 +133,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
 
     public IFileDialogService? FileDialogService => _fileDialogService;
     public IClipboardService? ClipboardService => _clipboardService;
-    public ITextPromptService? TextPromptService => _textPromptService;
-
-    public ConnectionMode SelectedMode
+public ConnectionMode SelectedMode
     {
         get => _selectedMode;
         set

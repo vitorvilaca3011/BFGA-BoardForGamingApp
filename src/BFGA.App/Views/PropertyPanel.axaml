@@ -64,9 +64,25 @@
                     <Button Classes="color-swatch" Background="#8E8E93" Tag="#8E8E93" Click="OnFillSwatchClick" />
                     <Button Classes="color-swatch" Background="#636366" Tag="#636366" Click="OnFillSwatchClick" />
                     <Button Classes="color-swatch" Background="#48484A" Tag="#48484A" Click="OnFillSwatchClick" />
-                    <Button Classes="color-swatch" Background="#2C2C2E" Tag="#2C2C2E" Click="OnFillSwatchClick" />
+                    <Button Classes="color-swatch" Background="#2C2C2E" Tag="#2C2E2E" Click="OnFillSwatchClick" />
                     <Button Classes="color-swatch" Background="#1C1C1E" Tag="#1C1C1E" Click="OnFillSwatchClick" />
                 </WrapPanel>
+            </StackPanel>
+
+            <StackPanel IsVisible="{Binding ShowTextFontSection}" Spacing="8">
+                <TextBlock Text="FONT" Classes="input-label" FontFamily="{DynamicResource InterMediumFont}" />
+                <StackPanel Spacing="6">
+                    <ComboBox x:Name="FontFamilyComboBox"
+                              SelectedItem="{Binding FontFamily, Mode=TwoWay}"
+                              HorizontalAlignment="Stretch" />
+                </StackPanel>
+                <StackPanel Spacing="6">
+                    <TextBlock Text="SIZE" Classes="input-label" FontFamily="{DynamicResource InterMediumFont}" />
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                        <Slider Minimum="8" Maximum="120" Value="{Binding FontSize, Mode=TwoWay}" />
+                        <TextBlock Grid.Column="1" Text="{Binding FontSize, StringFormat={}{0:0}}" Classes="whiteboard-status-text" />
+                    </Grid>
+                </StackPanel>
             </StackPanel>
         </StackPanel>
     </Border>

@@ -21,7 +21,7 @@ public partial class MainWindow : Window
         InitializeComponent();
         if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime)
         {
-            DataContext = new MainViewModel(new AvaloniaFileDialogService(this), new AvaloniaClipboardService(this), new AvaloniaTextPromptService(this));
+            DataContext = new MainViewModel(new AvaloniaFileDialogService(this), new AvaloniaClipboardService(this));
             if (DataContext is MainViewModel viewModel)
             {
                 viewModel.StartPolling();
@@ -85,6 +85,12 @@ public partial class MainWindow : Window
             return;
         }
 
+        var focusedElement = TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement();
+        if (boardScreen.IsEditingText || focusedElement is TextBox)
+        {
+            return;
+        }
+
         // Check Ctrl+Shift+Z FIRST (most specific), then Ctrl+Z, then Ctrl+Y
         if (e.Key == Key.Z && e.KeyModifiers == (KeyModifiers.Control | KeyModifiers.Shift))
         {
@@ -111,11 +117,11 @@ public partial class MainWindow : Window
             return;
         }
 
-        var focusedElement = TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement();
         if (TryHandleBoardShortcutAsync(
             e.Key,
             e.KeyModifiers,
             focusedElement,
+            boardScreen.IsEditingText,
             () =>
             {
                 var boardView = this.GetVisualDescendants().OfType<BoardView>().FirstOrDefault();
@@ -182,10 +188,11 @@ public partial class MainWindow : Window
         Key key,
         KeyModifiers modifiers,
         IInputElement? focusedElement,
+        bool isEditingText,
         Action deleteSelection,
         Func<Task> pasteImage)
     {
-        if (ShouldSuppressBoardShortcuts(focusedElement))
+        if (ShouldSuppressBoardShortcuts(focusedElement) || isEditingText)
             return false;
 
         if (TryHandleDeleteShortcut(key, modifiers))

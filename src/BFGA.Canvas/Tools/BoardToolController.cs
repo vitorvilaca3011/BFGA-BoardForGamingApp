@@ -179,6 +179,7 @@ return _gestureMode switch
 
     public TextElement PlaceText(string text, Vector2 position, SKColor color, float fontSize, string fontFamily)
     {
+        var size = MeasureTextSize(text, fontSize, fontFamily);
         var textElement = new TextElement
         {
             Id = Guid.NewGuid(),
@@ -187,6 +188,7 @@ return _gestureMode switch
             Color = color,
             FontSize = fontSize,
             FontFamily = fontFamily,
+            Size = size,
             ZIndex = GetNextZIndex()
         };
 
@@ -625,4 +627,39 @@ private ToolResult FinishEraser(Vector2 position)
 
     private static SKColor ApplyOpacity(SKColor color, float opacity)
         => color.WithAlpha((byte)(color.Alpha / 255f * opacity * 255));
+
+    private static Vector2 MeasureTextSize(string text, float fontSize, string fontFamily)
+    {
+        if (string.IsNullOrEmpty(text))
+            return Vector2.Zero;
+
+        using var font = new SKFont
+        {
+            Size = fontSize
+        };
+
+        if (!string.IsNullOrEmpty(fontFamily))
+        {
+            using var typeface = SKTypeface.FromFamilyName(fontFamily);
+            if (typeface is not null)
+                font.Typeface = typeface;
+        }
+
+        var metrics = font.Metrics;
+        var lineHeight = metrics.Descent - metrics.Ascent + metrics.Leading;
+        if (lineHeight <= float.Epsilon)
+            lineHeight = fontSize * 1.2f;
+
+        var lines = text.Split('\n');
+        var maxWidth = 0f;
+        foreach (var line in lines)
+        {
+            var width = font.MeasureText(line);
+            if (width > maxWidth)
+                maxWidth = width;
+        }
+
+        var height = Math.Max(lineHeight, lineHeight * lines.Length);
+        return new Vector2(maxWidth, height);
+    }
 }

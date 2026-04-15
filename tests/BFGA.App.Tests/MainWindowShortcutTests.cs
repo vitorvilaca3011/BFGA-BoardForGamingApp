@@ -55,6 +55,7 @@ public class MainWindowShortcutTests
             Key.Delete,
             KeyModifiers.None,
             focusedElement: null,
+            isEditingText: false,
             deleteSelection: () => invoked = true,
             pasteImage: () =>
             {
@@ -77,6 +78,7 @@ public class MainWindowShortcutTests
             Key.Delete,
             KeyModifiers.None,
             focusedElement: new TextBox(),
+            isEditingText: false,
             deleteSelection: () => invoked = true,
             pasteImage: () =>
             {
@@ -99,6 +101,7 @@ public class MainWindowShortcutTests
             Key.V,
             KeyModifiers.Control,
             focusedElement: null,
+            isEditingText: false,
             deleteSelection: () => deleteInvoked = true,
             pasteImage: () =>
             {
@@ -109,5 +112,28 @@ public class MainWindowShortcutTests
         Assert.True(handled);
         Assert.False(deleteInvoked);
         Assert.True(pasteInvoked);
+    }
+
+    [Fact]
+    public async Task TryHandleBoardShortcutAsync_SuppressesWhenEditingText()
+    {
+        var deleteInvoked = false;
+        var pasteInvoked = false;
+
+        var handled = await MainWindow.TryHandleBoardShortcutAsync(
+            Key.Delete,
+            KeyModifiers.None,
+            focusedElement: null,
+            isEditingText: true,
+            deleteSelection: () => deleteInvoked = true,
+            pasteImage: () =>
+            {
+                pasteInvoked = true;
+                return Task.CompletedTask;
+            });
+
+        Assert.False(handled);
+        Assert.False(deleteInvoked);
+        Assert.False(pasteInvoked);
     }
 }

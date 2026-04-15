@@ -5,12 +5,101 @@
              x:Name="root"
              HorizontalAlignment="Stretch"
              VerticalAlignment="Stretch">
-    <canvas:BoardViewport x:Name="viewport"
-                          HorizontalAlignment="Stretch"
-                          VerticalAlignment="Stretch"
-                          Board="{Binding Board, ElementName=root}"
-                          RemoteCursors="{Binding RemoteCursors, ElementName=root}"
-                          RemoteStrokePreviews="{Binding RemoteStrokePreviews, ElementName=root}"
-                          EraserPreview="{Binding EraserPreview, ElementName=root}"
-                          DotGridOpacity="{Binding DotGridOpacity, ElementName=root}" />
+    <UserControl.Styles>
+        <Style Selector="TextBox.inline-text-editor">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <DataValidationErrors>
+                        <Panel>
+                            <Border x:Name="PART_BorderElement"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="{TemplateBinding CornerRadius}"
+                                    MinWidth="{TemplateBinding MinWidth}"
+                                    MinHeight="{TemplateBinding MinHeight}">
+                                <ScrollViewer x:Name="PART_ScrollViewer"
+                                              Background="Transparent"
+                                              BorderBrush="Transparent"
+                                              BorderThickness="0"
+                                              HorizontalScrollBarVisibility="Hidden"
+                                              VerticalScrollBarVisibility="Hidden">
+                                    <Panel>
+                                        <TextPresenter x:Name="PART_TextPresenter"
+                                                       Background="Transparent"
+                                                       TextElement.Foreground="{TemplateBinding Foreground}"
+                                                       CaretBrush="{TemplateBinding CaretBrush}"
+                                                       Text="{TemplateBinding Text, Mode=TwoWay}"
+                                                       CaretIndex="{TemplateBinding CaretIndex}"
+                                                       SelectionStart="{TemplateBinding SelectionStart}"
+                                                       SelectionEnd="{TemplateBinding SelectionEnd}"
+                                                       TextAlignment="{TemplateBinding TextAlignment}"
+                                                       TextWrapping="{TemplateBinding TextWrapping}"
+                                                       LineHeight="{TemplateBinding LineHeight}"
+                                                       LetterSpacing="{TemplateBinding LetterSpacing}"
+                                                       PasswordChar="{TemplateBinding PasswordChar}"
+                                                       TextElement.FontFamily="{TemplateBinding FontFamily}"
+                                                       TextElement.FontSize="{TemplateBinding FontSize}"
+                                                       TextElement.FontStyle="{TemplateBinding FontStyle}"
+                                                       TextElement.FontWeight="{TemplateBinding FontWeight}"
+                                                       SelectionBrush="{TemplateBinding SelectionBrush}"
+                                                       SelectionForegroundBrush="{TemplateBinding SelectionForegroundBrush}"
+                                                       VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                       HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" />
+                                    </Panel>
+                                </ScrollViewer>
+                            </Border>
+                        </Panel>
+                    </DataValidationErrors>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+        <Style Selector="TextBox.inline-text-editor /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="TextBox.inline-text-editor /template/ ScrollViewer#PART_ScrollViewer">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="TextBox.inline-text-editor /template/ TextPresenter#PART_TextPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+    </UserControl.Styles>
+    <Grid>
+        <canvas:BoardViewport x:Name="viewport"
+                              HorizontalAlignment="Stretch"
+                              VerticalAlignment="Stretch"
+                              Board="{Binding Board, ElementName=root}"
+                              RemoteCursors="{Binding RemoteCursors, ElementName=root}"
+                              RemoteStrokePreviews="{Binding RemoteStrokePreviews, ElementName=root}"
+                              EraserPreview="{Binding EraserPreview, ElementName=root}"
+                              DotGridOpacity="{Binding DotGridOpacity, ElementName=root}" />
+        <Canvas>
+            <TextBox x:Name="InlineTextEditor"
+                     Classes="inline-text-editor"
+                     IsVisible="False"
+                     HorizontalAlignment="Left"
+                     VerticalAlignment="Top"
+                     AcceptsReturn="True"
+                     MinWidth="40"
+                     MinHeight="28"
+                     Background="Transparent"
+                     Foreground="White"
+                     CaretBrush="White"
+                     BorderBrush="Transparent"
+                     BorderThickness="0"
+                     Padding="0"
+                     Margin="0"
+                     Watermark="Type text..."
+                     FontSize="16"
+                     TextWrapping="Wrap" />
+        </Canvas>
+    </Grid>
 </UserControl>

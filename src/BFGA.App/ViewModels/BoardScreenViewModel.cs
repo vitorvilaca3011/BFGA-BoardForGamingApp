@@ -24,6 +24,11 @@ public sealed class BoardScreenViewModel : ViewModelBase, IDisposable
     private SKColor _selectedFillColor = SKColors.Transparent;
     private float _strokeWidth = 2f;
     private float _opacity = 1f;
+    private float _fontSize = 24f;
+    private string _fontFamily = "Inter";
+    private bool _isEditingText;
+    private Guid? _editingTextElementId;
+    private bool _hasSelectedTextSelection;
 
     public BoardScreenViewModel(MainViewModel mainViewModel)
     {
@@ -83,6 +88,7 @@ public sealed class BoardScreenViewModel : ViewModelBase, IDisposable
             OnPropertyChanged(nameof(IsLaserPointerToolActive));
             OnPropertyChanged(nameof(IsPropertyPanelVisible));
             OnPropertyChanged(nameof(ShowFillSection));
+            OnPropertyChanged(nameof(IsTextSelectionActive));
             MainViewModel.LogBoardDebug("selected-tool", () => $"tool={_selectedTool}");
         }
     }
@@ -110,6 +116,48 @@ public sealed class BoardScreenViewModel : ViewModelBase, IDisposable
         get => _opacity;
         set => SetProperty(ref _opacity, Math.Clamp(value, 0f, 1f));
     }
+
+    public float FontSize
+    {
+        get => _fontSize;
+        set => SetProperty(ref _fontSize, Math.Clamp(value, 8f, 200f));
+    }
+
+    public string FontFamily
+    {
+        get => _fontFamily;
+        set => SetProperty(ref _fontFamily, value);
+    }
+
+    public bool IsEditingText
+    {
+        get => _isEditingText;
+        set => SetProperty(ref _isEditingText, value);
+    }
+
+    public Guid? EditingTextElementId
+    {
+        get => _editingTextElementId;
+        set => SetProperty(ref _editingTextElementId, value);
+    }
+
+    public bool HasSelectedTextSelection
+    {
+        get => _hasSelectedTextSelection;
+        set
+        {
+            if (!SetProperty(ref _hasSelectedTextSelection, value))
+            {
+                return;
+            }
+
+            OnPropertyChanged(nameof(IsPropertyPanelVisible));
+            OnPropertyChanged(nameof(IsTextSelectionActive));
+        }
+    }
+
+    public static IReadOnlyList<string> AvailableFontFamilies { get; } =
+        ["Inter", "Arial", "Times New Roman", "Courier New", "Verdana", "Comic Sans MS"];
 
     public string SelectedToolText => SelectedTool switch
     {
@@ -162,9 +210,13 @@ public sealed class BoardScreenViewModel : ViewModelBase, IDisposable
 
     public bool IsLaserPointerToolActive => SelectedTool == BoardToolType.LaserPointer;
 
-    public bool IsPropertyPanelVisible => SelectedTool is BoardToolType.Pen or BoardToolType.Rectangle or BoardToolType.Ellipse or BoardToolType.Arrow or BoardToolType.Line;
+    public bool IsPropertyPanelVisible => SelectedTool is BoardToolType.Pen or BoardToolType.Rectangle or BoardToolType.Ellipse or BoardToolType.Arrow or BoardToolType.Line or BoardToolType.Text || HasSelectedTextSelection;
 
     public bool ShowFillSection => SelectedTool is BoardToolType.Rectangle or BoardToolType.Ellipse;
+
+    public bool ShowTextFontSection => SelectedTool is BoardToolType.Text;
+
+    public bool IsTextSelectionActive => HasSelectedTextSelection;
 
     public bool IsRosterVisible => MainViewModel.Roster.Count > 0;
 }

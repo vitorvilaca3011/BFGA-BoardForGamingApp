@@ -1,6 +1,9 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Media;
+using Avalonia.Media.TextFormatting;
 using BFGA.App.Infrastructure;
 using BFGA.App.ViewModels;
 using BFGA.Canvas.Rendering;
@@ -9,6 +12,7 @@ using BFGA.Core;
 using BFGA.Core.Models;
 using BFGA.Network.Protocol;
 using System.ComponentModel;
+using System.Numerics;
 using System.Windows.Input;
 
 namespace BFGA.App.Views;
@@ -85,6 +89,9 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
         viewport.PointerReleased += HandlePointerReleased;
         viewport.PointerExited += HandlePointerExited;
         DataContextChanged += HandleDataContextChanged;
+        InlineTextEditor.KeyDown += HandleInlineTextEditorKeyDown;
+        InlineTextEditor.LostFocus += HandleInlineTextEditorLostFocus;
+        InlineTextEditor.TextChanged += HandleInlineTextEditorTextChanged;
         SyncToolController();
     }
 
@@ -151,6 +158,10 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
     private bool _isPanning;
     private Point _lastPanPosition;
     private PointerPhase _currentPointerPhase;
+    private System.Numerics.Vector2? _inlineTextEditPosition;
+    private Guid? _inlineTextEditElementId;
+    private string? _inlineTextEditOriginalText;
+    private bool _isCommittingInlineText;
 
     private void HandleDataContextChanged(object? sender, EventArgs e)
     {
@@ -177,15 +188,34 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
             or nameof(BoardScreenViewModel.SelectedStrokeColor)
             or nameof(BoardScreenViewModel.SelectedFillColor)
             or nameof(BoardScreenViewModel.StrokeWidth)
-            or nameof(BoardScreenViewModel.Opacity))
+            or nameof(BoardScreenViewModel.Opacity)
+            or nameof(BoardScreenViewModel.FontSize)
+            or nameof(BoardScreenViewModel.FontFamily))
         {
             SyncToolController();
+        }
+
+        if (_boardScreenViewModel?.IsEditingText == true
+            && e.PropertyName is nameof(BoardScreenViewModel.FontSize)
+                or nameof(BoardScreenViewModel.FontFamily)
+                or nameof(BoardScreenViewModel.SelectedStrokeColor)
+                or nameof(BoardScreenViewModel.Opacity))
+        {
+            UpdateInlineTextEditorVisuals();
         }
 
         if (e.PropertyName is nameof(BoardScreenViewModel.SelectedTool))
         {
             SyncEraserPreview(null, false);
             UpdateCursorForTool();
+        }
+
+        if (e.PropertyName is nameof(BoardScreenViewModel.SelectedStrokeColor)
+            or nameof(BoardScreenViewModel.Opacity)
+            or nameof(BoardScreenViewModel.FontSize)
+            or nameof(BoardScreenViewModel.FontFamily))
+        {
+            UpdateSelectedTextPropertiesFromPanel();
         }
     }
 
@@ -232,10 +262,16 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
         }
     }
 
-    private async void HandlePointerPressed(object? sender, PointerPressedEventArgs e)
+    private void HandlePointerPressed(object? sender, PointerPressedEventArgs e)
     {
         StartPointerGesture();
         LogPointerEvent("pointer-pressed", e);
+
+        if (_boardScreenViewModel is not null && _boardScreenViewModel.IsEditingText)
+        {
+            CommitInlineText();
+            return;
+        }
 
         var isHandTool = _toolController?.CurrentTool == BoardToolType.Hand;
         var isMiddleButton = e.GetCurrentPoint(viewport).Properties.IsMiddleButtonPressed;
@@ -251,11 +287,22 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
         if (_toolController?.CurrentTool == BoardToolType.Text)
         {
             var boardPoint = viewport.ScreenToBoard(e.GetPosition(viewport));
-            var result = await PlaceTextFromPromptAsync(boardPoint);
-            ApplyToolResult(result, "pressed", logThisPhase: true);
-            if (result.Handled)
-                e.Handled = true;
+            if (!TryStartInlineTextEditExistingText(boardPoint))
+                StartInlineTextEditing(boardPoint);
+            e.Handled = true;
             return;
+        }
+
+        var clickCount = e.GetCurrentPoint(viewport).Properties.PointerUpdateKind == Avalonia.Input.PointerUpdateKind.LeftButtonPressed
+            ? e.ClickCount : 1;
+        if (clickCount >= 2 && _toolController?.CurrentTool == BoardToolType.Select)
+        {
+            var boardPoint = viewport.ScreenToBoard(e.GetPosition(viewport));
+            if (TryStartInlineTextEditExistingText(boardPoint))
+            {
+                e.Handled = true;
+                return;
+            }
         }
 
         if (!TryHandlePointer(e, PointerPhase.Pressed))
@@ -389,28 +436,287 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
         ApplyToolResult(result, "delete-selection", logThisPhase: true);
     }
 
-    private async Task<ToolResult> PlaceTextFromPromptAsync(System.Numerics.Vector2 position)
+    private void StartInlineTextEditing(System.Numerics.Vector2 boardPosition)
     {
         if (_boardScreenViewModel is null || _toolController is null)
-            return ToolResult.None;
+            return;
 
-        var mainViewModel = _boardScreenViewModel.MainViewModel;
-        var promptService = mainViewModel.TextPromptService;
-        if (promptService is null)
-            return ToolResult.None;
+        _inlineTextEditPosition = boardPosition;
+        _inlineTextEditElementId = null;
+        _inlineTextEditOriginalText = null;
 
-        var text = await promptService.PromptAsync("Add Text", "Enter text", "Text");
-        if (string.IsNullOrWhiteSpace(text))
-            return ToolResult.None;
+        var screenPoint = viewport.BoardToScreen(boardPosition);
+        var zoom = viewport.Zoom;
 
-        var baseColor = _boardScreenViewModel.SelectedStrokeColor;
-        var color = new SkiaSharp.SKColor(baseColor.Red, baseColor.Green, baseColor.Blue, (byte)Math.Round(255 * _boardScreenViewModel.Opacity));
+        InlineTextEditor.Text = string.Empty;
+        InlineTextEditor.FontSize = _boardScreenViewModel.FontSize * zoom;
+        InlineTextEditor.FontFamily = new FontFamily(_boardScreenViewModel.FontFamily);
+        InlineTextEditor.Foreground = new SolidColorBrush(Color.FromArgb(
+                (byte)Math.Round(255 * _boardScreenViewModel.Opacity),
+                _boardScreenViewModel.SelectedStrokeColor.Red,
+                _boardScreenViewModel.SelectedStrokeColor.Green,
+                _boardScreenViewModel.SelectedStrokeColor.Blue));
 
-        var textElement = _toolController.PlaceText(text, position, color, 24f, "Inter");
+        PositionInlineTextEditor(screenPoint);
+        InlineTextEditor.IsVisible = true;
+        InlineTextEditor.Focus();
+        InlineTextEditor.SelectAll();
+
+        _boardScreenViewModel.IsEditingText = true;
+        _boardScreenViewModel.EditingTextElementId = null;
+    }
+
+    private bool TryStartInlineTextEditExistingText(System.Numerics.Vector2 boardPoint)
+    {
+        if (_boardScreenViewModel is null || _toolController is null)
+            return false;
+
+        var hit = HitTestHelper.GetTopmostHit(_toolController.Board, boardPoint);
+        if (hit is not TextElement textElement)
+            return false;
+
+        _inlineTextEditPosition = textElement.Position;
+        _inlineTextEditElementId = textElement.Id;
+        _inlineTextEditOriginalText = textElement.Text;
+
+        var screenPoint = viewport.BoardToScreen(textElement.Position);
+        var zoom = viewport.Zoom;
+
+        InlineTextEditor.Text = textElement.Text;
+        InlineTextEditor.FontSize = textElement.FontSize * zoom;
+        var textColor = textElement.Color;
+        InlineTextEditor.FontFamily = new FontFamily(textElement.FontFamily);
+        InlineTextEditor.Foreground = new SolidColorBrush(Color.FromArgb(textColor.Alpha, textColor.Red, textColor.Green, textColor.Blue));
+
+        PositionInlineTextEditor(screenPoint);
+        InlineTextEditor.IsVisible = true;
+        InlineTextEditor.Focus();
+        InlineTextEditor.SelectAll();
+
+        if (_boardScreenViewModel is not null)
+        {
+            _boardScreenViewModel.SelectedTool = BoardToolType.Text;
+            _boardScreenViewModel.FontSize = textElement.FontSize;
+            _boardScreenViewModel.FontFamily = textElement.FontFamily;
+            _boardScreenViewModel.SelectedStrokeColor = textColor;
+            _boardScreenViewModel.Opacity = textColor.Alpha / 255f;
+        }
+
+        _boardScreenViewModel.IsEditingText = true;
+        _boardScreenViewModel.EditingTextElementId = textElement.Id;
+
         _toolController.Selection.Select(textElement.Id);
-        _boardScreenViewModel.SelectedTool = BoardToolType.Select;
+        SyncSelectionOverlay();
+        viewport.InvalidateBoard();
 
-        return new ToolResult(true, true, [new AddElementOperation(textElement)]);
+        return true;
+    }
+
+    private void CommitInlineText()
+    {
+        if (_boardScreenViewModel is null || _toolController is null || _isCommittingInlineText)
+            return;
+
+        var text = InlineTextEditor.Text;
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            CancelInlineText();
+            return;
+        }
+
+        _isCommittingInlineText = true;
+
+        try
+        {
+            var mainViewModel = _boardScreenViewModel.MainViewModel;
+            var baseColor = _boardScreenViewModel.SelectedStrokeColor;
+            var color = new SkiaSharp.SKColor(baseColor.Red, baseColor.Green, baseColor.Blue, (byte)Math.Round(255 * _boardScreenViewModel.Opacity));
+
+            if (_inlineTextEditElementId.HasValue && _inlineTextEditPosition.HasValue)
+            {
+                var element = _toolController.Board.Elements.FirstOrDefault(e => e.Id == _inlineTextEditElementId.Value);
+                if (element is TextElement textElement)
+                {
+                    textElement.Text = text;
+                    textElement.FontSize = _boardScreenViewModel.FontSize;
+                    textElement.FontFamily = _boardScreenViewModel.FontFamily;
+                    textElement.Color = color;
+                    textElement.Size = MeasureTextSize(textElement.Text, textElement.FontSize, textElement.FontFamily);
+                    viewport.InvalidateBoard();
+                    mainViewModel.PublishLocalBoardOperation(
+                        new UpdateElementOperation(textElement.Id, new Dictionary<string, object>
+                        {
+                            ["Text"] = textElement.Text,
+                            ["FontSize"] = textElement.FontSize,
+                            ["FontFamily"] = textElement.FontFamily,
+                            ["Color"] = textElement.Color
+                        }));
+                    if (mainViewModel.Host is not null)
+                    {
+                        mainViewModel.SyncBoardFromHost();
+                        _toolController.SetBoard(mainViewModel.Board);
+                    }
+                }
+            }
+            else if (_inlineTextEditPosition.HasValue)
+            {
+                var position = _inlineTextEditPosition.Value;
+                var textElement = _toolController.PlaceText(text, position, color, _boardScreenViewModel.FontSize, _boardScreenViewModel.FontFamily);
+                _toolController.Selection.Select(textElement.Id);
+                var result = new ToolResult(true, true, [new AddElementOperation(textElement)]);
+                ApplyToolResult(result, "place-text", logThisPhase: true);
+            }
+        }
+        finally
+        {
+            _isCommittingInlineText = false;
+            HideInlineTextEditor();
+
+            if (_boardScreenViewModel is not null)
+            {
+                _boardScreenViewModel.IsEditingText = false;
+                _boardScreenViewModel.EditingTextElementId = null;
+                _boardScreenViewModel.SelectedTool = BoardToolType.Select;
+            }
+
+            _inlineTextEditPosition = null;
+            _inlineTextEditElementId = null;
+            _inlineTextEditOriginalText = null;
+        }
+    }
+
+    private void CancelInlineText()
+    {
+        HideInlineTextEditor();
+
+        if (_boardScreenViewModel is not null)
+        {
+            _boardScreenViewModel.IsEditingText = false;
+            _boardScreenViewModel.EditingTextElementId = null;
+        }
+
+        _inlineTextEditPosition = null;
+        _inlineTextEditElementId = null;
+        _inlineTextEditOriginalText = null;
+    }
+
+    private void HideInlineTextEditor()
+    {
+        InlineTextEditor.IsVisible = false;
+        InlineTextEditor.Text = string.Empty;
+        viewport.Focus();
+    }
+
+    private void PositionInlineTextEditor(Point screenPoint)
+    {
+        UpdateInlineTextEditorVisuals();
+        Avalonia.Controls.Canvas.SetLeft(InlineTextEditor, screenPoint.X);
+        Avalonia.Controls.Canvas.SetTop(InlineTextEditor, screenPoint.Y);
+    }
+
+    private void HandleInlineTextEditorTextChanged(object? sender, TextChangedEventArgs e)
+    {
+        UpdateInlineTextEditorVisuals();
+    }
+
+    private void UpdateInlineTextEditorVisuals()
+    {
+        if (_boardScreenViewModel is null)
+            return;
+
+        var zoom = viewport.Zoom;
+        var fontSize = _boardScreenViewModel.FontSize * zoom;
+        var text = InlineTextEditor.Text ?? string.Empty;
+        var typeface = new Typeface(_boardScreenViewModel.FontFamily);
+
+        var contentWidth = 40d;
+        var contentHeight = 28d;
+
+        try
+        {
+            using var layout = new TextLayout(
+                string.IsNullOrEmpty(text) ? "W" : text,
+                typeface,
+                fontSize,
+                Brushes.White,
+                textWrapping: TextWrapping.Wrap,
+                maxWidth: double.PositiveInfinity);
+
+            contentWidth = layout.WidthIncludingTrailingWhitespace + layout.OverhangLeading + layout.OverhangTrailing;
+            contentHeight = layout.Extent;
+
+            if (text.Contains('\n'))
+            {
+                var longestLine = text.Split('\n').MaxBy(line => line.Length) ?? string.Empty;
+                contentWidth = Math.Max(contentWidth, longestLine.Length * fontSize * 0.6d);
+                contentHeight = Math.Max(contentHeight, layout.TextLines.Count * fontSize * 1.4d);
+            }
+        }
+        catch (InvalidOperationException)
+        {
+            var fallbackText = string.IsNullOrEmpty(text) ? "W" : text;
+            var lineCount = Math.Max(1, fallbackText.Split('\n').Length);
+            var longestLine = fallbackText.Split('\n').MaxBy(line => line.Length) ?? fallbackText;
+            contentWidth = Math.Max(40d, longestLine.Length * fontSize * 0.6d);
+            contentHeight = Math.Max(28d, lineCount * fontSize * 1.4d);
+        }
+
+        var width = Math.Max(40d, contentWidth + 8d);
+        var height = Math.Max(28d, contentHeight + 8d);
+
+        InlineTextEditor.FontSize = fontSize;
+        InlineTextEditor.FontFamily = typeface.FontFamily;
+        InlineTextEditor.Width = width;
+        InlineTextEditor.Height = height;
+        InlineTextEditor.Foreground = new SolidColorBrush(Color.FromArgb(
+            (byte)Math.Round(255 * _boardScreenViewModel.Opacity),
+            _boardScreenViewModel.SelectedStrokeColor.Red,
+            _boardScreenViewModel.SelectedStrokeColor.Green,
+            _boardScreenViewModel.SelectedStrokeColor.Blue));
+    }
+
+    private static Vector2 MeasureTextSize(string text, float fontSize, string fontFamily)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return Vector2.Zero;
+
+        try
+        {
+            using var layout = new TextLayout(
+                text,
+                new Typeface(fontFamily),
+                fontSize,
+                Brushes.White,
+                maxWidth: double.PositiveInfinity);
+
+            return new Vector2(
+                (float)(layout.WidthIncludingTrailingWhitespace + layout.OverhangLeading + layout.OverhangTrailing),
+                (float)layout.Extent);
+        }
+        catch (InvalidOperationException)
+        {
+            return new Vector2(text.Length * fontSize * 0.6f, fontSize * 1.4f);
+        }
+    }
+
+    private void HandleInlineTextEditorKeyDown(object? sender, Avalonia.Input.KeyEventArgs e)
+    {
+        if (e.Key == Avalonia.Input.Key.Escape)
+        {
+            CancelInlineText();
+            e.Handled = true;
+        }
+        else if (e.Key == Avalonia.Input.Key.Enter && !e.KeyModifiers.HasFlag(Avalonia.Input.KeyModifiers.Shift))
+        {
+            CommitInlineText();
+            e.Handled = true;
+        }
+    }
+
+    private void HandleInlineTextEditorLostFocus(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (_boardScreenViewModel?.IsEditingText == true)
+            CommitInlineText();
     }
 
     private void SyncEraserPreview(System.Numerics.Vector2? boardPoint, bool isActive)
@@ -485,13 +791,26 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
         if (_toolController is null)
         {
             viewport.SelectionOverlay = null;
+            if (_boardScreenViewModel is not null)
+                _boardScreenViewModel.HasSelectedTextSelection = false;
             return;
         }
 
         if (_toolController.CurrentTool != BoardToolType.Select)
         {
             viewport.SelectionOverlay = null;
+            if (_boardScreenViewModel is not null)
+                _boardScreenViewModel.HasSelectedTextSelection = false;
             return;
+        }
+
+        if (_boardScreenViewModel is not null)
+        {
+            var selectedId = _toolController.Selection.ActiveElementId;
+            var selected = selectedId is null
+                ? null
+                : _toolController.Board.Elements.FirstOrDefault(e => e.Id == selectedId);
+            _boardScreenViewModel.HasSelectedTextSelection = selected is TextElement;
         }
 
         viewport.SelectionOverlay = new SelectionOverlayState(
@@ -499,6 +818,38 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
             _toolController.Selection.ActiveElementId,
             _toolController.GetSelectionHandles(),
             _toolController.GetSelectionBoxRect());
+    }
+
+    private void UpdateSelectedTextPropertiesFromPanel()
+    {
+        if (_boardScreenViewModel is null || _toolController is null)
+            return;
+
+        if (_toolController.Selection.ActiveElementId is not Guid activeId)
+            return;
+
+        var element = _toolController.Board.Elements.FirstOrDefault(e => e.Id == activeId);
+        if (element is not TextElement textElement)
+            return;
+
+        textElement.Color = new SkiaSharp.SKColor(
+            _boardScreenViewModel.SelectedStrokeColor.Red,
+            _boardScreenViewModel.SelectedStrokeColor.Green,
+            _boardScreenViewModel.SelectedStrokeColor.Blue,
+            (byte)Math.Round(255 * _boardScreenViewModel.Opacity));
+        textElement.FontSize = _boardScreenViewModel.FontSize;
+        textElement.FontFamily = _boardScreenViewModel.FontFamily;
+        textElement.Size = MeasureTextSize(textElement.Text, textElement.FontSize, textElement.FontFamily);
+
+        _boardScreenViewModel.MainViewModel.PublishLocalBoardOperation(
+            new UpdateElementOperation(textElement.Id, new Dictionary<string, object>
+            {
+                ["Color"] = textElement.Color,
+                ["FontSize"] = textElement.FontSize,
+                ["FontFamily"] = textElement.FontFamily
+            }));
+
+        viewport.InvalidateBoard();
     }
 
     private void LogPointerEvent(string eventName, PointerEventArgs e)

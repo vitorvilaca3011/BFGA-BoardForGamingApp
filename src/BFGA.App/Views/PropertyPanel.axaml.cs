@@ -10,6 +10,7 @@ public partial class PropertyPanel : UserControl
     public PropertyPanel()
     {
         InitializeComponent();
+        FontFamilyComboBox.ItemsSource = BoardScreenViewModel.AvailableFontFamilies;
     }
 
     private void OnStrokeSwatchClick(object? sender, RoutedEventArgs e)

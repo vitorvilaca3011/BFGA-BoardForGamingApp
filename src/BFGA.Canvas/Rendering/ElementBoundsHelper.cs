@@ -17,6 +17,7 @@ public static class ElementBoundsHelper
         return element switch
         {
             StrokeElement stroke => GetStrokeBounds(stroke),
+            TextElement text => GetTextBounds(text),
             _ => GetTransformedBounds(element)
         };
     }
@@ -31,6 +32,7 @@ public static class ElementBoundsHelper
         {
             StrokeElement stroke => HitTestHelper.HitTestStroke(stroke, point),
             ShapeElement shape => ContainsPointShape(shape, point),
+            TextElement text => ContainsPointRect(GetBounds(text), point),
             _ => ContainsPointBBox(element, point)
         };
     }
@@ -119,9 +121,12 @@ public static class ElementBoundsHelper
         if (SupportsRotation(element) && MathF.Abs(element.Rotation) > float.Epsilon)
             point = InverseRotatePoint(point, GetCenter(element), element.Rotation);
 
-        return point.X >= bounds.Left && point.X <= bounds.Right
-            && point.Y >= bounds.Top && point.Y <= bounds.Bottom;
+        return ContainsPointRect(bounds, point);
     }
+
+    private static bool ContainsPointRect(SKRect bounds, Vector2 point)
+        => point.X >= bounds.Left && point.X <= bounds.Right
+            && point.Y >= bounds.Top && point.Y <= bounds.Bottom;
 
     private static SKRect GetTransformedBounds(BoardElement element)
     {
@@ -151,6 +156,41 @@ public static class ElementBoundsHelper
         }
 
         return new SKRect(minX, minY, maxX, maxY);
+    }
+
+    private static SKRect GetTextBounds(TextElement text)
+    {
+        if (string.IsNullOrEmpty(text.Text))
+            return new SKRect(text.Position.X, text.Position.Y, text.Position.X, text.Position.Y);
+
+        using var font = new SKFont
+        {
+            Size = text.FontSize
+        };
+
+        if (!string.IsNullOrEmpty(text.FontFamily))
+        {
+            using var typeface = SKTypeface.FromFamilyName(text.FontFamily);
+            if (typeface is not null)
+                font.Typeface = typeface;
+        }
+
+        var metrics = font.Metrics;
+        var lineHeight = metrics.Descent - metrics.Ascent + metrics.Leading;
+        if (lineHeight <= float.Epsilon)
+            lineHeight = text.FontSize * 1.2f;
+
+        var lines = text.Text.Split('\n');
+        var maxWidth = 0f;
+        foreach (var line in lines)
+        {
+            var width = font.MeasureText(line);
+            if (width > maxWidth)
+                maxWidth = width;
+        }
+
+        var height = Math.Max(lineHeight, lineHeight * lines.Length);
+        return new SKRect(text.Position.X, text.Position.Y, text.Position.X + maxWidth, text.Position.Y + height);
     }
 
     public static SKRect CreateNormalizedRect(Vector2 position, Vector2 size)

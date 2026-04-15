@@ -50,6 +50,19 @@ public class PropertyPanelTests
     }
 
     [Fact]
+    public void TextSelection_OpensPropertyPanelEvenInSelectTool()
+    {
+        var sut = CreateSut();
+
+        Assert.False(sut.IsPropertyPanelVisible);
+
+        sut.HasSelectedTextSelection = true;
+
+        Assert.True(sut.IsPropertyPanelVisible);
+        Assert.True(sut.IsTextSelectionActive);
+    }
+
+    [Fact]
     public void Opacity_ClampsToValidRange()
     {
         var sut = CreateSut();

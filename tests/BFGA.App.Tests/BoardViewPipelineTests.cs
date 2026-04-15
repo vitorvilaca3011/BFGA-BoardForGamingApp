@@ -1,4 +1,5 @@
 using System.Reflection;
+using BFGA.App.Services;
 using BFGA.App.ViewModels;
 using BFGA.App.Views;
 using BFGA.Canvas.Rendering;
@@ -7,7 +8,6 @@ using BFGA.Core;
 using BFGA.Core.Models;
 using BFGA.Network.Protocol;
 using System.Numerics;
-using BFGA.App.Services;
 
 namespace BFGA.App.Tests;
 
@@ -234,56 +234,170 @@ public sealed class BoardViewPipelineTests
         Assert.Empty(mainViewModel.Board.Elements);
     }
 
-    [Fact]
-    public async Task TextTool_PromptReturnsText_AddsTextElementWithStyledDefaults()
+[Fact]
+    public void TextTool_PlaceText_CreatesElementWithStyledDefaults()
     {
-        var prompt = new FakeTextPromptService { Result = "hello" };
-        var mainViewModel = new MainViewModel(textPromptService: prompt);
-        var boardView = new BoardView();
+        var mainViewModel = new MainViewModel();
         var boardScreenViewModel = new BoardScreenViewModel(mainViewModel)
         {
             SelectedTool = BoardToolType.Text,
             SelectedStrokeColor = SkiaSharp.SKColors.DeepSkyBlue,
-            Opacity = 0.5f
+            Opacity = 0.5f,
+            FontSize = 32f,
+            FontFamily = "Arial"
         };
+        var boardView = new BoardView();
         AttachBoardScreen(boardView, boardScreenViewModel);
         InvokePrivateNoArgs(boardView, "SyncToolController");
 
-        await (Task)InvokePrivate(boardView, "PlaceTextFromPromptAsync", new Vector2(25f, 30f))!;
+        var toolController = GetToolController(boardView);
+        var color = new SkiaSharp.SKColor(0, 191, 255, 128);
+        var textElement = toolController.PlaceText("hello", new Vector2(25f, 30f), color, 32f, "Arial");
 
         var text = Assert.Single(mainViewModel.Board.Elements.OfType<TextElement>());
         Assert.Equal("hello", text.Text);
         Assert.Equal(new Vector2(25f, 30f), text.Position);
-        Assert.Equal(new SkiaSharp.SKColor(0, 191, 255, 128), text.Color);
-        Assert.Equal(24f, text.FontSize);
-        Assert.Equal("Inter", text.FontFamily);
-        Assert.Equal(BoardToolType.Select, boardScreenViewModel.SelectedTool);
-
-        var toolController = GetToolController(boardView);
-        Assert.Contains(text.Id, toolController.Selection.SelectedElementIds);
-        Assert.Equal(text.Id, toolController.Selection.ActiveElementId);
+        Assert.Equal(color, text.Color);
+        Assert.Equal(32f, text.FontSize);
+        Assert.Equal("Arial", text.FontFamily);
     }
 
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("   ")]
-    public async Task TextTool_PromptCancelledOrBlank_DoesNothing(string? promptResult)
+    [Fact]
+    public void TextTool_PlaceText_DoesNotAddOnEmptyString()
     {
-        var prompt = new FakeTextPromptService { Result = promptResult };
-        var mainViewModel = new MainViewModel(textPromptService: prompt);
-        var boardView = new BoardView();
+        var mainViewModel = new MainViewModel();
         var boardScreenViewModel = new BoardScreenViewModel(mainViewModel)
         {
             SelectedTool = BoardToolType.Text
         };
+        var boardView = new BoardView();
         AttachBoardScreen(boardView, boardScreenViewModel);
         InvokePrivateNoArgs(boardView, "SyncToolController");
 
-        await (Task)InvokePrivate(boardView, "PlaceTextFromPromptAsync", new Vector2(25f, 30f))!;
-
         Assert.Empty(mainViewModel.Board.Elements.OfType<TextElement>());
-        Assert.Equal(BoardToolType.Text, boardScreenViewModel.SelectedTool);
+    }
+
+    [Fact]
+    public void StartInlineTextEditing_PositionsEditorAtClickPoint()
+    {
+        var mainViewModel = new MainViewModel();
+        var boardView = new BoardView();
+        var boardScreenViewModel = new BoardScreenViewModel(mainViewModel)
+        {
+            FontSize = 24f
+        };
+
+        AttachBoardScreen(boardView, boardScreenViewModel);
+        InvokePrivateNoArgs(boardView, "SyncToolController");
+
+        var viewport = GetViewport(boardView);
+        viewport.Width = 800;
+        viewport.Height = 600;
+        viewport.Zoom = 1.0;
+
+        InvokePrivate(boardView, "StartInlineTextEditing", new Vector2(50f, 60f));
+
+        var editor = GetInlineTextEditor(boardView);
+        Assert.Equal(50d, Avalonia.Controls.Canvas.GetLeft(editor));
+        Assert.Equal(60d, Avalonia.Controls.Canvas.GetTop(editor));
+        Assert.True(editor.IsVisible);
+    }
+
+    [Fact]
+    public void TryStartInlineTextEditExistingText_SelectsTextElementAndEnablesEditing()
+    {
+        var mainViewModel = new MainViewModel();
+        var board = new BoardState();
+        var text = new TextElement
+        {
+            Id = Guid.NewGuid(),
+            Position = new Vector2(40, 50),
+            Text = "hello",
+            FontSize = 24f,
+            FontFamily = "Inter",
+            Color = SkiaSharp.SKColors.White
+        };
+        board.Elements.Add(text);
+        typeof(MainViewModel).GetField("_board", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(mainViewModel, board);
+
+        var boardView = new BoardView();
+        var boardScreenViewModel = new BoardScreenViewModel(mainViewModel);
+        AttachBoardScreen(boardView, boardScreenViewModel);
+        InvokePrivateNoArgs(boardView, "SyncToolController");
+
+        var handled = (bool)(InvokePrivate(boardView, "TryStartInlineTextEditExistingText", new Vector2(42f, 52f)) ?? false);
+
+        Assert.True(handled);
+        Assert.True(boardScreenViewModel.IsEditingText);
+        Assert.Equal(text.Id, boardScreenViewModel.EditingTextElementId);
+
+        var toolController = GetToolController(boardView);
+        Assert.Equal(text.Id, toolController.Selection.ActiveElementId);
+        Assert.Contains(text.Id, toolController.Selection.SelectedElementIds);
+    }
+
+    [Fact]
+    public void BoardToolController_SelectTool_AllowsTextMoveAfterSelection()
+    {
+        var board = new BoardState();
+        var text = new TextElement
+        {
+            Id = Guid.NewGuid(),
+            Position = new Vector2(10, 10),
+            Text = "move me",
+            FontSize = 24f,
+            FontFamily = "Inter",
+            Color = SkiaSharp.SKColors.White
+        };
+        board.Elements.Add(text);
+
+        var controller = new BoardToolController(board);
+        controller.SetTool(BoardToolType.Select);
+        controller.Selection.Select(text.Id);
+
+        var bounds = BFGA.Canvas.Rendering.ElementBoundsHelper.GetBounds(text);
+        var result = controller.HandlePointerDown(new Vector2(bounds.Left + 1, bounds.Top + 1));
+        Assert.True(result.Handled);
+
+        var moveResult = controller.HandlePointerMove(new Vector2(bounds.Left + 11, bounds.Top + 15));
+        Assert.True(moveResult.BoardChanged);
+
+        controller.HandlePointerUp(new Vector2(bounds.Left + 11, bounds.Top + 15));
+        Assert.Equal(new Vector2(20, 24), text.Position);
+    }
+
+    [Fact]
+    public void SyncSelectionOverlay_TextSelection_ExposesPropertyPanelState()
+    {
+        var mainViewModel = new MainViewModel();
+        var board = new BoardState();
+        var text = new TextElement
+        {
+            Id = Guid.NewGuid(),
+            Position = new Vector2(10, 10),
+            Text = "panel",
+            FontSize = 24f,
+            FontFamily = "Inter",
+            Color = SkiaSharp.SKColors.White
+        };
+        board.Elements.Add(text);
+        typeof(MainViewModel).GetField("_board", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(mainViewModel, board);
+
+        var boardView = new BoardView();
+        var boardScreenViewModel = new BoardScreenViewModel(mainViewModel)
+        {
+            SelectedTool = BoardToolType.Select
+        };
+        AttachBoardScreen(boardView, boardScreenViewModel);
+        InvokePrivateNoArgs(boardView, "SyncToolController");
+
+        var toolController = GetToolController(boardView);
+        toolController.Selection.Select(text.Id);
+
+        InvokePrivateNoArgs(boardView, "SyncSelectionOverlay");
+
+        Assert.True(boardScreenViewModel.HasSelectedTextSelection);
+        Assert.True(boardScreenViewModel.IsPropertyPanelVisible);
     }
 
     private static void AttachBoardScreen(BoardView boardView, BoardScreenViewModel boardScreenViewModel)
@@ -312,6 +426,13 @@ public sealed class BoardViewPipelineTests
         var field = typeof(BoardView).GetField("viewport", BindingFlags.Instance | BindingFlags.NonPublic);
         Assert.NotNull(field);
         return Assert.IsType<BFGA.Canvas.BoardViewport>(field!.GetValue(boardView));
+    }
+
+    private static Avalonia.Controls.TextBox GetInlineTextEditor(BoardView boardView)
+    {
+        var field = typeof(BoardView).GetField("InlineTextEditor", BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(field);
+        return Assert.IsType<Avalonia.Controls.TextBox>(field!.GetValue(boardView));
     }
 
     private static BoardToolController GetToolController(BoardView boardView)
@@ -386,13 +507,5 @@ public sealed class BoardViewPipelineTests
         public Task<ClipboardImageData?> ReadImageAsync() => Task.FromResult(ReadResult);
 
         public Task WriteImageAsync(byte[] imageData, string fileName) => Task.CompletedTask;
-    }
-
-    private sealed class FakeTextPromptService : ITextPromptService
-    {
-        public string? Result { get; set; }
-
-        public Task<string?> PromptAsync(string title, string prompt, string placeholder = "")
-            => Task.FromResult(Result);
-    }
+}
 }
