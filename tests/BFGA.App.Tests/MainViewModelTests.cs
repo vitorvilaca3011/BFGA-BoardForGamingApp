@@ -1014,6 +1014,39 @@ public class MainViewModelTests
         Assert.Equal(Guid.Empty, join.ClientId);
         Assert.Equal("Host Player", join.DisplayName);
         Assert.Equal(SkiaSharp.SKColors.Orange, join.AssignedColor);
+        Assert.Equal("Host Player", sessions.LastCreatedHost.HostDisplayName);
+        Assert.Equal(SkiaSharp.SKColors.Orange, sessions.LastCreatedHost.HostAssignedColor);
+    }
+
+    [Fact]
+    public async Task MainViewModel_StartHost_SyncsHostPresenceIntoSession()
+    {
+        var sessions = new FakeGameSessionFactory();
+        var sut = new MainViewModel(sessionFactory: sessions)
+        {
+            DisplayName = "Host Player",
+            LaserPresenceColor = SkiaSharp.SKColors.MediumPurple
+        };
+
+        await sut.StartHostAsync();
+
+        Assert.Equal("Host Player", sessions.LastCreatedHost!.HostDisplayName);
+        Assert.Equal(SkiaSharp.SKColors.MediumPurple, sessions.LastCreatedHost.HostAssignedColor);
+    }
+
+    [Fact]
+    public async Task MainViewModel_HostPeerJoined_ColorRefresh_UpdatesRosterEntry()
+    {
+        var sessions = new FakeGameSessionFactory();
+        var sut = new MainViewModel(sessionFactory: sessions);
+        var remoteClientId = Guid.NewGuid();
+
+        await sut.StartHostAsync();
+        sessions.LastCreatedHost!.RaisePeerJoined(remoteClientId, "Remote", SkiaSharp.SKColors.CadetBlue);
+        sessions.LastCreatedHost.RaisePeerJoined(remoteClientId, "Remote", SkiaSharp.SKColors.Gold);
+
+        var player = Assert.Contains(remoteClientId, sut.Roster);
+        Assert.Equal(SkiaSharp.SKColors.Gold, player.AssignedColor);
     }
 
     [Fact]
@@ -1643,22 +1676,21 @@ public class MainViewModelTests
     {
         public List<BoardOperation> BroadcastedOperations { get; } = new();
         public List<BoardState> FullSyncBroadcasts { get; } = new();
+        public string HostDisplayName { get; private set; } = "Host";
+        public SkiaSharp.SKColor HostAssignedColor { get; private set; } = SkiaSharp.SKColors.White;
 
-        public event EventHandler<PeerJoinedEventArgs>? PeerJoined
-        {
-            add { }
-            remove { }
-        }
-
-        public event EventHandler<PeerLeftEventArgs>? PeerLeft
-        {
-            add { }
-            remove { }
-        }
+        public event EventHandler<PeerJoinedEventArgs>? PeerJoined;
+        public event EventHandler<PeerLeftEventArgs>? PeerLeft;
 
         public bool IsRunning { get; private set; }
         public int Port { get; private set; }
         public BoardState BoardState { get; } = new();
+
+        public void SetHostPresence(string displayName, SkiaSharp.SKColor assignedColor)
+        {
+            HostDisplayName = displayName;
+            HostAssignedColor = assignedColor;
+        }
 
         public void Start(int port = 7777)
         {
@@ -1726,6 +1758,11 @@ public class MainViewModelTests
         public void Dispose()
         {
             IsRunning = false;
+        }
+
+        public void RaisePeerJoined(Guid clientId, string displayName, SkiaSharp.SKColor assignedColor)
+        {
+            PeerJoined?.Invoke(this, new PeerJoinedEventArgs(clientId, displayName, assignedColor));
         }
     }
 

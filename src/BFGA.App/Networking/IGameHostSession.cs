@@ -1,5 +1,6 @@
 using BFGA.Core;
 using BFGA.Network;
+using SkiaSharp;
 
 namespace BFGA.App.Networking;
 
@@ -13,6 +14,7 @@ public interface IGameHostSession : IDisposable
     BoardState BoardState { get; }
 
     void Start(int port = 7777);
+    void SetHostPresence(string displayName, SKColor assignedColor);
     void ReplaceBoardState(BoardState snapshot);
     bool TryApplyLocalOperation(BFGA.Network.Protocol.BoardOperation operation);
     void SyncAllClients();

@@ -82,6 +82,8 @@ public class GameHost : IDisposable
     private BoardState _boardState;
     private bool _isRunning;
     private int _port;
+    private string _hostDisplayName = "Host";
+    private SKColor _hostAssignedColor = SKColors.White;
 
     /// <summary>
     /// Channel 0: Reliable ordered for all operations
@@ -137,6 +139,12 @@ public class GameHost : IDisposable
     /// UI model. Full isolation would require cloning which has performance implications.
     /// </summary>
     public BoardState BoardState => _boardState;
+
+    public void SetHostPresence(string displayName, SKColor assignedColor)
+    {
+        _hostDisplayName = string.IsNullOrWhiteSpace(displayName) ? "Host" : displayName;
+        _hostAssignedColor = assignedColor;
+    }
 
     public void ReplaceBoardState(BoardState snapshot)
     {
@@ -320,6 +328,13 @@ public class GameHost : IDisposable
         return _players.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Info);
     }
 
+    private Dictionary<Guid, PlayerInfo> GetFullSyncRoster()
+    {
+        var roster = GetPlayerRoster();
+        roster[_hostUserId] = new PlayerInfo(_hostDisplayName, _hostAssignedColor);
+        return roster;
+    }
+
     /// <summary>
     /// Updates the board state with the latest element.
     /// </summary>
@@ -393,6 +408,7 @@ public class GameHost : IDisposable
             BroadcastOperation(
                 new PeerJoinedOperation(operation.SenderId, updatedInfo.DisplayName, updateColor.Color),
                 reliable: true);
+            PeerJoined?.Invoke(this, new PeerJoinedEventArgs(operation.SenderId, updatedInfo.DisplayName, updateColor.Color));
             return;
         }
 
@@ -710,7 +726,7 @@ public class GameHost : IDisposable
 
     private void SendFullSync(NetPeer peer, Guid clientId)
     {
-        var roster = GetPlayerRoster();
+        var roster = GetFullSyncRoster();
         var response = new FullSyncResponseOperation(clientId, _boardState, roster);
         SendToClient(peer, response, reliable: true);
     }

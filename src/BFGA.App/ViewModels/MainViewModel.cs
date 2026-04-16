@@ -223,6 +223,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
                 return;
             }
 
+            SyncHostPresence();
             RaiseCommandStates();
         }
     }
@@ -508,6 +509,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
             await Task.Run(() => host.Start(HostPort)).ConfigureAwait(true);
 
             Host = host;
+            SyncHostPresence();
             SyncBoardFromHost();
             ConnectionState = ShellConnectionState.Hosting;
             StatusText = $"Hosting on port {host.Port}.";
@@ -1459,6 +1461,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     {
         if (Host is not null)
         {
+            SyncHostPresence();
             Host.BroadcastOperation(new PeerJoinedOperation(Guid.Empty, DisplayName, LaserPresenceColor), reliable: true);
             return;
         }
@@ -1471,6 +1474,11 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
                 Client.SendOperation(new UpdatePresenceColorOperation(LaserPresenceColor));
             }
         }
+    }
+
+    private void SyncHostPresence()
+    {
+        Host?.SetHostPresence(DisplayName, LaserPresenceColor);
     }
 
     private void AbortJoinAttempt(string message)

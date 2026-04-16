@@ -518,4 +518,45 @@ public class NetworkTests
         host.Stop();
         client.Disconnect();
     }
+
+    [Fact]
+    public async Task GameHost_FullSync_IncludesHostPresenceMetadata()
+    {
+        using var host = new GameHost();
+        host.SetHostPresence("Host Player", SKColors.MediumPurple);
+        host.Start(0);
+
+        using var client = new GameClient("SyncTester");
+        var connectTask = client.ConnectAsync("localhost", host.Port);
+
+        FullSyncResponseOperation? fullSync = null;
+        client.OperationReceived += (_, args) =>
+        {
+            if (args.Operation is FullSyncResponseOperation sync)
+            {
+                fullSync = sync;
+            }
+        };
+
+        for (int i = 0; i < 100; i++)
+        {
+            host.PollEvents();
+            client.PollEvents();
+            await Task.Delay(10);
+            if (fullSync is not null)
+            {
+                break;
+            }
+        }
+
+        await connectTask;
+
+        Assert.NotNull(fullSync);
+        Assert.True(fullSync!.PlayerRoster.TryGetValue(Guid.Empty, out var hostInfo));
+        Assert.Equal("Host Player", hostInfo.DisplayName);
+        Assert.Equal(SKColors.MediumPurple, hostInfo.AssignedColor);
+
+        host.Stop();
+        client.Disconnect();
+    }
 }

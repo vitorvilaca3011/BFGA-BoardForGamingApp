@@ -115,6 +115,7 @@ public class LaserOverlayCanvas : Control
     private void UpdateLaserFadeTimer(long now)
     {
         var hasVisible = LaserTrailRenderer.HasVisibleTrails(RemoteLasers, now)
+            || LaserTrailRenderer.HasVisibleActiveRemoteLaser(RemoteLasers, now, RemoteLaserStaleTimeoutMs)
             || LaserTrailRenderer.HasVisibleLocalLaser(LocalLaser, now)
             || LaserTrailRenderer.HasVisiblePing(LocalPing, now);
 
@@ -135,6 +136,7 @@ public class LaserOverlayCanvas : Control
         var now = Environment.TickCount64;
         var releasedStaleRemoteLaser = ReleaseStaleRemoteLasers(now);
         var hasVisible = LaserTrailRenderer.HasVisibleTrails(RemoteLasers, now)
+            || LaserTrailRenderer.HasVisibleActiveRemoteLaser(RemoteLasers, now, RemoteLaserStaleTimeoutMs)
             || LaserTrailRenderer.HasVisibleLocalLaser(LocalLaser, now)
             || LaserTrailRenderer.HasVisiblePing(LocalPing, now);
 

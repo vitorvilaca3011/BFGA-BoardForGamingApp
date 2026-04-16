@@ -1,5 +1,6 @@
 using BFGA.Core;
 using BFGA.Network;
+using SkiaSharp;
 
 namespace BFGA.App.Networking;
 
@@ -43,6 +44,11 @@ public sealed class NetworkGameSessionFactory : IGameSessionFactory
         public void Start(int port = 7777)
         {
             _inner.Start(port);
+        }
+
+        public void SetHostPresence(string displayName, SKColor assignedColor)
+        {
+            _inner.SetHostPresence(displayName, assignedColor);
         }
 
         public void ReplaceBoardState(BoardState snapshot)

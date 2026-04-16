@@ -28,6 +28,16 @@ public static class LaserTrailRenderer
             if (points.Length == 0)
                 continue;
 
+            if (state.IsActive)
+            {
+                DrawLaserDot(
+                    canvas,
+                    points[^1].Position,
+                    state.Color,
+                    1f,
+                    GetWorldSize(LocalDotScreenRadius, zoom));
+            }
+
             if (points.Length == 1)
             {
                 float age = currentTimestampMs - points[0].TimestampMs;
@@ -81,6 +91,23 @@ public static class LaserTrailRenderer
                 if (age < decayMs)
                     return true;
             }
+        }
+
+        return false;
+    }
+
+    public static bool HasVisibleActiveRemoteLaser(
+        IReadOnlyDictionary<Guid, RemoteLaserState>? lasers,
+        long currentTimestampMs,
+        long staleTimeoutMs)
+    {
+        if (lasers is null || lasers.Count == 0)
+            return false;
+
+        foreach (var state in lasers.Values)
+        {
+            if (state.IsActive && currentTimestampMs - state.LastUpdateMs < staleTimeoutMs)
+                return true;
         }
 
         return false;

@@ -121,6 +121,22 @@ public sealed class LaserOverlayCanvasTests
         Assert.Equal(3_000L, state.Trail.GetPoints().ToArray()[0].TimestampMs);
     }
 
+    [Fact]
+    public void LaserOverlayCanvas_StationaryActiveRemoteLaser_StaysVisibleUntilStaleTimeout()
+    {
+        var overlay = new LaserOverlayCanvas();
+        var state = CreateRemoteLaserState(SKColors.DeepPink, new Vector2(12f, 18f), timestampMs: 3_000L, isActive: true);
+        overlay.RemoteLasers = new Dictionary<Guid, RemoteLaserState>
+        {
+            [Guid.NewGuid()] = state
+        };
+
+        InvokeNonPublic(overlay, "UpdateLaserFadeTimer", new[] { typeof(long) }, 4_800L);
+
+        Assert.NotNull(GetLaserFadeTimer(overlay));
+        Assert.True(state.IsActive);
+    }
+
     private static LocalLaserState CreateLocalLaserState(SKColor color, Vector2 head, long timestampMs)
     {
         var state = new LocalLaserState(color)

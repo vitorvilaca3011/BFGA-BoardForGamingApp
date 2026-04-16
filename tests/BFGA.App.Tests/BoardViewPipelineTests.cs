@@ -878,6 +878,8 @@ public sealed class BoardViewPipelineTests
             BoardState.Elements = snapshot.Elements.ToList();
         }
 
+        public void SetHostPresence(string displayName, SkiaSharp.SKColor assignedColor) { }
+
         public bool TryApplyLocalOperation(BoardOperation operation)
         {
             if (operation is DeleteElementOperation delete)
