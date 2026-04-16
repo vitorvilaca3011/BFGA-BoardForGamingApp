@@ -47,6 +47,11 @@ public class GameClient : IDisposable
     public const int UnreliableChannel = 1;
 
     /// <summary>
+    /// Channel 2: Sequenced for laser pointer updates
+    /// </summary>
+    public const int SequencedChannel = 2;
+
+    /// <summary>
     /// Raised when an operation is received from the host.
     /// </summary>
     public event EventHandler<ClientOperationReceivedEventArgs>? OperationReceived;
@@ -98,7 +103,7 @@ public class GameClient : IDisposable
         _connectCompletionSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         _netManager = new NetManager(new ClientEventListener(this));
-        _netManager.ChannelsCount = 2; // Match host channel configuration
+        _netManager.ChannelsCount = 3; // Match host channel configuration (Reliable=0, Unreliable=1, Sequenced=2)
         if (!_netManager.Start())
         {
             _connectCompletionSource.TrySetException(new InvalidOperationException("Failed to start network client"));
@@ -157,20 +162,28 @@ public class GameClient : IDisposable
 
         operation.SenderId = _clientId;
         
-        // CursorUpdate always uses unreliable channel regardless of reliable parameter
+        // Determine channel and delivery method
         int channel;
-        if (operation is CursorUpdateOperation)
+        DeliveryMethod deliveryMethod;
+
+        if (operation is LaserPointerOperation)
+        {
+            channel = SequencedChannel;
+            deliveryMethod = DeliveryMethod.Sequenced;
+        }
+        else if (operation is CursorUpdateOperation)
         {
             channel = UnreliableChannel;
+            deliveryMethod = DeliveryMethod.Unreliable;
         }
         else
         {
             channel = reliable ? ReliableChannel : UnreliableChannel;
+            deliveryMethod = reliable ? DeliveryMethod.ReliableOrdered : DeliveryMethod.Unreliable;
         }
         
         _dataWriter.Reset();
         _dataWriter.PutBytesWithLength(OperationSerializer.Serialize(operation));
-        var deliveryMethod = channel == UnreliableChannel ? DeliveryMethod.Unreliable : DeliveryMethod.ReliableOrdered;
         _connectedPeer.Send(_dataWriter, (byte)channel, deliveryMethod);
         Debug.WriteLine($"[GameClient] Sent operation {operation.Type} on channel {channel}");
     }

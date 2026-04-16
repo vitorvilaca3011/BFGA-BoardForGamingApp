@@ -94,6 +94,11 @@ public class GameHost : IDisposable
     public const int UnreliableChannel = 1;
 
     /// <summary>
+    /// Channel 2: Sequenced for laser pointer updates (ordered but not reliable — dropped packets are OK, order is not)
+    /// </summary>
+    public const int SequencedChannel = 2;
+
+    /// <summary>
     /// Raised when a player joins the session.
     /// </summary>
     public event EventHandler<PeerJoinedEventArgs>? PeerJoined;
@@ -158,6 +163,14 @@ public class GameHost : IDisposable
         }
 
         operation.SenderId = _hostUserId;
+
+        // SHORT-CIRCUIT: Laser pointer ops are ephemeral — broadcast to peers without touching board state
+        if (operation is LaserPointerOperation)
+        {
+            BroadcastOperation(operation, reliable: false);
+            return true;
+        }
+
         ApplyOperation(operation);
         return true;
     }
@@ -219,7 +232,7 @@ public class GameHost : IDisposable
         _boardState = new BoardState();
         _dataWriter = new NetDataWriter();
         _netManager = new NetManager(new HostEventListener(this));
-        _netManager.ChannelsCount = 2;
+        _netManager.ChannelsCount = 3;
     }
 
     /// <summary>
@@ -270,10 +283,27 @@ public class GameHost : IDisposable
     {
         if (!_isRunning) return;
 
-        var channel = reliable ? ReliableChannel : UnreliableChannel;
+        int channel;
+        DeliveryMethod deliveryMethod;
+
+        if (operation is LaserPointerOperation)
+        {
+            channel = SequencedChannel;
+            deliveryMethod = DeliveryMethod.Sequenced;
+        }
+        else if (reliable)
+        {
+            channel = ReliableChannel;
+            deliveryMethod = DeliveryMethod.ReliableOrdered;
+        }
+        else
+        {
+            channel = UnreliableChannel;
+            deliveryMethod = DeliveryMethod.Unreliable;
+        }
+
         _dataWriter.Reset();
         _dataWriter.PutBytesWithLength(OperationSerializer.Serialize(operation));
-        var deliveryMethod = reliable ? DeliveryMethod.ReliableOrdered : DeliveryMethod.Unreliable;
 
         foreach (var player in _players.Values)
         {
@@ -339,6 +369,13 @@ public class GameHost : IDisposable
     {
         operation.SenderId = GetClientId(peer);
         OperationReceived?.Invoke(this, new OperationReceivedEventArgs(operation, operation.SenderId));
+
+        // SHORT-CIRCUIT: Laser pointer ops are ephemeral — relay to peers without touching board state
+        if (operation is LaserPointerOperation)
+        {
+            BroadcastOperation(operation, reliable: false);
+            return;
+        }
 
         // Validate and apply operation
         bool isValid = ValidateOperation(operation);
@@ -599,8 +636,8 @@ public class GameHost : IDisposable
 
     private static bool IsOperationReliable(BoardOperation operation)
     {
-        // Cursor updates are unreliable, everything else is reliable
-        return operation is not CursorUpdateOperation;
+        // Cursor updates and laser pointer ops are non-reliable
+        return operation is not CursorUpdateOperation and not LaserPointerOperation;
     }
 
     private Guid GetClientId(NetPeer peer)
