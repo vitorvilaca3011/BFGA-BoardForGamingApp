@@ -454,6 +454,30 @@ public sealed class BoardViewPipelineTests
     }
 
     [Fact]
+    public void LaserPointer_BeginLocalLaser_UsesLaserPresenceColorInsteadOfSelectedStrokeColor()
+    {
+        var mainViewModel = new MainViewModel
+        {
+            LaserPresenceColor = SkiaSharp.SKColors.Lime
+        };
+        var boardView = new BoardView();
+        var boardScreenViewModel = new BoardScreenViewModel(mainViewModel)
+        {
+            SelectedTool = BoardToolType.LaserPointer,
+            SelectedStrokeColor = SkiaSharp.SKColors.DeepPink
+        };
+
+        AttachBoardScreen(boardView, boardScreenViewModel);
+        InvokePrivateNoArgs(boardView, "SyncToolController");
+
+        InvokePrivate(boardView, "BeginLocalLaser", new Vector2(12f, 34f), new Point(20, 40), 100L);
+
+        Assert.NotNull(boardView.LocalLaser);
+        Assert.Equal(mainViewModel.LaserPresenceColor, boardView.LocalLaser!.Color);
+        Assert.NotEqual(boardScreenViewModel.SelectedStrokeColor, boardView.LocalLaser.Color);
+    }
+
+    [Fact]
     public void LaserPointer_UpdateLocalLaser_ChangedPointPublishesActiveOperation()
     {
         var mainViewModel = new MainViewModel();
@@ -535,6 +559,38 @@ public sealed class BoardViewPipelineTests
     }
 
     [Fact]
+    public void LaserPointer_ToolSwitchAway_PublishesInactiveOperationAndPreservesTrail()
+    {
+        var mainViewModel = new MainViewModel();
+        var client = new FakeClientSession();
+        AttachClient(mainViewModel, client);
+
+        var boardView = new BoardView();
+        var boardScreenViewModel = new BoardScreenViewModel(mainViewModel)
+        {
+            SelectedTool = BoardToolType.LaserPointer
+        };
+
+        AttachBoardScreen(boardView, boardScreenViewModel);
+        InvokePrivateNoArgs(boardView, "SyncToolController");
+        InvokePrivate(boardView, "BeginLocalLaser", new Vector2(4f, 6f), new Point(4, 6), 100L);
+        InvokePrivate(boardView, "UpdateLocalLaser", new Vector2(8f, 9f), 120L);
+
+        var trailCount = boardView.LocalLaser!.Trail.Count;
+
+        boardScreenViewModel.SelectedTool = BoardToolType.Select;
+        InvokePrivate(boardView, "HandleBoardScreenPropertyChanged", boardScreenViewModel, new System.ComponentModel.PropertyChangedEventArgs(nameof(BoardScreenViewModel.SelectedTool)));
+
+        Assert.NotNull(boardView.LocalLaser);
+        Assert.False(boardView.LocalLaser!.IsActive);
+        Assert.Equal(trailCount, boardView.LocalLaser.Trail.Count);
+        Assert.Equal(3, client.SentOperations.Count);
+        var cancel = Assert.IsType<LaserPointerOperation>(client.SentOperations[^1]);
+        Assert.Equal(new Vector2(8f, 9f), cancel.Position);
+        Assert.False(cancel.IsActive);
+    }
+
+    [Fact]
     public void LaserPointer_QuickTap_KeepsLocalPingAndPublishesLaserLifecycleOnly()
     {
         var mainViewModel = new MainViewModel();
@@ -561,6 +617,31 @@ public sealed class BoardViewPipelineTests
         Assert.All(client.SentOperations, operation => Assert.IsType<LaserPointerOperation>(operation));
         Assert.True(((LaserPointerOperation)client.SentOperations[0]).IsActive);
         Assert.False(((LaserPointerOperation)client.SentOperations[1]).IsActive);
+    }
+
+    [Fact]
+    public void LaserPointer_QuickTapPing_UsesLaserPresenceColor()
+    {
+        var mainViewModel = new MainViewModel
+        {
+            LaserPresenceColor = SkiaSharp.SKColors.Cyan
+        };
+        var boardView = new BoardView();
+        var boardScreenViewModel = new BoardScreenViewModel(mainViewModel)
+        {
+            SelectedTool = BoardToolType.LaserPointer,
+            SelectedStrokeColor = SkiaSharp.SKColors.DeepPink
+        };
+
+        AttachBoardScreen(boardView, boardScreenViewModel);
+        InvokePrivateNoArgs(boardView, "SyncToolController");
+        InvokePrivate(boardView, "BeginLocalLaser", new Vector2(10f, 10f), new Point(10, 10), 100L);
+
+        InvokePrivate(boardView, "CompleteLocalLaser", new Vector2(12f, 13f), new Point(12, 13), 250L);
+
+        Assert.NotNull(boardView.LocalPing);
+        Assert.Equal(mainViewModel.LaserPresenceColor, boardView.LocalPing!.Color);
+        Assert.NotEqual(boardScreenViewModel.SelectedStrokeColor, boardView.LocalPing.Color);
     }
 
     [Fact]
