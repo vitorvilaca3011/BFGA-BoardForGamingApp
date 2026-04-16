@@ -37,11 +37,11 @@ Fading laser trail renders smoothly at 60fps with zero GC pressure from point st
 
 ### RemoteLaserState (BFGA.Canvas/Rendering/ or Models/)
 - Per-peer laser state: `LaserTrailBuffer`, `bool IsActive`, `long LastUpdateMs`
-- Stored in `IReadOnlyDictionary<int, RemoteLaserState>` on BoardCanvas styled property
+- Stored in `IReadOnlyDictionary<Guid, RemoteLaserState>` on BoardCanvas styled property
 
 ### LaserTrailRenderer (BFGA.Canvas/Rendering/)
 - Static helper (matches `CollaboratorOverlayHelper` pattern)
-- `DrawLaserTrails(SKCanvas, IReadOnlyDictionary<int, RemoteLaserState>, ...)` 
+- `DrawLaserTrails(SKCanvas, IReadOnlyDictionary<Guid, RemoteLaserState>, ...)` 
 - Iterates points, computes alpha from age: `alpha = 1 - (age / decayMs)` with ease-out curve
 - Draws `SKCanvas.DrawLine()` per segment with varying alpha
 - Uses `using var paint = new SKPaint` per trail (follows convention)
@@ -52,7 +52,7 @@ Fading laser trail renders smoothly at 60fps with zero GC pressure from point st
 | What | Where | Action |
 |------|-------|--------|
 | Handle op | `MainViewModel.cs` ~L916 | Add `LaserPointerOperation` case → upsert `RemoteLaserState` |
-| Styled property | `BoardCanvas.cs` ~L44 | `RemoteLasersProperty` — `IReadOnlyDictionary<int, RemoteLaserState>` |
+| Styled property | `BoardCanvas.cs` ~L44 | `RemoteLasersProperty` — `IReadOnlyDictionary<Guid, RemoteLaserState>` |
 | Render call | `BoardDrawOperation.Render()` ~L300 | Call `LaserTrailRenderer.DrawLaserTrails()` after cursors |
 | Fade timer | `BoardCanvas.cs` | `DispatcherTimer` ~16ms, starts when any laser active, stops when all inactive |
 | Invalidation | Timer tick | `InvalidateVisual()` to trigger re-render for fade animation |
