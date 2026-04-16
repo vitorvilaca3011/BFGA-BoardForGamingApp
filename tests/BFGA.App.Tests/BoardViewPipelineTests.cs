@@ -429,6 +429,141 @@ public sealed class BoardViewPipelineTests
     }
 
     [Fact]
+    public void LaserPointer_BeginLocalLaser_PublishesActiveOperation()
+    {
+        var mainViewModel = new MainViewModel();
+        var client = new FakeClientSession();
+        AttachClient(mainViewModel, client);
+
+        var boardView = new BoardView();
+        var boardScreenViewModel = new BoardScreenViewModel(mainViewModel)
+        {
+            SelectedTool = BoardToolType.LaserPointer
+        };
+
+        AttachBoardScreen(boardView, boardScreenViewModel);
+        InvokePrivateNoArgs(boardView, "SyncToolController");
+
+        InvokePrivate(boardView, "BeginLocalLaser", new Vector2(12f, 34f), new Point(20, 40), 100L);
+
+        var operation = Assert.Single(client.SentOperations);
+        var laser = Assert.IsType<LaserPointerOperation>(operation);
+        Assert.Equal(Guid.Empty, laser.SenderId);
+        Assert.Equal(new Vector2(12f, 34f), laser.Position);
+        Assert.True(laser.IsActive);
+    }
+
+    [Fact]
+    public void LaserPointer_UpdateLocalLaser_ChangedPointPublishesActiveOperation()
+    {
+        var mainViewModel = new MainViewModel();
+        var client = new FakeClientSession();
+        AttachClient(mainViewModel, client);
+
+        var boardView = new BoardView();
+        var boardScreenViewModel = new BoardScreenViewModel(mainViewModel)
+        {
+            SelectedTool = BoardToolType.LaserPointer
+        };
+
+        AttachBoardScreen(boardView, boardScreenViewModel);
+        InvokePrivateNoArgs(boardView, "SyncToolController");
+        InvokePrivate(boardView, "BeginLocalLaser", new Vector2(10f, 10f), new Point(10, 10), 100L);
+
+        InvokePrivate(boardView, "UpdateLocalLaser", new Vector2(10f, 10f), 120L);
+        InvokePrivate(boardView, "UpdateLocalLaser", new Vector2(16f, 22f), 150L);
+
+        Assert.Equal(2, client.SentOperations.Count);
+
+        var update = Assert.IsType<LaserPointerOperation>(client.SentOperations[1]);
+        Assert.Equal(new Vector2(16f, 22f), update.Position);
+        Assert.True(update.IsActive);
+    }
+
+    [Fact]
+    public void LaserPointer_CompleteLocalLaser_PublishesInactiveOperation()
+    {
+        var mainViewModel = new MainViewModel();
+        var client = new FakeClientSession();
+        AttachClient(mainViewModel, client);
+
+        var boardView = new BoardView();
+        var boardScreenViewModel = new BoardScreenViewModel(mainViewModel)
+        {
+            SelectedTool = BoardToolType.LaserPointer,
+            SelectedStrokeColor = SkiaSharp.SKColors.DeepPink
+        };
+
+        AttachBoardScreen(boardView, boardScreenViewModel);
+        InvokePrivateNoArgs(boardView, "SyncToolController");
+        InvokePrivate(boardView, "BeginLocalLaser", new Vector2(10f, 10f), new Point(10, 10), 100L);
+
+        InvokePrivate(boardView, "CompleteLocalLaser", new Vector2(12f, 13f), new Point(12, 13), 250L);
+
+        Assert.Equal(2, client.SentOperations.Count);
+
+        var complete = Assert.IsType<LaserPointerOperation>(client.SentOperations[1]);
+        Assert.Equal(new Vector2(12f, 13f), complete.Position);
+        Assert.False(complete.IsActive);
+    }
+
+    [Fact]
+    public void LaserPointer_CancelLocalLaser_PublishesInactiveOperation()
+    {
+        var mainViewModel = new MainViewModel();
+        var client = new FakeClientSession();
+        AttachClient(mainViewModel, client);
+
+        var boardView = new BoardView();
+        var boardScreenViewModel = new BoardScreenViewModel(mainViewModel)
+        {
+            SelectedTool = BoardToolType.LaserPointer
+        };
+
+        AttachBoardScreen(boardView, boardScreenViewModel);
+        InvokePrivateNoArgs(boardView, "SyncToolController");
+        InvokePrivate(boardView, "BeginLocalLaser", new Vector2(4f, 6f), new Point(4, 6), 100L);
+        InvokePrivate(boardView, "UpdateLocalLaser", new Vector2(8f, 9f), 120L);
+
+        InvokePrivateNoArgs(boardView, "CancelLocalLaser");
+
+        Assert.Equal(3, client.SentOperations.Count);
+
+        var cancel = Assert.IsType<LaserPointerOperation>(client.SentOperations[2]);
+        Assert.Equal(new Vector2(8f, 9f), cancel.Position);
+        Assert.False(cancel.IsActive);
+    }
+
+    [Fact]
+    public void LaserPointer_QuickTap_KeepsLocalPingAndPublishesLaserLifecycleOnly()
+    {
+        var mainViewModel = new MainViewModel();
+        var client = new FakeClientSession();
+        AttachClient(mainViewModel, client);
+
+        var boardView = new BoardView();
+        var boardScreenViewModel = new BoardScreenViewModel(mainViewModel)
+        {
+            SelectedTool = BoardToolType.LaserPointer,
+            SelectedStrokeColor = SkiaSharp.SKColors.DeepPink
+        };
+
+        AttachBoardScreen(boardView, boardScreenViewModel);
+        InvokePrivateNoArgs(boardView, "SyncToolController");
+        var initialCount = mainViewModel.Board.Elements.Count;
+
+        InvokePrivate(boardView, "BeginLocalLaser", new Vector2(10f, 10f), new Point(10, 10), 100L);
+        InvokePrivate(boardView, "CompleteLocalLaser", new Vector2(12f, 13f), new Point(12, 13), 250L);
+
+        Assert.NotNull(boardView.LocalPing);
+        Assert.Equal(initialCount, mainViewModel.Board.Elements.Count);
+        Assert.Equal(2, client.SentOperations.Count);
+        Assert.All(client.SentOperations, operation => Assert.IsType<LaserPointerOperation>(operation));
+        Assert.True(((LaserPointerOperation)client.SentOperations[0]).IsActive);
+        Assert.False(((LaserPointerOperation)client.SentOperations[1]).IsActive);
+    }
+
+    [Fact]
     public void LaserPointer_UpdateLocalLaser_AppendsTrailAndHeadPosition()
     {
         var mainViewModel = new MainViewModel();
@@ -588,6 +723,13 @@ public sealed class BoardViewPipelineTests
         field!.SetValue(boardView, boardScreenViewModel);
     }
 
+    private static void AttachClient(MainViewModel mainViewModel, FakeClientSession client)
+    {
+        var field = typeof(MainViewModel).GetField("_client", BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(field);
+        field!.SetValue(mainViewModel, client);
+    }
+
     private static object? InvokePrivate(object instance, string methodName, params object[] arguments)
     {
         var method = instance.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic);
@@ -688,5 +830,35 @@ public sealed class BoardViewPipelineTests
         public Task<ClipboardImageData?> ReadImageAsync() => Task.FromResult(ReadResult);
 
         public Task WriteImageAsync(byte[] imageData, string fileName) => Task.CompletedTask;
+    }
+
+    private sealed class FakeClientSession : BFGA.App.Networking.IGameClientSession
+    {
+        public List<BoardOperation> SentOperations { get; } = new();
+        public string DisplayName => "Client";
+        public bool IsConnected => true;
+
+        public event EventHandler? Connected { add { } remove { } }
+        public event EventHandler? Disconnected { add { } remove { } }
+        public event EventHandler<BFGA.Network.ClientOperationReceivedEventArgs>? OperationReceived { add { } remove { } }
+
+        public void ConnectAsync(string hostAddress, int port = 7777)
+        {
+        }
+
+        public void RequestFullSync()
+        {
+        }
+
+        public void SendOperation(BoardOperation operation, bool reliable = true)
+            => SentOperations.Add(operation);
+
+        public void PollEvents()
+        {
+        }
+
+        public void Dispose()
+        {
+        }
     }
 }
