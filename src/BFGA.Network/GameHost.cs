@@ -75,7 +75,7 @@ public class GameHost : IDisposable
     private readonly Dictionary<Guid, BoardElement> _boardElements;
     private readonly Dictionary<IPEndPoint, string> _pendingDisplayNames;
     private readonly object _lockObject = new();
-    
+
     private readonly UndoRedoManager _undoManager = new();
     private static readonly Guid _hostUserId = Guid.Empty;
 
@@ -122,7 +122,7 @@ public class GameHost : IDisposable
     /// Gets the current player roster.
     /// </summary>
     public IReadOnlyDictionary<Guid, PlayerInfo> PlayerRoster => _players.ToDictionary(
-        kvp => kvp.Key, 
+        kvp => kvp.Key,
         kvp => kvp.Value.Info);
 
     /// <summary>
@@ -381,30 +381,45 @@ public class GameHost : IDisposable
         bool isValid = ValidateOperation(operation);
         if (!isValid) return;
 
+        if (operation is UpdatePresenceColorOperation updateColor)
+        {
+            if (!_players.TryGetValue(operation.SenderId, out var player))
+            {
+                return;
+            }
+
+            var updatedInfo = new PlayerInfo(player.Info.DisplayName, updateColor.Color);
+            _players[operation.SenderId] = (player.Peer, updatedInfo);
+            BroadcastOperation(
+                new PeerJoinedOperation(operation.SenderId, updatedInfo.DisplayName, updateColor.Color),
+                reliable: true);
+            return;
+        }
+
         // SHORT-CIRCUIT: Undo/Redo are meta-operations — resolve them to
         // concrete ops and apply+broadcast the result, NOT the request.
         switch (operation)
         {
             case UndoOperation:
-            {
-                var undoResult = _undoManager.TryUndo(operation.SenderId);
-                if (undoResult is not null)
                 {
-                    ApplyOperationNoUndo(undoResult);
-                    BroadcastOperation(undoResult, IsOperationReliable(undoResult));
+                    var undoResult = _undoManager.TryUndo(operation.SenderId);
+                    if (undoResult is not null)
+                    {
+                        ApplyOperationNoUndo(undoResult);
+                        BroadcastOperation(undoResult, IsOperationReliable(undoResult));
+                    }
+                    return;
                 }
-                return;
-            }
             case RedoOperation:
-            {
-                var redoResult = _undoManager.TryRedo(operation.SenderId);
-                if (redoResult is not null)
                 {
-                    ApplyOperationNoUndo(redoResult);
-                    BroadcastOperation(redoResult, IsOperationReliable(redoResult));
+                    var redoResult = _undoManager.TryRedo(operation.SenderId);
+                    if (redoResult is not null)
+                    {
+                        ApplyOperationNoUndo(redoResult);
+                        BroadcastOperation(redoResult, IsOperationReliable(redoResult));
+                    }
+                    return;
                 }
-                return;
-            }
         }
 
         ApplyOperation(operation);
@@ -426,6 +441,8 @@ public class GameHost : IDisposable
             case UndoOperation:
             case RedoOperation:
                 return true;
+            case UpdatePresenceColorOperation:
+                return operation.SenderId != Guid.Empty && _players.ContainsKey(operation.SenderId);
         }
 
         switch (operation)
@@ -474,15 +491,15 @@ public class GameHost : IDisposable
             switch (operation)
             {
                 case AddElementOperation add:
-                {
-                    if (pushUndo)
                     {
-                        var inverseDelete = new DeleteElementOperation { ElementId = add.Element.Id };
-                        _undoManager.Push(operation.SenderId, operation, inverseDelete);
+                        if (pushUndo)
+                        {
+                            var inverseDelete = new DeleteElementOperation { ElementId = add.Element.Id };
+                            _undoManager.Push(operation.SenderId, operation, inverseDelete);
+                        }
+                        _boardElements[add.Element.Id] = add.Element;
+                        break;
                     }
-                    _boardElements[add.Element.Id] = add.Element;
-                    break;
-                }
                 case UpdateElementOperation update:
                     if (_boardElements.TryGetValue(update.ElementId, out var existingElement))
                     {
@@ -731,7 +748,7 @@ public class GameHost : IDisposable
             {
                 // Use default name if reading fails
             }
-            
+
             // Store display name by endpoint for retrieval in OnPeerConnected
             _host._pendingDisplayNames[request.RemoteEndPoint] = displayName;
             request.Accept();
@@ -741,13 +758,13 @@ public class GameHost : IDisposable
         {
             // Get display name that was stored in OnConnectionRequest
             string displayName = $"Player{_host._players.Count + 1}";
-            
+
             if (_host._pendingDisplayNames.TryGetValue(new IPEndPoint(peer.Address, peer.Port), out var pendingName))
             {
                 displayName = pendingName;
                 _host._pendingDisplayNames.Remove(new IPEndPoint(peer.Address, peer.Port));
             }
-            
+
             var clientId = _host.AssignClientId(peer, displayName);
 
             _host.PeerJoined?.Invoke(_host, new PeerJoinedEventArgs(
@@ -793,7 +810,7 @@ public class GameHost : IDisposable
                 Debug.WriteLine($"[Host] Received {data.Length} bytes from {peer.Address} on channel {channel}");
                 var operation = OperationSerializer.Deserialize(data);
                 Debug.WriteLine($"[Host] Deserialized operation {operation.Type}");
-                
+
                 // Handle special operations
                 if (operation is RequestFullSyncOperation)
                 {

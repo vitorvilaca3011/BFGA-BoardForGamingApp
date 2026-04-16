@@ -24,7 +24,8 @@ public enum OperationType
     PeerLeft = 10,
     Undo = 11,
     Redo = 12,
-    LaserPointer = 13
+    LaserPointer = 13,
+    UpdatePresenceColor = 14
 }
 
 /// <summary>
@@ -46,6 +47,7 @@ public enum OperationType
 [MessagePack.Union(11, typeof(UndoOperation))]
 [MessagePack.Union(12, typeof(RedoOperation))]
 [MessagePack.Union(13, typeof(LaserPointerOperation))]
+[MessagePack.Union(14, typeof(UpdatePresenceColorOperation))]
 public abstract class BoardOperation
 {
     /// <summary>
@@ -424,5 +426,27 @@ public class LaserPointerOperation : BoardOperation
         SenderId = clientId;
         Position = position;
         IsActive = isActive;
+    }
+}
+
+/// <summary>
+/// Requests host-authoritative update of sender's shared presence color.
+/// Direction: Client -> Host
+/// </summary>
+[MessagePackObject]
+public sealed class UpdatePresenceColorOperation : BoardOperation
+{
+    public override OperationType Type => OperationType.UpdatePresenceColor;
+
+    [Key(3)]
+    public SKColor Color { get; set; }
+
+    public UpdatePresenceColorOperation()
+    {
+    }
+
+    public UpdatePresenceColorOperation(SKColor color)
+    {
+        Color = color;
     }
 }
