@@ -19,7 +19,7 @@ namespace BFGA.App.ViewModels;
 
 public sealed class MainViewModel : ViewModelBase, IDisposable
 {
-private readonly IFileDialogService? _fileDialogService;
+    private readonly IFileDialogService? _fileDialogService;
     private readonly IClipboardService? _clipboardService;
     private readonly IGameSessionFactory _sessionFactory;
     private readonly Func<string> _documentsFolderProvider;
@@ -66,13 +66,13 @@ private readonly IFileDialogService? _fileDialogService;
     private TaskCompletionSource<bool>? _pendingFullSyncRequest;
     private readonly SettingsService _settingsService = new();
 
-public MainViewModel(
-        IFileDialogService? fileDialogService,
-        IGameSessionFactory? sessionFactory,
-        TimeSpan? joinTimeout = null,
-        TimeSpan? fullSyncTimeout = null,
-        Func<string>? documentsFolderProvider = null)
-        : this(fileDialogService, null, sessionFactory, joinTimeout, fullSyncTimeout, documentsFolderProvider)
+    public MainViewModel(
+            IFileDialogService? fileDialogService,
+            IGameSessionFactory? sessionFactory,
+            TimeSpan? joinTimeout = null,
+            TimeSpan? fullSyncTimeout = null,
+            Func<string>? documentsFolderProvider = null)
+            : this(fileDialogService, null, sessionFactory, joinTimeout, fullSyncTimeout, documentsFolderProvider)
     {
     }
 
@@ -134,7 +134,7 @@ public MainViewModel(
 
     public IFileDialogService? FileDialogService => _fileDialogService;
     public IClipboardService? ClipboardService => _clipboardService;
-public ConnectionMode SelectedMode
+    public ConnectionMode SelectedMode
     {
         get => _selectedMode;
         set
@@ -1115,17 +1115,21 @@ public ConnectionMode SelectedMode
     private void UpsertRemoteLaser(LaserPointerOperation operation)
     {
         if (ShouldIgnoreLocalPresence(operation.SenderId))
+        {
             return;
+        }
+
+        var playerInfo = GetPlayerInfo(operation.SenderId);
 
         var lasers = new Dictionary<Guid, RemoteLaserState>(_remoteLasers);
 
         if (!lasers.TryGetValue(operation.SenderId, out var state))
         {
-            var playerInfo = GetPlayerInfo(operation.SenderId);
             state = new RemoteLaserState(playerInfo?.AssignedColor ?? SkiaSharp.SKColors.White);
             lasers[operation.SenderId] = state;
         }
 
+        state.Color = playerInfo?.AssignedColor ?? state.Color;
         state.IsActive = operation.IsActive;
         state.LastUpdateMs = Environment.TickCount64;
 
@@ -1214,6 +1218,7 @@ public ConnectionMode SelectedMode
         {
             RemoteCursors = new Dictionary<Guid, RemoteCursorState>();
             RemoteStrokePreviews = new Dictionary<Guid, RemoteStrokePreviewState>();
+            RemoteLasers = new Dictionary<Guid, RemoteLaserState>();
             return;
         }
 
@@ -1225,6 +1230,7 @@ public ConnectionMode SelectedMode
 
         RemoteCursors = RebuildRemoteCursors(validIds);
         RemoteStrokePreviews = RebuildRemoteStrokePreviews(validIds);
+        RemoteLasers = RebuildRemoteLasers(validIds);
     }
 
     private Dictionary<Guid, RemoteCursorState> RebuildRemoteCursors(HashSet<Guid> validIds)
@@ -1270,6 +1276,25 @@ public ConnectionMode SelectedMode
         }
 
         return previews;
+    }
+
+    private Dictionary<Guid, RemoteLaserState> RebuildRemoteLasers(HashSet<Guid> validIds)
+    {
+        var lasers = new Dictionary<Guid, RemoteLaserState>();
+
+        foreach (var entry in RemoteLasers)
+        {
+            if (!validIds.Contains(entry.Key))
+            {
+                continue;
+            }
+
+            var playerInfo = GetPlayerInfo(entry.Key);
+            entry.Value.Color = playerInfo?.AssignedColor ?? entry.Value.Color;
+            lasers[entry.Key] = entry.Value;
+        }
+
+        return lasers;
     }
 
     private PlayerInfo? GetPlayerInfo(Guid clientId) => Roster.TryGetValue(clientId, out var info) ? info : null;
