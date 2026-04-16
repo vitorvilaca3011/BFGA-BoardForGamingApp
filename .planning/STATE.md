@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-stopped_at: Phase 5 UI-SPEC approved
-last_updated: "2026-04-16T22:06:11.515Z"
-last_activity: 2026-04-16 -- Phase 04 execution complete
+status: complete
+stopped_at: Phase 05 complete. Laser pointer milestone finished.
+last_updated: "2026-04-16T23:10:00.000Z"
+last_activity: 2026-04-16 -- Phase 05 execution complete
 progress:
   total_phases: 5
-  completed_phases: 4
-  total_plans: 9
-  completed_plans: 9
+  completed_phases: 5
+  total_plans: 12
+  completed_plans: 12
   percent: 100
 ---
 
@@ -25,18 +25,18 @@ See: .planning/PROJECT.md (updated 2026-04-15)
 
 ## Current Position
 
-Phase: 04 (multiplayer-integration) — COMPLETE
+Phase: 05 (polish-configuration) — COMPLETE
 Plan: 3 of 3
-Status: Phase 04 complete, ready for Phase 05
-Last activity: 2026-04-16 -- Phase 04 execution complete
+Status: Phase 05 complete, milestone finished
+Last activity: 2026-04-16 -- Phase 05 execution complete
 
-Progress: [========░░] 80%
+Progress: [==========] 100%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 9
+- Total plans completed: 12
 - Average duration: —
 - Total execution time: 0 hours
 
@@ -48,6 +48,7 @@ Progress: [========░░] 80%
 | 02 | 2 | - | - |
 | 03 | 3 | - | - |
 | 04 | 3 | - | - |
+| 05 | 3 | - | - |
 
 **Recent Trend:**
 
@@ -79,6 +80,10 @@ Recent decisions affecting current work:
 - [Phase 4]: Remote lasers render in dedicated overlay path, not `BoardDrawOperation`
 - [Phase 4]: Remote release stops new points but keeps natural fade-out
 - [Phase 4]: Existing host player palette is sufficient for multiplayer colors
+- [Phase 5]: Laser color uses shared presence identity, not drawing stroke color
+- [Phase 5]: Laser color picker lives in settings panel only and persists to settings.json
+- [Phase 5]: Stale remote lasers timeout after ~3s, then fade naturally
+- [Phase 5]: Peer disconnect removes remote laser immediately; tool switch sends inactive release semantics
 
 ### Pending Todos
 
@@ -91,6 +96,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-16T22:06:11.512Z
-Stopped at: Phase 5 UI-SPEC approved
-Resume file: .planning/phases/05-polish-configuration/05-UI-SPEC.md
+Last session: 2026-04-16T23:10:00.000Z
+Stopped at: Phase 05 complete. Laser pointer milestone finished.
+Resume file: .planning/phases/05-polish-configuration/05-03-SUMMARY.md

@@ -14,7 +14,7 @@ Deliver a fully ephemeral laser pointer tool with fading trail, press-and-hold a
 - [x] **Phase 2: Trail Buffer & Renderer** - Ring buffer, per-segment fade rendering, smooth animation loop
 - [x] **Phase 3: Local Tool Implementation** - Press-and-hold activation, local dot + trail, ping marker, zoom/pan correctness
 - [x] **Phase 4: Multiplayer Integration** - Remote laser rendering, per-user colors, simultaneous multi-peer lasers
-- [ ] **Phase 5: Polish & Configuration** - Color picker, disconnect cleanup, stale laser timeout, edge case handling
+- [x] **Phase 5: Polish & Configuration** - Color picker, disconnect cleanup, stale laser timeout, edge case handling
 
 ## Phase Details
 
@@ -86,7 +86,11 @@ Plans:
   2. Peer disconnect cleans up their laser trail immediately — no ghost trails persist
   3. Stale remote lasers time out after ~3 seconds if no updates received
   4. Switching away from laser tool sends deactivation signal and cleans up local state
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [x] 05-01-PLAN.md — Persist preferred presence color and add settings-panel-only LASER COLOR swatch UI
+- [x] 05-02-PLAN.md — Propagate preferred presence color through host-authoritative roster/cursor/laser metadata
+- [x] 05-03-PLAN.md — Use preferred presence color for local laser and enforce stale remote timeout release semantics
 **UI hint**: yes
 
 ## Progress
@@ -100,4 +104,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. Trail Buffer & Renderer | 2/2 | Complete | Yes |
 | 3. Local Tool Implementation | 3/3 | Complete | Yes |
 | 4. Multiplayer Integration | 3/3 | Complete | Yes |
-| 5. Polish & Configuration | 0/? | Not started | - |
+| 5. Polish & Configuration | 3/3 | Complete | Yes |
