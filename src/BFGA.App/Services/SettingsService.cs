@@ -20,6 +20,7 @@ public sealed class SettingsService : IDisposable
     public string DefaultImageFolder { get; set; } = string.Empty;
     public bool AutosaveEnabled { get; set; } = true;
     public int AutosaveIntervalSeconds { get; set; } = 60;
+    public string LaserPresenceColorHex { get; set; } = "#FFFFFF";
 
     public void Load()
     {
@@ -42,6 +43,9 @@ public sealed class SettingsService : IDisposable
             DefaultImageFolder = data.DefaultImageFolder ?? string.Empty;
             AutosaveEnabled = data.AutosaveEnabled;
             AutosaveIntervalSeconds = data.AutosaveIntervalSeconds > 0 ? data.AutosaveIntervalSeconds : 60;
+            LaserPresenceColorHex = string.IsNullOrWhiteSpace(data.LaserPresenceColorHex)
+                ? "#FFFFFF"
+                : data.LaserPresenceColorHex;
         }
         catch
         {
@@ -80,7 +84,8 @@ public sealed class SettingsService : IDisposable
                 Language = Language,
                 DefaultImageFolder = DefaultImageFolder,
                 AutosaveEnabled = AutosaveEnabled,
-                AutosaveIntervalSeconds = AutosaveIntervalSeconds
+                AutosaveIntervalSeconds = AutosaveIntervalSeconds,
+                LaserPresenceColorHex = LaserPresenceColorHex
             };
             var json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(SettingsPath, json);
@@ -104,5 +109,6 @@ public sealed class SettingsService : IDisposable
         public string? DefaultImageFolder { get; set; } = string.Empty;
         public bool AutosaveEnabled { get; set; } = true;
         public int AutosaveIntervalSeconds { get; set; } = 60;
+        public string? LaserPresenceColorHex { get; set; } = "#FFFFFF";
     }
 }

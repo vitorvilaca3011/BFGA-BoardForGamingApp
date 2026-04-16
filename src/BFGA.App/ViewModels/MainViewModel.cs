@@ -59,6 +59,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     private int _redoShadowCount;
     private bool _isSettingsOpen;
     private float _gridOpacity = 0.1f;
+    private SkiaSharp.SKColor _laserPresenceColor = SkiaSharp.SKColors.White;
     private DateTime? _joinStartedAt;
     private readonly TimeSpan _joinTimeout;
     private readonly TimeSpan _fullSyncTimeout;
@@ -130,6 +131,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
 
         _settingsService.Load();
         _gridOpacity = _settingsService.GridOpacity;
+        _laserPresenceColor = ParseLaserPresenceColor(_settingsService.LaserPresenceColorHex);
     }
 
     public IFileDialogService? FileDialogService => _fileDialogService;
@@ -305,6 +307,21 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
                 _settingsService.SaveDebounced();
                 OnPropertyChanged(nameof(GridOpacityPercent));
             }
+        }
+    }
+
+    public SkiaSharp.SKColor LaserPresenceColor
+    {
+        get => _laserPresenceColor;
+        set
+        {
+            if (!SetProperty(ref _laserPresenceColor, value))
+            {
+                return;
+            }
+
+            _settingsService.LaserPresenceColorHex = value.ToString();
+            _settingsService.SaveDebounced();
         }
     }
 
@@ -1416,6 +1433,19 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     }
 
     private static string ShortClientId(Guid clientId) => clientId.ToString("N")[..8];
+
+    private static SkiaSharp.SKColor ParseLaserPresenceColor(string? colorHex)
+    {
+        try
+        {
+            var normalized = string.IsNullOrWhiteSpace(colorHex) ? "#FFFFFF" : colorHex;
+            return SkiaSharp.SKColor.Parse(normalized);
+        }
+        catch (ArgumentException)
+        {
+            return SkiaSharp.SKColors.White;
+        }
+    }
 
     private void AbortJoinAttempt(string message)
     {

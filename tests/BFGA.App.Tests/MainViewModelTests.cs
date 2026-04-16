@@ -17,6 +17,8 @@ namespace BFGA.App.Tests;
 [Collection("BFGA_BOARD_DEBUG_LOG")]
 public class MainViewModelTests
 {
+    private static readonly SemaphoreSlim SettingsFileGate = new(1, 1);
+
     [Fact]
     public async Task CurrentScreen_IsReadOnlyAndDerivedFromConnectionState()
     {
@@ -1425,6 +1427,96 @@ public class MainViewModelTests
         finally
         {
             await sut.StopHostAsync();
+        }
+    }
+
+    [Fact]
+    public async Task MainViewModel_LoadsLaserPresenceColorFromSettingsService()
+    {
+        await RunWithIsolatedSettingsFileAsync(async settingsPath =>
+        {
+            await File.WriteAllTextAsync(settingsPath, """
+                {
+                  "GridOpacity": 0.1,
+                  "Language": "English",
+                  "DefaultImageFolder": "",
+                  "AutosaveEnabled": true,
+                  "AutosaveIntervalSeconds": 60,
+                  "LaserPresenceColorHex": "#007AFF"
+                }
+                """);
+
+            using var sut = new MainViewModel();
+
+            Assert.Equal(SkiaSharp.SKColor.Parse("#007AFF"), sut.LaserPresenceColor);
+        });
+    }
+
+    [Fact]
+    public async Task MainViewModel_ChangingLaserPresenceColor_PersistsToSettingsService()
+    {
+        await RunWithIsolatedSettingsFileAsync(async settingsPath =>
+        {
+            using var sut = new MainViewModel();
+            var color = SkiaSharp.SKColor.Parse("#AF52DE");
+
+            sut.LaserPresenceColor = color;
+
+            var settingsService = (SettingsService)typeof(MainViewModel)
+                .GetField("_settingsService", BindingFlags.Instance | BindingFlags.NonPublic)!
+                .GetValue(sut)!;
+
+            Assert.Equal(color.ToString(), settingsService.LaserPresenceColorHex);
+
+            await Task.Delay(650);
+
+            var json = await File.ReadAllTextAsync(settingsPath);
+            Assert.Contains(color.ToString(), json);
+        });
+    }
+
+    private static async Task RunWithIsolatedSettingsFileAsync(Func<string, Task> action)
+    {
+        await SettingsFileGate.WaitAsync();
+        var settingsFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "BFGA");
+        var settingsPath = Path.Combine(settingsFolder, "settings.json");
+        var backupPath = Path.Combine(settingsFolder, $"settings.{Guid.NewGuid():N}.bak");
+        var hadExistingFile = File.Exists(settingsPath);
+
+        Directory.CreateDirectory(settingsFolder);
+
+        if (hadExistingFile)
+        {
+            File.Copy(settingsPath, backupPath, overwrite: true);
+        }
+
+        try
+        {
+            if (File.Exists(settingsPath))
+            {
+                File.Delete(settingsPath);
+            }
+
+            await action(settingsPath);
+        }
+        finally
+        {
+            if (File.Exists(settingsPath))
+            {
+                File.Delete(settingsPath);
+            }
+
+            if (hadExistingFile && File.Exists(backupPath))
+            {
+                File.Copy(backupPath, settingsPath, overwrite: true);
+                File.Delete(backupPath);
+            }
+            else if (File.Exists(backupPath))
+            {
+                File.Delete(backupPath);
+            }
+
+            SettingsFileGate.Release();
         }
     }
 

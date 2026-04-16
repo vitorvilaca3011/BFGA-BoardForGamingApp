@@ -2,6 +2,7 @@ using BFGA.App.ViewModels;
 using BFGA.Canvas.Tools;
 using BFGA.App.Services;
 using System.IO;
+using SkiaSharp;
 
 namespace BFGA.App.Tests;
 
@@ -99,5 +100,38 @@ public class BoardScreenViewModelTests
         using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
         using var reader = new StreamReader(stream);
         return reader.ReadToEnd();
+    }
+
+    [Fact]
+    public void BoardScreenViewModel_LaserPresenceColor_ProxiesMainViewModel()
+    {
+        using var mainViewModel = new MainViewModel();
+        using var sut = new BoardScreenViewModel(mainViewModel);
+        var changed = new List<string>();
+
+        sut.PropertyChanged += (_, args) => changed.Add(args.PropertyName ?? string.Empty);
+
+        mainViewModel.LaserPresenceColor = SKColor.Parse("#34C759");
+
+        Assert.Equal(SKColor.Parse("#34C759"), sut.LaserPresenceColor);
+        Assert.Contains(nameof(BoardScreenViewModel.LaserPresenceColor), changed);
+
+        sut.LaserPresenceColor = SKColor.Parse("#FF9500");
+
+        Assert.Equal(SKColor.Parse("#FF9500"), mainViewModel.LaserPresenceColor);
+    }
+
+    [Fact]
+    public void BoardScreenViewModel_LaserPresenceColor_DoesNotChangeSelectedStrokeColor()
+    {
+        using var mainViewModel = new MainViewModel();
+        using var sut = new BoardScreenViewModel(mainViewModel);
+        var strokeColor = SKColor.Parse("#007AFF");
+
+        sut.SelectedStrokeColor = strokeColor;
+        sut.LaserPresenceColor = SKColor.Parse("#FF2D55");
+
+        Assert.Equal(strokeColor, sut.SelectedStrokeColor);
+        Assert.Equal(SKColor.Parse("#FF2D55"), mainViewModel.LaserPresenceColor);
     }
 }

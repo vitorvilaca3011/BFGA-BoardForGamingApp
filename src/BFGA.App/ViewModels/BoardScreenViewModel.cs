@@ -52,7 +52,14 @@ public sealed class BoardScreenViewModel : ViewModelBase, IDisposable
     private void OnMainViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(MainViewModel.Roster))
+        {
             OnPropertyChanged(nameof(IsRosterVisible));
+        }
+
+        if (e.PropertyName == nameof(MainViewModel.LaserPresenceColor))
+        {
+            OnPropertyChanged(nameof(LaserPresenceColor));
+        }
     }
 
     public void Dispose()
@@ -103,6 +110,12 @@ public sealed class BoardScreenViewModel : ViewModelBase, IDisposable
     {
         get => _selectedFillColor;
         set => SetProperty(ref _selectedFillColor, value);
+    }
+
+    public SKColor LaserPresenceColor
+    {
+        get => MainViewModel.LaserPresenceColor;
+        set => MainViewModel.LaserPresenceColor = value;
     }
 
     public float StrokeWidth
