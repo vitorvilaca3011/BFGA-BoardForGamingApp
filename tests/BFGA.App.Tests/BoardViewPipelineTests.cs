@@ -504,6 +504,54 @@ public sealed class BoardViewPipelineTests
     }
 
     [Fact]
+    public void LaserPointer_BeginLocalLaser_CreatesFreshOverlayPerGesture()
+    {
+        var mainViewModel = new MainViewModel();
+        var boardView = new BoardView();
+        var boardScreenViewModel = new BoardScreenViewModel(mainViewModel)
+        {
+            SelectedTool = BoardToolType.LaserPointer,
+            SelectedStrokeColor = SkiaSharp.SKColors.DeepPink
+        };
+
+        AttachBoardScreen(boardView, boardScreenViewModel);
+        InvokePrivateNoArgs(boardView, "SyncToolController");
+        InvokePrivate(boardView, "BeginLocalLaser", new Vector2(2f, 3f), new Point(2, 3), 100L);
+
+        var firstGestureLaser = boardView.LocalLaser;
+        Assert.NotNull(firstGestureLaser);
+
+        InvokePrivate(boardView, "CompleteLocalLaser", new Vector2(4f, 5f), new Point(4, 5), 300L);
+        InvokePrivate(boardView, "BeginLocalLaser", new Vector2(8f, 13f), new Point(8, 13), 400L);
+
+        Assert.NotNull(boardView.LocalLaser);
+        Assert.NotSame(firstGestureLaser, boardView.LocalLaser);
+        Assert.True(boardView.LocalLaser!.IsActive);
+    }
+
+    [Fact]
+    public void LaserPointer_CompleteAfterCancel_DoesNotCreatePing()
+    {
+        var mainViewModel = new MainViewModel();
+        var boardView = new BoardView();
+        var boardScreenViewModel = new BoardScreenViewModel(mainViewModel)
+        {
+            SelectedTool = BoardToolType.LaserPointer,
+            SelectedStrokeColor = SkiaSharp.SKColors.DeepPink
+        };
+
+        AttachBoardScreen(boardView, boardScreenViewModel);
+        InvokePrivateNoArgs(boardView, "SyncToolController");
+        InvokePrivate(boardView, "BeginLocalLaser", new Vector2(10f, 10f), new Point(10, 10), 100L);
+        InvokePrivateNoArgs(boardView, "CancelLocalLaser");
+        InvokePrivate(boardView, "CompleteLocalLaser", new Vector2(12f, 12f), new Point(12, 12), 150L);
+
+        Assert.NotNull(boardView.LocalLaser);
+        Assert.False(boardView.LocalLaser!.IsActive);
+        Assert.Null(boardView.LocalPing);
+    }
+
+    [Fact]
     public void LaserPointer_ToolSwitchAway_CancelsActiveEmission()
     {
         var mainViewModel = new MainViewModel();

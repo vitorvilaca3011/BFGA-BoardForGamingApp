@@ -188,6 +188,7 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
     private PointerPhase _currentPointerPhase;
     private long _laserPressStartTimestampMs;
     private Point _laserPressStartScreenPoint;
+    private bool _localLaserCanceled;
     private System.Numerics.Vector2? _inlineTextEditPosition;
     private Guid? _inlineTextEditElementId;
     private string? _inlineTextEditOriginalText;
@@ -406,7 +407,9 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
             if (_toolController?.CurrentTool == BoardToolType.LaserPointer)
             {
                 var screenPoint = e.GetPosition(viewport);
-                CompleteLocalLaser(viewport.ScreenToBoard(screenPoint), screenPoint, Environment.TickCount64);
+                if (!_localLaserCanceled)
+                    CompleteLocalLaser(viewport.ScreenToBoard(screenPoint), screenPoint, Environment.TickCount64);
+
                 e.Handled = true;
                 return;
             }
@@ -447,6 +450,7 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
             && e.Pointer.Captured == viewport)
         {
             CancelLocalLaser();
+            e.Pointer.Capture(null);
         }
     }
 
@@ -458,8 +462,7 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
     private void BeginLocalLaser(Vector2 boardPoint, Point screenPoint, long timestampMs)
     {
         var color = _boardScreenViewModel?.SelectedStrokeColor ?? SkiaSharp.SKColors.White;
-        LocalLaser ??= new LocalLaserState(color);
-        LocalLaser.Color = color;
+        LocalLaser = new LocalLaserState(color);
         LocalLaser.IsActive = true;
         LocalLaser.HeadPosition = boardPoint;
         LocalLaser.LastUpdateMs = timestampMs;
@@ -467,6 +470,7 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
         LocalLaser.Trail.Add(boardPoint, timestampMs);
         _laserPressStartTimestampMs = timestampMs;
         _laserPressStartScreenPoint = screenPoint;
+        _localLaserCanceled = false;
         LocalPing = null;
     }
 
@@ -485,7 +489,7 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
 
     private void CompleteLocalLaser(Vector2 boardPoint, Point screenPoint, long timestampMs)
     {
-        if (LocalLaser is null)
+        if (LocalLaser is null || !LocalLaser.IsActive)
             return;
 
         UpdateLocalLaser(boardPoint, timestampMs);
@@ -507,6 +511,7 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
         if (LocalLaser is null)
             return;
 
+        _localLaserCanceled = true;
         LocalLaser.IsActive = false;
         LocalLaser.LastUpdateMs = Environment.TickCount64;
     }
