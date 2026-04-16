@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-15)
 
 **Core value:** Real-time collaborative canvas that stays in sync — laser pointer interactions must feel instant and consistent
-**Current focus:** Phase 01 — network-protocol-host-relay
+**Current focus:** Phase 02 — trail-buffer-renderer
 
 ## Current Position
 
 Phase: 2
 Plan: Not started
-Status: Executing Phase 01
-Last activity: 2026-04-16
+Status: Context written, ready for planning
+Last activity: 2026-04-15
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -63,6 +63,10 @@ Recent decisions affecting current work:
 - [Roadmap]: Network-first build order — routing decisions are architectural, wrong routing causes catastrophic perf (Pitfall #2, #3)
 - [Roadmap]: Sequenced delivery on dedicated channel 2 — resolves out-of-order jitter vs Unreliable, avoids cursor interference
 - [Roadmap]: Follow CursorUpdateOperation pattern — bypass board state pipeline entirely for laser ops
+- [Phase 2]: SKPaint — follow `using var` pattern, no reuse (consistency over micro-opt)
+- [Phase 2]: Fade timer lives in BoardCanvas (rendering concern, not ViewModel)
+- [Phase 2]: Timestamps via `Environment.TickCount64` (monotonic, ms precision, sufficient)
+- [Phase 2]: Laser trails render after cursors (topmost layer)
 
 ### Pending Todos
 
@@ -77,5 +81,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-04-15
-Stopped at: Roadmap created, ready for Phase 1 planning
-Resume file: None
+Stopped at: Phase 2 CONTEXT.md written, ready for /gsd-plan-phase
+Resume file: .planning/phases/02-trail-buffer-renderer/CONTEXT.md
