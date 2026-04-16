@@ -322,6 +322,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
 
             _settingsService.LaserPresenceColorHex = value.ToString();
             _settingsService.SaveDebounced();
+            SyncPreferredPresenceColor();
         }
     }
 
@@ -711,6 +712,12 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     private void OnPeerJoined(object? sender, PeerJoinedEventArgs e)
     {
         UpsertRosterEntry(e.ClientId, new PlayerInfo(e.DisplayName, e.AssignedColor));
+
+        if (Host is not null)
+        {
+            Host.BroadcastOperation(new PeerJoinedOperation(Guid.Empty, DisplayName, LaserPresenceColor), reliable: true);
+        }
+
         StatusText = $"{e.DisplayName} joined the board.";
     }
 
@@ -965,6 +972,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         _localClientId = sync.ClientId == Guid.Empty ? null : sync.ClientId;
         Roster = new Dictionary<Guid, PlayerInfo>(sync.PlayerRoster);
         ReconcileRemoteState();
+        SyncPreferredPresenceColor();
 
         if (sync.BoardState is not null)
         {
@@ -1444,6 +1452,24 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         catch (ArgumentException)
         {
             return SkiaSharp.SKColors.White;
+        }
+    }
+
+    private void SyncPreferredPresenceColor()
+    {
+        if (Host is not null)
+        {
+            Host.BroadcastOperation(new PeerJoinedOperation(Guid.Empty, DisplayName, LaserPresenceColor), reliable: true);
+            return;
+        }
+
+        if (Client is not null && _localClientId.HasValue)
+        {
+            var playerInfo = GetPlayerInfo(_localClientId.Value);
+            if (playerInfo?.AssignedColor != LaserPresenceColor)
+            {
+                Client.SendOperation(new UpdatePresenceColorOperation(LaserPresenceColor));
+            }
         }
     }
 
