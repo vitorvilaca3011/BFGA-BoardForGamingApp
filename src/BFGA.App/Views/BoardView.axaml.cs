@@ -461,7 +461,7 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
 
     private void BeginLocalLaser(Vector2 boardPoint, Point screenPoint, long timestampMs)
     {
-        var color = _boardScreenViewModel?.SelectedStrokeColor ?? SkiaSharp.SKColors.White;
+        var color = _boardScreenViewModel?.MainViewModel.LaserPresenceColor ?? SkiaSharp.SKColors.White;
         var laser = new LocalLaserState(color)
         {
             IsActive = true,
