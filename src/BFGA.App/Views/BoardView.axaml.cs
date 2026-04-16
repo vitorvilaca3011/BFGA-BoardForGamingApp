@@ -115,6 +115,7 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
         viewport.PointerMoved += HandlePointerMoved;
         viewport.PointerReleased += HandlePointerReleased;
         viewport.PointerExited += HandlePointerExited;
+        viewport.PointerCaptureLost += HandlePointerCaptureLost;
         DataContextChanged += HandleDataContextChanged;
         InlineTextEditor.KeyDown += HandleInlineTextEditorKeyDown;
         InlineTextEditor.LostFocus += HandleInlineTextEditorLostFocus;
@@ -185,6 +186,8 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
     private bool _isPanning;
     private Point _lastPanPosition;
     private PointerPhase _currentPointerPhase;
+    private long _laserPressStartTimestampMs;
+    private Point _laserPressStartScreenPoint;
     private System.Numerics.Vector2? _inlineTextEditPosition;
     private Guid? _inlineTextEditElementId;
     private string? _inlineTextEditOriginalText;
@@ -234,6 +237,9 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
         if (e.PropertyName is nameof(BoardScreenViewModel.SelectedTool))
         {
             SyncEraserPreview(null, false);
+            if (_boardScreenViewModel?.SelectedTool != BoardToolType.LaserPointer)
+                CancelLocalLaser();
+
             UpdateCursorForTool();
         }
 
@@ -320,6 +326,15 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
             return;
         }
 
+        if (_toolController?.CurrentTool == BoardToolType.LaserPointer)
+        {
+            var screenPoint = e.GetPosition(viewport);
+            BeginLocalLaser(viewport.ScreenToBoard(screenPoint), screenPoint, Environment.TickCount64);
+            e.Pointer.Capture(viewport);
+            e.Handled = true;
+            return;
+        }
+
         var clickCount = e.GetCurrentPoint(viewport).Properties.PointerUpdateKind == Avalonia.Input.PointerUpdateKind.LeftButtonPressed
             ? e.ClickCount : 1;
         if (clickCount >= 2 && _toolController?.CurrentTool == BoardToolType.Select)
@@ -356,6 +371,13 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
             return;
         }
 
+        if (_toolController?.CurrentTool == BoardToolType.LaserPointer)
+        {
+            UpdateLocalLaser(viewport.ScreenToBoard(e.GetPosition(viewport)), Environment.TickCount64);
+            e.Handled = true;
+            return;
+        }
+
         SyncEraserPreview(viewport.ScreenToBoard(e.GetPosition(viewport)), true);
 
         var shouldLog = ShouldLogMoveEvent();
@@ -381,6 +403,14 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
 
         try
         {
+            if (_toolController?.CurrentTool == BoardToolType.LaserPointer)
+            {
+                var screenPoint = e.GetPosition(viewport);
+                CompleteLocalLaser(viewport.ScreenToBoard(screenPoint), screenPoint, Environment.TickCount64);
+                e.Handled = true;
+                return;
+            }
+
             SyncEraserPreview(viewport.ScreenToBoard(e.GetPosition(viewport)), true);
             if (TryHandlePointer(e, PointerPhase.Released))
                 e.Handled = true;
@@ -412,6 +442,73 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
     private void HandlePointerExited(object? sender, PointerEventArgs e)
     {
         SyncEraserPreview(null, false);
+
+        if (_toolController?.CurrentTool == BoardToolType.LaserPointer
+            && e.Pointer.Captured == viewport)
+        {
+            CancelLocalLaser();
+        }
+    }
+
+    private void HandlePointerCaptureLost(object? sender, PointerCaptureLostEventArgs e)
+    {
+        CancelLocalLaser();
+    }
+
+    private void BeginLocalLaser(Vector2 boardPoint, Point screenPoint, long timestampMs)
+    {
+        var color = _boardScreenViewModel?.SelectedStrokeColor ?? SkiaSharp.SKColors.White;
+        LocalLaser ??= new LocalLaserState(color);
+        LocalLaser.Color = color;
+        LocalLaser.IsActive = true;
+        LocalLaser.HeadPosition = boardPoint;
+        LocalLaser.LastUpdateMs = timestampMs;
+        LocalLaser.Trail.Clear();
+        LocalLaser.Trail.Add(boardPoint, timestampMs);
+        _laserPressStartTimestampMs = timestampMs;
+        _laserPressStartScreenPoint = screenPoint;
+        LocalPing = null;
+    }
+
+    private void UpdateLocalLaser(Vector2 boardPoint, long timestampMs)
+    {
+        if (LocalLaser is null || !LocalLaser.IsActive)
+            return;
+
+        LocalLaser.HeadPosition = boardPoint;
+        LocalLaser.LastUpdateMs = timestampMs;
+
+        var points = LocalLaser.Trail.GetPoints();
+        if (points.Length == 0 || points[^1].Position != boardPoint)
+            LocalLaser.Trail.Add(boardPoint, timestampMs);
+    }
+
+    private void CompleteLocalLaser(Vector2 boardPoint, Point screenPoint, long timestampMs)
+    {
+        if (LocalLaser is null)
+            return;
+
+        UpdateLocalLaser(boardPoint, timestampMs);
+
+        var elapsed = timestampMs - _laserPressStartTimestampMs;
+        var dx = screenPoint.X - _laserPressStartScreenPoint.X;
+        var dy = screenPoint.Y - _laserPressStartScreenPoint.Y;
+        var movement = Math.Sqrt(dx * dx + dy * dy);
+
+        if (elapsed < 200 && movement < 5)
+            LocalPing = new PingMarkerState(boardPoint, timestampMs, LocalLaser.Color);
+
+        LocalLaser.IsActive = false;
+        LocalLaser.LastUpdateMs = timestampMs;
+    }
+
+    private void CancelLocalLaser()
+    {
+        if (LocalLaser is null)
+            return;
+
+        LocalLaser.IsActive = false;
+        LocalLaser.LastUpdateMs = Environment.TickCount64;
     }
 
     private bool TryHandlePointer(PointerEventArgs e, PointerPhase phase, bool logThisPhase = true)

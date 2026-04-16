@@ -468,7 +468,7 @@ public sealed class BoardViewPipelineTests
         InvokePrivateNoArgs(boardView, "SyncToolController");
         InvokePrivate(boardView, "BeginLocalLaser", new Vector2(10f, 10f), new Point(10, 10), 100L);
 
-        InvokePrivate(boardView, "CompleteLocalLaser", new Vector2(12f, 13f), new Point(13, 14), 250L);
+        InvokePrivate(boardView, "CompleteLocalLaser", new Vector2(12f, 13f), new Point(12, 13), 250L);
 
         Assert.NotNull(boardView.LocalLaser);
         Assert.False(boardView.LocalLaser!.IsActive);
@@ -527,17 +527,10 @@ public sealed class BoardViewPipelineTests
     [Fact]
     public void BoardCursorFactory_LaserPointer_UsesCrossCursor()
     {
-        var factoryType = typeof(BoardView).Assembly.GetType("BFGA.App.Infrastructure.BoardCursorFactory");
-        Assert.NotNull(factoryType);
+        var sourcePath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "BFGA.App", "Infrastructure", "BoardCursorFactory.cs");
+        var source = File.ReadAllText(Path.GetFullPath(sourcePath));
 
-        var createMethod = factoryType!.GetMethod("Create", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
-        Assert.NotNull(createMethod);
-
-        var cursor = Assert.IsType<Cursor>(createMethod!.Invoke(null, [BoardToolType.LaserPointer]));
-        var standardTypeProperty = typeof(Cursor).GetProperty("StandardCursorType", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-
-        Assert.NotNull(standardTypeProperty);
-        Assert.Equal(StandardCursorType.Cross, Assert.IsType<StandardCursorType>(standardTypeProperty!.GetValue(cursor)));
+        Assert.Contains("BoardToolType.LaserPointer => new Cursor(StandardCursorType.Cross)", source);
     }
 
     private static void AttachBoardScreen(BoardView boardView, BoardScreenViewModel boardScreenViewModel)

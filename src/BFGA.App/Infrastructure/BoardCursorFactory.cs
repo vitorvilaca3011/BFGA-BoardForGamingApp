@@ -25,6 +25,7 @@ internal static class BoardCursorFactory
             BoardToolType.Arrow => new Cursor(StandardCursorType.Cross),
             BoardToolType.Line => new Cursor(StandardCursorType.Cross),
             BoardToolType.Eraser => new Cursor(StandardCursorType.Cross),
+            BoardToolType.LaserPointer => new Cursor(StandardCursorType.Cross),
             BoardToolType.Text => new Cursor(StandardCursorType.Ibeam),
             BoardToolType.Image => new Cursor(StandardCursorType.Hand),
             _ => new Cursor(StandardCursorType.Arrow)
