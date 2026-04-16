@@ -58,23 +58,23 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| RNDR-01 | — | Pending |
-| RNDR-02 | — | Pending |
-| RNDR-03 | — | Pending |
-| RNDR-04 | — | Pending |
-| RNDR-05 | — | Pending |
-| MULT-01 | — | Pending |
-| MULT-02 | — | Pending |
-| MULT-03 | — | Pending |
-| INPT-01 | — | Pending |
-| INPT-02 | — | Pending |
-| CONF-01 | — | Pending |
+| RNDR-01 | Phase 3 | Pending |
+| RNDR-02 | Phase 2 | Pending |
+| RNDR-03 | Phase 1 | Pending |
+| RNDR-04 | Phase 3 | Pending |
+| RNDR-05 | Phase 2 | Pending |
+| MULT-01 | Phase 4 | Pending |
+| MULT-02 | Phase 4 | Pending |
+| MULT-03 | Phase 4 | Pending |
+| INPT-01 | Phase 3 | Pending |
+| INPT-02 | Phase 3 | Pending |
+| CONF-01 | Phase 5 | Pending |
 
 **Coverage:**
 - v1 requirements: 11 total
-- Mapped to phases: 0
-- Unmapped: 11 (pending roadmap creation)
+- Mapped to phases: 11
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-15*
-*Last updated: 2026-04-15 after /gsd-new-project*
+*Last updated: 2026-04-15 — roadmap phase mapping complete*
