@@ -996,6 +996,76 @@ public class MainViewModelTests
     }
 
     [Fact]
+    public async Task MainViewModel_HostLaserPresenceColorChange_BroadcastsHostMetadataUpsert()
+    {
+        var sessions = new FakeGameSessionFactory();
+        var sut = new MainViewModel(sessionFactory: sessions)
+        {
+            DisplayName = "Host Player"
+        };
+
+        await sut.StartHostAsync();
+        sessions.LastCreatedHost!.BroadcastedOperations.Clear();
+
+        sut.LaserPresenceColor = SkiaSharp.SKColors.Orange;
+
+        var metadata = Assert.Single(sessions.LastCreatedHost.BroadcastedOperations);
+        var join = Assert.IsType<PeerJoinedOperation>(metadata);
+        Assert.Equal(Guid.Empty, join.ClientId);
+        Assert.Equal("Host Player", join.DisplayName);
+        Assert.Equal(SkiaSharp.SKColors.Orange, join.AssignedColor);
+    }
+
+    [Fact]
+    public async Task MainViewModel_ClientFullSync_WhenPreferredPresenceColorDiffers_SendsUpdatePresenceColorOperation()
+    {
+        var sessions = new FakeGameSessionFactory();
+        var sut = new MainViewModel(sessionFactory: sessions)
+        {
+            LaserPresenceColor = SkiaSharp.SKColors.Gold
+        };
+        var localClientId = Guid.NewGuid();
+
+        sut.SelectedMode = ConnectionMode.Join;
+        await sut.ConnectAsync();
+        sessions.LastCreatedClient!.RaiseConnected();
+        sessions.LastCreatedClient.SentOperations.Clear();
+
+        sessions.LastCreatedClient.RaiseOperationReceived(new FullSyncResponseOperation(localClientId, new BoardState(), new Dictionary<Guid, PlayerInfo>
+        {
+            { localClientId, new PlayerInfo("Me", SkiaSharp.SKColors.Blue) }
+        }));
+
+        var update = Assert.Single(sessions.LastCreatedClient.SentOperations.OfType<UpdatePresenceColorOperation>());
+        Assert.Equal(SkiaSharp.SKColors.Gold, update.Color);
+    }
+
+    [Fact]
+    public async Task MainViewModel_ClientLaserPresenceColorChange_SendsUpdatePresenceColorOperation()
+    {
+        var sessions = new FakeGameSessionFactory();
+        var sut = new MainViewModel(sessionFactory: sessions)
+        {
+            LaserPresenceColor = SkiaSharp.SKColors.Blue
+        };
+        var localClientId = Guid.NewGuid();
+
+        sut.SelectedMode = ConnectionMode.Join;
+        await sut.ConnectAsync();
+        sessions.LastCreatedClient!.RaiseConnected();
+        sessions.LastCreatedClient.RaiseOperationReceived(new FullSyncResponseOperation(localClientId, new BoardState(), new Dictionary<Guid, PlayerInfo>
+        {
+            { localClientId, new PlayerInfo("Me", SkiaSharp.SKColors.Blue) }
+        }));
+        sessions.LastCreatedClient.SentOperations.Clear();
+
+        sut.LaserPresenceColor = SkiaSharp.SKColors.Green;
+
+        var update = Assert.Single(sessions.LastCreatedClient.SentOperations.OfType<UpdatePresenceColorOperation>());
+        Assert.Equal(SkiaSharp.SKColors.Green, update.Color);
+    }
+
+    [Fact]
     public async Task LaserPointerOperation_MultiplePeers_KeepIndependentLaserState()
     {
         var sessions = new FakeGameSessionFactory();

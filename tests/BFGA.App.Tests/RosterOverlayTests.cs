@@ -1,6 +1,7 @@
 using Avalonia.Media;
 using BFGA.App.Converters;
 using BFGA.App.Helpers;
+using BFGA.App.Networking;
 using BFGA.App.ViewModels;
 using BFGA.Network;
 using BFGA.Network.Protocol;
@@ -109,6 +110,64 @@ public class RosterOverlayTests
         });
 
         Assert.DoesNotContain(nameof(BoardScreenViewModel.IsRosterVisible), changed);
+    }
+
+    [Fact]
+    public async Task PeerJoinedOperation_ColorRefresh_RecolorsRemoteIdentityAndPeerLeftStillRemovesLaser()
+    {
+        var sessions = CreateSessionFactory();
+        var mainViewModel = new MainViewModel(sessionFactory: sessions);
+        var localClientId = Guid.NewGuid();
+        var remoteClientId = Guid.NewGuid();
+        var client = GetLastCreatedClient(sessions);
+
+        mainViewModel.SelectedMode = ConnectionMode.Join;
+        await mainViewModel.ConnectAsync();
+        client = GetLastCreatedClient(sessions);
+        InvokeClient(client, "RaiseConnected");
+        InvokeClient(client, "RaiseOperationReceived", new FullSyncResponseOperation(localClientId, new BFGA.Core.BoardState(), new Dictionary<Guid, PlayerInfo>
+        {
+            { localClientId, new PlayerInfo("Me", SKColors.Blue) },
+            { remoteClientId, new PlayerInfo("Remote", SKColors.Red) }
+        }));
+
+        InvokeClient(client, "RaiseOperationReceived", new CursorUpdateOperation(remoteClientId, new System.Numerics.Vector2(10, 15)));
+        InvokeClient(client, "RaiseOperationReceived", new LaserPointerOperation(remoteClientId, new System.Numerics.Vector2(20, 25), true));
+
+        Assert.Equal(SKColors.Red, mainViewModel.RemoteCursors[remoteClientId].AssignedColor);
+        Assert.Equal(SKColors.Red, mainViewModel.RemoteLasers[remoteClientId].Color);
+
+        InvokeClient(client, "RaiseOperationReceived", new PeerJoinedOperation(remoteClientId, "Remote", SKColors.Green));
+
+        Assert.Equal(SKColors.Green, mainViewModel.Roster[remoteClientId].AssignedColor);
+        Assert.Equal(SKColors.Green, mainViewModel.RemoteCursors[remoteClientId].AssignedColor);
+        Assert.Equal(SKColors.Green, mainViewModel.RemoteLasers[remoteClientId].Color);
+
+        InvokeClient(client, "RaiseOperationReceived", new PeerLeftOperation(remoteClientId));
+
+        Assert.DoesNotContain(remoteClientId, mainViewModel.RemoteLasers.Keys);
+    }
+
+    private static IGameSessionFactory CreateSessionFactory()
+    {
+        var factoryType = typeof(MainViewModelTests).GetNestedType("FakeGameSessionFactory", BindingFlags.NonPublic)!;
+        return (IGameSessionFactory)Activator.CreateInstance(factoryType)!;
+    }
+
+    private static dynamic GetLastCreatedClient(IGameSessionFactory sessions)
+    {
+        return sessions
+            .GetType()
+            .GetProperty("LastCreatedClient", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)!
+            .GetValue(sessions)!;
+    }
+
+    private static void InvokeClient(object client, string methodName, params object[] args)
+    {
+        client
+            .GetType()
+            .GetMethod(methodName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)!
+            .Invoke(client, args);
     }
 
     private static void SetRoster(MainViewModel mainViewModel, IReadOnlyDictionary<Guid, PlayerInfo> roster)
