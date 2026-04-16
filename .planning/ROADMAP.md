@@ -29,7 +29,7 @@ Deliver a fully ephemeral laser pointer tool with fading trail, press-and-hold a
   4. Board state (`_boardState`) is never modified by laser operations — no `LastModified` update, no `CloneBoardState`
 **Plans**: 1 plan
 Plans:
-- [ ] 01-01-PLAN.md — LaserPointerOperation type, host relay bypass, dedicated sequenced channel 2
+- [x] 01-01-PLAN.md — LaserPointerOperation type, host relay bypass, dedicated sequenced channel 2
 
 ### Phase 2: Trail Buffer & Renderer
 **Goal**: Fading trail renders smoothly at 60fps with zero GC pressure
