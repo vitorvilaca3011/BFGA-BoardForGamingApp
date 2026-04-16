@@ -1,6 +1,10 @@
 using BFGA.App.ViewModels;
+using BFGA.App.Views;
 using BFGA.Canvas.Tools;
+using Avalonia.Controls;
+using Avalonia.Interactivity;
 using SkiaSharp;
+using System.Reflection;
 
 namespace BFGA.App.Tests;
 
@@ -169,6 +173,72 @@ public class PropertyPanelTests
         Assert.Contains(nameof(sut.SelectedFillColor), notifications);
         Assert.Contains(nameof(sut.StrokeWidth), notifications);
         Assert.Contains(nameof(sut.Opacity), notifications);
+    }
+
+    [Fact]
+    public void SettingsPanel_ContainsLaserColorSectionAndHelperCopy()
+    {
+        var settingsPanelXaml = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "BFGA.App", "Views", "SettingsPanel.axaml"));
+
+        Assert.Contains("LASER COLOR", settingsPanelXaml);
+        Assert.Contains("Used for roster, cursor, and laser", settingsPanelXaml);
+        Assert.Contains("SKColorToBrushConverter", settingsPanelXaml);
+    }
+
+    [Fact]
+    public void SettingsPanel_ContainsExpectedLaserColorSwatches()
+    {
+        var settingsPanelXaml = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "BFGA.App", "Views", "SettingsPanel.axaml"));
+        var expectedSwatches = new[]
+        {
+            "#000000", "#FFFFFF", "#FF3B30", "#FF9500",
+            "#FFCC00", "#34C759", "#007AFF", "#AF52DE",
+            "#5856D6", "#FF2D55", "#A2845E", "#8E8E93",
+            "#636366", "#48484A", "#2C2C2E", "#1C1C1E"
+        };
+
+        Assert.Equal(16, CountOccurrences(settingsPanelXaml, "Classes=\"color-swatch\""));
+
+        foreach (var swatch in expectedSwatches)
+        {
+            Assert.Contains($"Tag=\"{swatch}\"", settingsPanelXaml);
+            Assert.Contains($"Background=\"{swatch}\"", settingsPanelXaml);
+        }
+    }
+
+    [Fact]
+    public void SettingsPanelSwatchClick_UpdatesLaserPresenceColor()
+    {
+        using var mainViewModel = new MainViewModel();
+        using var boardScreenViewModel = new BoardScreenViewModel(mainViewModel);
+        var panel = new SettingsPanel
+        {
+            DataContext = boardScreenViewModel
+        };
+        var button = new Button
+        {
+            Tag = "#34C759"
+        };
+
+        typeof(SettingsPanel)
+            .GetMethod("OnLaserColorSwatchClick", BindingFlags.Instance | BindingFlags.NonPublic)!
+            .Invoke(panel, new object?[] { button, new RoutedEventArgs() });
+
+        Assert.Equal(SKColor.Parse("#34C759"), boardScreenViewModel.LaserPresenceColor);
+    }
+
+    private static int CountOccurrences(string source, string value)
+    {
+        var count = 0;
+        var index = 0;
+
+        while ((index = source.IndexOf(value, index, StringComparison.Ordinal)) >= 0)
+        {
+            count++;
+            index += value.Length;
+        }
+
+        return count;
     }
 
     private static BoardScreenViewModel CreateSut() => new(new MainViewModel());

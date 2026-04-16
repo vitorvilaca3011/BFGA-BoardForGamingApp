@@ -1,9 +1,13 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:BFGA.App.Converters"
              xmlns:vm="clr-namespace:BFGA.App.ViewModels"
              x:Class="BFGA.App.Views.SettingsPanel"
              x:DataType="vm:BoardScreenViewModel"
              IsVisible="{Binding MainViewModel.IsSettingsOpen}">
+    <UserControl.Resources>
+        <converters:SKColorToBrushConverter x:Key="SKColorToBrushConverter" />
+    </UserControl.Resources>
     <Border Classes="settings-panel" Width="260" Padding="16">
         <StackPanel Spacing="16">
             <!-- Header -->
@@ -50,6 +54,124 @@
                 <Slider Minimum="0" Maximum="30"
                         Value="{Binding MainViewModel.GridOpacityPercent, Mode=TwoWay}"
                         TickFrequency="1" />
+            </StackPanel>
+
+            <Border Height="1" Background="{DynamicResource BorderSubtle}" />
+
+            <StackPanel Spacing="8">
+                <TextBlock Text="LASER COLOR"
+                           FontFamily="{DynamicResource InterMediumFont}"
+                           FontSize="10"
+                           Foreground="{DynamicResource TextSecondary}" />
+                <TextBlock Text="Used for roster, cursor, and laser"
+                           FontSize="12"
+                           Foreground="{DynamicResource TextSecondary}" />
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Border Width="24"
+                            Height="24"
+                            CornerRadius="6"
+                            BorderBrush="{DynamicResource BorderDefault}"
+                            BorderThickness="1"
+                            Background="{Binding LaserPresenceColor, Converter={StaticResource SKColorToBrushConverter}}" />
+                </StackPanel>
+                <WrapPanel ItemWidth="24" ItemHeight="24" HorizontalAlignment="Left">
+                    <Button Classes="color-swatch"
+                            Background="#000000"
+                            Tag="#000000"
+                            Click="OnLaserColorSwatchClick"
+                            BorderBrush="{Binding LaserPresenceColor, Converter={x:Static converters:SelectedLaserSwatchBorderConverter.Instance}}"
+                            BorderThickness="{Binding LaserPresenceColor, Converter={x:Static converters:SelectedLaserSwatchThicknessConverter.Instance}, ConverterParameter=#000000}" />
+                    <Button Classes="color-swatch"
+                            Background="#FFFFFF"
+                            Tag="#FFFFFF"
+                            Click="OnLaserColorSwatchClick"
+                            BorderBrush="{Binding LaserPresenceColor, Converter={x:Static converters:SelectedLaserSwatchBorderConverter.Instance}}"
+                            BorderThickness="{Binding LaserPresenceColor, Converter={x:Static converters:SelectedLaserSwatchThicknessConverter.Instance}, ConverterParameter=#FFFFFF}" />
+                    <Button Classes="color-swatch"
+                            Background="#FF3B30"
+                            Tag="#FF3B30"
+                            Click="OnLaserColorSwatchClick"
+                            BorderBrush="{Binding LaserPresenceColor, Converter={x:Static converters:SelectedLaserSwatchBorderConverter.Instance}}"
+                            BorderThickness="{Binding LaserPresenceColor, Converter={x:Static converters:SelectedLaserSwatchThicknessConverter.Instance}, ConverterParameter=#FF3B30}" />
+                    <Button Classes="color-swatch"
+                            Background="#FF9500"
+                            Tag="#FF9500"
+                            Click="OnLaserColorSwatchClick"
+                            BorderBrush="{Binding LaserPresenceColor, Converter={x:Static converters:SelectedLaserSwatchBorderConverter.Instance}}"
+                            BorderThickness="{Binding LaserPresenceColor, Converter={x:Static converters:SelectedLaserSwatchThicknessConverter.Instance}, ConverterParameter=#FF9500}" />
+                    <Button Classes="color-swatch"
+                            Background="#FFCC00"
+                            Tag="#FFCC00"
+                            Click="OnLaserColorSwatchClick"
+                            BorderBrush="{Binding LaserPresenceColor, Converter={x:Static converters:SelectedLaserSwatchBorderConverter.Instance}}"
+                            BorderThickness="{Binding LaserPresenceColor, Converter={x:Static converters:SelectedLaserSwatchThicknessConverter.Instance}, ConverterParameter=#FFCC00}" />
+                    <Button Classes="color-swatch"
+                            Background="#34C759"
+                            Tag="#34C759"
+                            Click="OnLaserColorSwatchClick"
+                            BorderBrush="{Binding LaserPresenceColor, Converter={x:Static converters:SelectedLaserSwatchBorderConverter.Instance}}"
+                            BorderThickness="{Binding LaserPresenceColor, Converter={x:Static converters:SelectedLaserSwatchThicknessConverter.Instance}, ConverterParameter=#34C759}" />
+                    <Button Classes="color-swatch"
+                            Background="#007AFF"
+                            Tag="#007AFF"
+                            Click="OnLaserColorSwatchClick"
+                            BorderBrush="{Binding LaserPresenceColor, Converter={x:Static converters:SelectedLaserSwatchBorderConverter.Instance}}"
+                            BorderThickness="{Binding LaserPresenceColor, Converter={x:Static converters:SelectedLaserSwatchThicknessConverter.Instance}, ConverterParameter=#007AFF}" />
+                    <Button Classes="color-swatch"
+                            Background="#AF52DE"
+                            Tag="#AF52DE"
+                            Click="OnLaserColorSwatchClick"
+                            BorderBrush="{Binding LaserPresenceColor, Converter={x:Static converters:SelectedLaserSwatchBorderConverter.Instance}}"
+                            BorderThickness="{Binding LaserPresenceColor, Converter={x:Static converters:SelectedLaserSwatchThicknessConverter.Instance}, ConverterParameter=#AF52DE}" />
+                    <Button Classes="color-swatch"
+                            Background="#5856D6"
+                            Tag="#5856D6"
+                            Click="OnLaserColorSwatchClick"
+                            BorderBrush="{Binding LaserPresenceColor, Converter={x:Static converters:SelectedLaserSwatchBorderConverter.Instance}}"
+                            BorderThickness="{Binding LaserPresenceColor, Converter={x:Static converters:SelectedLaserSwatchThicknessConverter.Instance}, ConverterParameter=#5856D6}" />
+                    <Button Classes="color-swatch"
+                            Background="#FF2D55"
+                            Tag="#FF2D55"
+                            Click="OnLaserColorSwatchClick"
+                            BorderBrush="{Binding LaserPresenceColor, Converter={x:Static converters:SelectedLaserSwatchBorderConverter.Instance}}"
+                            BorderThickness="{Binding LaserPresenceColor, Converter={x:Static converters:SelectedLaserSwatchThicknessConverter.Instance}, ConverterParameter=#FF2D55}" />
+                    <Button Classes="color-swatch"
+                            Background="#A2845E"
+                            Tag="#A2845E"
+                            Click="OnLaserColorSwatchClick"
+                            BorderBrush="{Binding LaserPresenceColor, Converter={x:Static converters:SelectedLaserSwatchBorderConverter.Instance}}"
+                            BorderThickness="{Binding LaserPresenceColor, Converter={x:Static converters:SelectedLaserSwatchThicknessConverter.Instance}, ConverterParameter=#A2845E}" />
+                    <Button Classes="color-swatch"
+                            Background="#8E8E93"
+                            Tag="#8E8E93"
+                            Click="OnLaserColorSwatchClick"
+                            BorderBrush="{Binding LaserPresenceColor, Converter={x:Static converters:SelectedLaserSwatchBorderConverter.Instance}}"
+                            BorderThickness="{Binding LaserPresenceColor, Converter={x:Static converters:SelectedLaserSwatchThicknessConverter.Instance}, ConverterParameter=#8E8E93}" />
+                    <Button Classes="color-swatch"
+                            Background="#636366"
+                            Tag="#636366"
+                            Click="OnLaserColorSwatchClick"
+                            BorderBrush="{Binding LaserPresenceColor, Converter={x:Static converters:SelectedLaserSwatchBorderConverter.Instance}}"
+                            BorderThickness="{Binding LaserPresenceColor, Converter={x:Static converters:SelectedLaserSwatchThicknessConverter.Instance}, ConverterParameter=#636366}" />
+                    <Button Classes="color-swatch"
+                            Background="#48484A"
+                            Tag="#48484A"
+                            Click="OnLaserColorSwatchClick"
+                            BorderBrush="{Binding LaserPresenceColor, Converter={x:Static converters:SelectedLaserSwatchBorderConverter.Instance}}"
+                            BorderThickness="{Binding LaserPresenceColor, Converter={x:Static converters:SelectedLaserSwatchThicknessConverter.Instance}, ConverterParameter=#48484A}" />
+                    <Button Classes="color-swatch"
+                            Background="#2C2C2E"
+                            Tag="#2C2C2E"
+                            Click="OnLaserColorSwatchClick"
+                            BorderBrush="{Binding LaserPresenceColor, Converter={x:Static converters:SelectedLaserSwatchBorderConverter.Instance}}"
+                            BorderThickness="{Binding LaserPresenceColor, Converter={x:Static converters:SelectedLaserSwatchThicknessConverter.Instance}, ConverterParameter=#2C2C2E}" />
+                    <Button Classes="color-swatch"
+                            Background="#1C1C1E"
+                            Tag="#1C1C1E"
+                            Click="OnLaserColorSwatchClick"
+                            BorderBrush="{Binding LaserPresenceColor, Converter={x:Static converters:SelectedLaserSwatchBorderConverter.Instance}}"
+                            BorderThickness="{Binding LaserPresenceColor, Converter={x:Static converters:SelectedLaserSwatchThicknessConverter.Instance}, ConverterParameter=#1C1C1E}" />
+                </WrapPanel>
             </StackPanel>
 
             <Border Height="1" Background="{DynamicResource BorderSubtle}" />
