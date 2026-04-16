@@ -27,7 +27,9 @@ Deliver a fully ephemeral laser pointer tool with fading trail, press-and-hold a
   2. Host receives laser op and relays to other peers without calling `ApplyOperationCore` board state logic
   3. Laser ops use `DeliveryMethod.Sequenced` on channel 2 (dedicated, not shared with cursor)
   4. Board state (`_boardState`) is never modified by laser operations — no `LastModified` update, no `CloneBoardState`
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 01-01-PLAN.md — LaserPointerOperation type, host relay bypass, dedicated sequenced channel 2
 
 ### Phase 2: Trail Buffer & Renderer
 **Goal**: Fading trail renders smoothly at 60fps with zero GC pressure
