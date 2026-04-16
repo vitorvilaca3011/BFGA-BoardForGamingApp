@@ -313,7 +313,8 @@ public class ProtocolTests
             new PeerJoinedOperation(Guid.NewGuid(), "Player", SKColors.Red),
             new PeerLeftOperation(Guid.NewGuid()),
             new UndoOperation(),
-            new RedoOperation()
+            new RedoOperation(),
+            new LaserPointerOperation(Guid.NewGuid(), new Vector2(10, 20), true)
         };
 
         // Act & Assert - wrap in NetworkMessage for proper polymorphic serialization
@@ -325,6 +326,47 @@ public class ProtocolTests
             Assert.NotNull(restored.Operation);
             Assert.Equal(operation.GetType(), restored.Operation.GetType());
         }
+    }
+
+    [Fact]
+    public void LaserPointerOperation_SerializeDeserialize_RoundTrip()
+    {
+        // Arrange
+        var clientId = Guid.NewGuid();
+        var operation = new LaserPointerOperation(clientId, new Vector2(150, 250), true);
+
+        // Act - wrap in NetworkMessage for proper polymorphic serialization
+        var message = new NetworkMessage(operation);
+        var bytes = MessagePackSerializer.Serialize(message, MessagePackSetup.Options);
+        var restored = MessagePackSerializer.Deserialize<NetworkMessage>(bytes, MessagePackSetup.Options);
+
+        // Assert
+        Assert.NotNull(restored.Operation);
+        Assert.IsType<LaserPointerOperation>(restored.Operation);
+        var result = (LaserPointerOperation)restored.Operation;
+        Assert.Equal(clientId, result.SenderId);
+        Assert.Equal(new Vector2(150, 250), result.Position);
+        Assert.True(result.IsActive);
+    }
+
+    [Fact]
+    public void OperationSerializer_LaserPointer_RoundTrip()
+    {
+        // Arrange
+        var clientId = Guid.NewGuid();
+        var operation = new LaserPointerOperation(clientId, new Vector2(42, 84), false);
+
+        // Act
+        var bytes = OperationSerializer.Serialize(operation);
+        var deserialized = OperationSerializer.Deserialize(bytes);
+
+        // Assert
+        Assert.NotNull(deserialized);
+        Assert.IsType<LaserPointerOperation>(deserialized);
+        var result = (LaserPointerOperation)deserialized;
+        Assert.Equal(clientId, result.SenderId);
+        Assert.Equal(new Vector2(42, 84), result.Position);
+        Assert.False(result.IsActive);
     }
 
     [Fact]
