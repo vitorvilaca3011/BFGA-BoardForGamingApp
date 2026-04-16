@@ -10,9 +10,9 @@ Deliver a fully ephemeral laser pointer tool with fading trail, press-and-hold a
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 1: Network Protocol & Host Relay** - LaserPointerOperation type, routing bypass, sequenced delivery on channel 2
-- [ ] **Phase 2: Trail Buffer & Renderer** - Ring buffer, per-segment fade rendering, smooth animation loop
-- [ ] **Phase 3: Local Tool Implementation** - Press-and-hold activation, local dot + trail, ping marker, zoom/pan correctness
+- [x] **Phase 1: Network Protocol & Host Relay** - LaserPointerOperation type, routing bypass, sequenced delivery on channel 2
+- [x] **Phase 2: Trail Buffer & Renderer** - Ring buffer, per-segment fade rendering, smooth animation loop
+- [x] **Phase 3: Local Tool Implementation** - Press-and-hold activation, local dot + trail, ping marker, zoom/pan correctness
 - [ ] **Phase 4: Multiplayer Integration** - Remote laser rendering, per-user colors, simultaneous multi-peer lasers
 - [ ] **Phase 5: Polish & Configuration** - Color picker, disconnect cleanup, stale laser timeout, edge case handling
 
@@ -55,7 +55,11 @@ Plans:
   3. Quick tap (<200ms, <5px movement) produces a pulsing ping marker that fades after ~2-3 seconds
   4. Dot and trail render at correct positions after pan/zoom — scene-space coords with viewport transform
   5. Releasing mouse stops laser emission and trail begins final fade-out
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [x] 03-01-PLAN.md — Local laser overlay models and renderer helpers for constant-size dot, trail, and ping
+- [x] 03-02-PLAN.md — BoardCanvas, BoardViewport, and BoardView local overlay property plumbing
+- [x] 03-03-PLAN.md — BoardView laser gesture lifecycle, quick tap ping, cancellation, and crosshair cursor
 **UI hint**: yes
 
 ### Phase 4: Multiplayer Integration
@@ -88,8 +92,8 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Network Protocol & Host Relay | 0/? | Not started | - |
-| 2. Trail Buffer & Renderer | 0/? | Not started | - |
-| 3. Local Tool Implementation | 0/? | Not started | - |
+| 1. Network Protocol & Host Relay | 1/1 | Complete | Yes |
+| 2. Trail Buffer & Renderer | 2/2 | Complete | Yes |
+| 3. Local Tool Implementation | 3/3 | Complete | Yes |
 | 4. Multiplayer Integration | 0/? | Not started | - |
 | 5. Polish & Configuration | 0/? | Not started | - |
