@@ -48,7 +48,7 @@ private readonly IFileDialogService? _fileDialogService;
     private IReadOnlyDictionary<Guid, PlayerInfo> _roster = new Dictionary<Guid, PlayerInfo>();
     private IReadOnlyDictionary<Guid, RemoteCursorState> _remoteCursors = new Dictionary<Guid, RemoteCursorState>();
     private IReadOnlyDictionary<Guid, RemoteStrokePreviewState> _remoteStrokePreviews = new Dictionary<Guid, RemoteStrokePreviewState>();
-    private Dictionary<Guid, RemoteLaserState> _remoteLasers = new();
+    private IReadOnlyDictionary<Guid, RemoteLaserState> _remoteLasers = new Dictionary<Guid, RemoteLaserState>();
     private string _statusText = "Ready. Choose Host or Join.";
     private IGameHostSession? _host;
     private IGameClientSession? _client;
@@ -270,7 +270,7 @@ public ConnectionMode SelectedMode
     public IReadOnlyDictionary<Guid, RemoteLaserState> RemoteLasers
     {
         get => _remoteLasers;
-        private set => SetProperty(ref _remoteLasers, (Dictionary<Guid, RemoteLaserState>)value);
+        private set => SetProperty(ref _remoteLasers, value);
     }
 
     public string StatusText
@@ -1087,7 +1087,9 @@ public ConnectionMode SelectedMode
 
         RemoveRemoteCursor(clientId);
         RemoveRemoteStrokePreviews(clientId);
-        _remoteLasers.Remove(clientId);
+        var lasers = new Dictionary<Guid, RemoteLaserState>(_remoteLasers);
+        lasers.Remove(clientId);
+        RemoteLasers = lasers;
     }
 
     private void UpsertRemoteCursor(CursorUpdateOperation operation)
@@ -1115,11 +1117,13 @@ public ConnectionMode SelectedMode
         if (ShouldIgnoreLocalPresence(operation.SenderId))
             return;
 
-        if (!_remoteLasers.TryGetValue(operation.SenderId, out var state))
+        var lasers = new Dictionary<Guid, RemoteLaserState>(_remoteLasers);
+
+        if (!lasers.TryGetValue(operation.SenderId, out var state))
         {
             var playerInfo = GetPlayerInfo(operation.SenderId);
             state = new RemoteLaserState(playerInfo?.AssignedColor ?? SkiaSharp.SKColors.White);
-            _remoteLasers[operation.SenderId] = state;
+            lasers[operation.SenderId] = state;
         }
 
         state.IsActive = operation.IsActive;
@@ -1130,8 +1134,8 @@ public ConnectionMode SelectedMode
             state.Trail.Add(operation.Position, Environment.TickCount64);
         }
 
-        // Trigger property change to push to BoardCanvas styled property
-        RemoteLasers = _remoteLasers;
+        // New dictionary instance so SetProperty detects change
+        RemoteLasers = lasers;
     }
 
     private void UpsertRemoteStrokePreview(DrawStrokePointOperation operation)
@@ -1278,7 +1282,7 @@ public ConnectionMode SelectedMode
         Roster = new Dictionary<Guid, PlayerInfo>();
         RemoteCursors = new Dictionary<Guid, RemoteCursorState>();
         RemoteStrokePreviews = new Dictionary<Guid, RemoteStrokePreviewState>();
-        _remoteLasers = new Dictionary<Guid, RemoteLaserState>();
+        RemoteLasers = new Dictionary<Guid, RemoteLaserState>();
     }
 
     private void StartAutosave()
