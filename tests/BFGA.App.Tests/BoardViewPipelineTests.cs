@@ -1,4 +1,6 @@
 using System.Reflection;
+using Avalonia;
+using Avalonia.Input;
 using BFGA.App.Services;
 using BFGA.App.ViewModels;
 using BFGA.App.Views;
@@ -234,7 +236,7 @@ public sealed class BoardViewPipelineTests
         Assert.Empty(mainViewModel.Board.Elements);
     }
 
-[Fact]
+    [Fact]
     public void TextTool_PlaceText_CreatesElementWithStyledDefaults()
     {
         var mainViewModel = new MainViewModel();
@@ -400,6 +402,144 @@ public sealed class BoardViewPipelineTests
         Assert.True(boardScreenViewModel.IsPropertyPanelVisible);
     }
 
+    [Fact]
+    public void LaserPointer_BeginLocalLaser_SetsActiveOverlayWithoutBoardMutation()
+    {
+        var mainViewModel = new MainViewModel();
+        var boardView = new BoardView();
+        var boardScreenViewModel = new BoardScreenViewModel(mainViewModel)
+        {
+            SelectedTool = BoardToolType.LaserPointer,
+            SelectedStrokeColor = SkiaSharp.SKColors.DeepPink
+        };
+
+        AttachBoardScreen(boardView, boardScreenViewModel);
+        InvokePrivateNoArgs(boardView, "SyncToolController");
+
+        var initialCount = mainViewModel.Board.Elements.Count;
+
+        InvokePrivate(boardView, "BeginLocalLaser", new Vector2(12f, 34f), new Point(20, 40), 100L);
+
+        Assert.NotNull(boardView.LocalLaser);
+        Assert.True(boardView.LocalLaser!.IsActive);
+        Assert.Equal(new Vector2(12f, 34f), boardView.LocalLaser.HeadPosition);
+        Assert.Equal(100L, boardView.LocalLaser.LastUpdateMs);
+        Assert.Null(boardView.LocalPing);
+        Assert.Equal(initialCount, mainViewModel.Board.Elements.Count);
+    }
+
+    [Fact]
+    public void LaserPointer_UpdateLocalLaser_AppendsTrailAndHeadPosition()
+    {
+        var mainViewModel = new MainViewModel();
+        var boardView = new BoardView();
+        var boardScreenViewModel = new BoardScreenViewModel(mainViewModel)
+        {
+            SelectedTool = BoardToolType.LaserPointer
+        };
+
+        AttachBoardScreen(boardView, boardScreenViewModel);
+        InvokePrivateNoArgs(boardView, "SyncToolController");
+        InvokePrivate(boardView, "BeginLocalLaser", new Vector2(10f, 10f), new Point(10, 10), 100L);
+
+        InvokePrivate(boardView, "UpdateLocalLaser", new Vector2(16f, 22f), 150L);
+
+        Assert.NotNull(boardView.LocalLaser);
+        Assert.Equal(new Vector2(16f, 22f), boardView.LocalLaser!.HeadPosition);
+        Assert.Equal(150L, boardView.LocalLaser.LastUpdateMs);
+        var trailPoints = boardView.LocalLaser.Trail.GetPoints().ToArray();
+        Assert.True(trailPoints.Length >= 2);
+        Assert.Equal(new Vector2(10f, 10f), trailPoints[0].Position);
+        Assert.Equal(new Vector2(16f, 22f), trailPoints[^1].Position);
+    }
+
+    [Fact]
+    public void LaserPointer_CompleteLocalLaser_QuickTapCreatesPing()
+    {
+        var mainViewModel = new MainViewModel();
+        var boardView = new BoardView();
+        var boardScreenViewModel = new BoardScreenViewModel(mainViewModel)
+        {
+            SelectedTool = BoardToolType.LaserPointer,
+            SelectedStrokeColor = SkiaSharp.SKColors.DeepPink
+        };
+
+        AttachBoardScreen(boardView, boardScreenViewModel);
+        InvokePrivateNoArgs(boardView, "SyncToolController");
+        InvokePrivate(boardView, "BeginLocalLaser", new Vector2(10f, 10f), new Point(10, 10), 100L);
+
+        InvokePrivate(boardView, "CompleteLocalLaser", new Vector2(12f, 13f), new Point(13, 14), 250L);
+
+        Assert.NotNull(boardView.LocalLaser);
+        Assert.False(boardView.LocalLaser!.IsActive);
+        Assert.Equal(250L, boardView.LocalLaser.LastUpdateMs);
+        Assert.NotNull(boardView.LocalPing);
+        Assert.Equal(new Vector2(12f, 13f), boardView.LocalPing!.Position);
+        Assert.Equal(250L, boardView.LocalPing.StartedAtMs);
+    }
+
+    [Fact]
+    public void LaserPointer_CancelLocalLaser_MarksOverlayInactive()
+    {
+        var mainViewModel = new MainViewModel();
+        var boardView = new BoardView();
+        var boardScreenViewModel = new BoardScreenViewModel(mainViewModel)
+        {
+            SelectedTool = BoardToolType.LaserPointer
+        };
+
+        AttachBoardScreen(boardView, boardScreenViewModel);
+        InvokePrivateNoArgs(boardView, "SyncToolController");
+        InvokePrivate(boardView, "BeginLocalLaser", new Vector2(4f, 6f), new Point(4, 6), 100L);
+        InvokePrivate(boardView, "UpdateLocalLaser", new Vector2(8f, 9f), 120L);
+
+        var trailCount = boardView.LocalLaser!.Trail.Count;
+
+        InvokePrivateNoArgs(boardView, "CancelLocalLaser");
+
+        Assert.NotNull(boardView.LocalLaser);
+        Assert.False(boardView.LocalLaser!.IsActive);
+        Assert.Equal(trailCount, boardView.LocalLaser.Trail.Count);
+        Assert.Null(boardView.LocalPing);
+    }
+
+    [Fact]
+    public void LaserPointer_ToolSwitchAway_CancelsActiveEmission()
+    {
+        var mainViewModel = new MainViewModel();
+        var boardView = new BoardView();
+        var boardScreenViewModel = new BoardScreenViewModel(mainViewModel)
+        {
+            SelectedTool = BoardToolType.LaserPointer
+        };
+
+        AttachBoardScreen(boardView, boardScreenViewModel);
+        InvokePrivateNoArgs(boardView, "SyncToolController");
+        InvokePrivate(boardView, "BeginLocalLaser", new Vector2(18f, 24f), new Point(18, 24), 100L);
+
+        boardScreenViewModel.SelectedTool = BoardToolType.Select;
+        InvokePrivate(boardView, "HandleBoardScreenPropertyChanged", boardScreenViewModel, new System.ComponentModel.PropertyChangedEventArgs(nameof(BoardScreenViewModel.SelectedTool)));
+
+        Assert.NotNull(boardView.LocalLaser);
+        Assert.False(boardView.LocalLaser!.IsActive);
+    }
+
+    [Fact]
+    public void BoardCursorFactory_LaserPointer_UsesCrossCursor()
+    {
+        var factoryType = typeof(BoardView).Assembly.GetType("BFGA.App.Infrastructure.BoardCursorFactory");
+        Assert.NotNull(factoryType);
+
+        var createMethod = factoryType!.GetMethod("Create", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+        Assert.NotNull(createMethod);
+
+        var cursor = Assert.IsType<Cursor>(createMethod!.Invoke(null, [BoardToolType.LaserPointer]));
+        var standardTypeProperty = typeof(Cursor).GetProperty("StandardCursorType", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
+        Assert.NotNull(standardTypeProperty);
+        Assert.Equal(StandardCursorType.Cross, Assert.IsType<StandardCursorType>(standardTypeProperty!.GetValue(cursor)));
+    }
+
     private static void AttachBoardScreen(BoardView boardView, BoardScreenViewModel boardScreenViewModel)
     {
         var field = typeof(BoardView).GetField("_boardScreenViewModel", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -507,5 +647,5 @@ public sealed class BoardViewPipelineTests
         public Task<ClipboardImageData?> ReadImageAsync() => Task.FromResult(ReadResult);
 
         public Task WriteImageAsync(byte[] imageData, string fileName) => Task.CompletedTask;
-}
+    }
 }
