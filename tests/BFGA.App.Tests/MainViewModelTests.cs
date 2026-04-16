@@ -146,9 +146,9 @@ public class MainViewModelTests
 
             Assert.Equal("Replacement", screen.BoardView.Board!.BoardName);
 
-        sut.SelectedMode = ConnectionMode.Join;
-        await sut.ConnectAsync();
-        sessions.LastCreatedClient!.RaiseConnected();
+            sut.SelectedMode = ConnectionMode.Join;
+            await sut.ConnectAsync();
+            sessions.LastCreatedClient!.RaiseConnected();
 
             var remoteClientId = Guid.NewGuid();
             sessions.LastCreatedClient.RaiseOperationReceived(new CursorUpdateOperation(remoteClientId, new System.Numerics.Vector2(12, 34)));
@@ -854,6 +854,150 @@ public class MainViewModelTests
     }
 
     [Fact]
+    public async Task LaserPointerOperation_RemotePeer_UsesAssignedRosterColor()
+    {
+        var sessions = new FakeGameSessionFactory();
+        var sut = new MainViewModel(sessionFactory: sessions);
+        var localClientId = Guid.NewGuid();
+        var remoteClientId = Guid.NewGuid();
+
+        sut.SelectedMode = ConnectionMode.Join;
+        await sut.ConnectAsync();
+        sessions.LastCreatedClient!.RaiseConnected();
+        sessions.LastCreatedClient.RaiseOperationReceived(new FullSyncResponseOperation(localClientId, new BoardState(), new Dictionary<Guid, PlayerInfo>
+        {
+            { localClientId, new PlayerInfo("Me", SkiaSharp.SKColors.Blue) },
+            { remoteClientId, new PlayerInfo("Remote", SkiaSharp.SKColors.Red) }
+        }));
+
+        sessions.LastCreatedClient.RaiseOperationReceived(new LaserPointerOperation(remoteClientId, new System.Numerics.Vector2(10, 15), true));
+
+        var remoteLaser = Assert.Contains(remoteClientId, sut.RemoteLasers);
+        Assert.Equal(SkiaSharp.SKColors.Red, remoteLaser.Color);
+        Assert.True(remoteLaser.IsActive);
+        Assert.Equal(1, remoteLaser.Trail.Count);
+    }
+
+    [Fact]
+    public async Task LaserPointerOperation_InactiveUpdate_PreservesTrailForFade()
+    {
+        var sessions = new FakeGameSessionFactory();
+        var sut = new MainViewModel(sessionFactory: sessions);
+        var localClientId = Guid.NewGuid();
+        var remoteClientId = Guid.NewGuid();
+
+        sut.SelectedMode = ConnectionMode.Join;
+        await sut.ConnectAsync();
+        sessions.LastCreatedClient!.RaiseConnected();
+        sessions.LastCreatedClient.RaiseOperationReceived(new FullSyncResponseOperation(localClientId, new BoardState(), new Dictionary<Guid, PlayerInfo>
+        {
+            { localClientId, new PlayerInfo("Me", SkiaSharp.SKColors.Blue) },
+            { remoteClientId, new PlayerInfo("Remote", SkiaSharp.SKColors.Red) }
+        }));
+
+        sessions.LastCreatedClient.RaiseOperationReceived(new LaserPointerOperation(remoteClientId, new System.Numerics.Vector2(10, 15), true));
+        var remoteLaser = Assert.Contains(remoteClientId, sut.RemoteLasers);
+        var trailCountBeforeRelease = remoteLaser.Trail.Count;
+
+        sessions.LastCreatedClient.RaiseOperationReceived(new LaserPointerOperation(remoteClientId, new System.Numerics.Vector2(20, 25), false));
+
+        remoteLaser = Assert.Contains(remoteClientId, sut.RemoteLasers);
+        Assert.False(remoteLaser.IsActive);
+        Assert.Equal(trailCountBeforeRelease, remoteLaser.Trail.Count);
+    }
+
+    [Fact]
+    public async Task FullSync_ReconcilesRemoteLaserColorAndDropsUnknownPeers()
+    {
+        var sessions = new FakeGameSessionFactory();
+        var sut = new MainViewModel(sessionFactory: sessions);
+        var localClientId = Guid.NewGuid();
+        var knownRemoteClientId = Guid.NewGuid();
+        var unknownRemoteClientId = Guid.NewGuid();
+
+        sut.SelectedMode = ConnectionMode.Join;
+        await sut.ConnectAsync();
+        sessions.LastCreatedClient!.RaiseConnected();
+
+        sessions.LastCreatedClient.RaiseOperationReceived(new LaserPointerOperation(knownRemoteClientId, new System.Numerics.Vector2(10, 15), true));
+        sessions.LastCreatedClient.RaiseOperationReceived(new LaserPointerOperation(unknownRemoteClientId, new System.Numerics.Vector2(20, 25), true));
+
+        Assert.Equal(SkiaSharp.SKColors.White, sut.RemoteLasers[knownRemoteClientId].Color);
+        Assert.Equal(SkiaSharp.SKColors.White, sut.RemoteLasers[unknownRemoteClientId].Color);
+
+        sessions.LastCreatedClient.RaiseOperationReceived(new FullSyncResponseOperation(localClientId, new BoardState(), new Dictionary<Guid, PlayerInfo>
+        {
+            { localClientId, new PlayerInfo("Me", SkiaSharp.SKColors.Blue) },
+            { knownRemoteClientId, new PlayerInfo("Remote", SkiaSharp.SKColors.Red) }
+        }));
+
+        var remoteLaser = Assert.Contains(knownRemoteClientId, sut.RemoteLasers);
+        Assert.Equal(SkiaSharp.SKColors.Red, remoteLaser.Color);
+        Assert.DoesNotContain(unknownRemoteClientId, sut.RemoteLasers.Keys);
+    }
+
+    [Fact]
+    public async Task PeerLeft_RemovesRemoteLaserState()
+    {
+        var sessions = new FakeGameSessionFactory();
+        var sut = new MainViewModel(sessionFactory: sessions);
+        var localClientId = Guid.NewGuid();
+        var remoteClientId = Guid.NewGuid();
+
+        sut.SelectedMode = ConnectionMode.Join;
+        await sut.ConnectAsync();
+        sessions.LastCreatedClient!.RaiseConnected();
+        sessions.LastCreatedClient.RaiseOperationReceived(new FullSyncResponseOperation(localClientId, new BoardState(), new Dictionary<Guid, PlayerInfo>
+        {
+            { localClientId, new PlayerInfo("Me", SkiaSharp.SKColors.Blue) },
+            { remoteClientId, new PlayerInfo("Remote", SkiaSharp.SKColors.Red) }
+        }));
+
+        sessions.LastCreatedClient.RaiseOperationReceived(new LaserPointerOperation(remoteClientId, new System.Numerics.Vector2(10, 15), true));
+        Assert.Contains(remoteClientId, sut.RemoteLasers.Keys);
+
+        sessions.LastCreatedClient.RaiseOperationReceived(new PeerLeftOperation(remoteClientId));
+
+        Assert.DoesNotContain(remoteClientId, sut.RemoteLasers.Keys);
+    }
+
+    [Fact]
+    public async Task LaserPointerOperation_MultiplePeers_KeepIndependentLaserState()
+    {
+        var sessions = new FakeGameSessionFactory();
+        var sut = new MainViewModel(sessionFactory: sessions);
+        var localClientId = Guid.NewGuid();
+        var firstRemoteClientId = Guid.NewGuid();
+        var secondRemoteClientId = Guid.NewGuid();
+
+        sut.SelectedMode = ConnectionMode.Join;
+        await sut.ConnectAsync();
+        sessions.LastCreatedClient!.RaiseConnected();
+        sessions.LastCreatedClient.RaiseOperationReceived(new FullSyncResponseOperation(localClientId, new BoardState(), new Dictionary<Guid, PlayerInfo>
+        {
+            { localClientId, new PlayerInfo("Me", SkiaSharp.SKColors.Blue) },
+            { firstRemoteClientId, new PlayerInfo("Remote 1", SkiaSharp.SKColors.Red) },
+            { secondRemoteClientId, new PlayerInfo("Remote 2", SkiaSharp.SKColors.Green) }
+        }));
+
+        sessions.LastCreatedClient.RaiseOperationReceived(new LaserPointerOperation(firstRemoteClientId, new System.Numerics.Vector2(10, 15), true));
+        sessions.LastCreatedClient.RaiseOperationReceived(new LaserPointerOperation(secondRemoteClientId, new System.Numerics.Vector2(20, 25), true));
+        sessions.LastCreatedClient.RaiseOperationReceived(new LaserPointerOperation(firstRemoteClientId, new System.Numerics.Vector2(30, 35), false));
+
+        var firstRemoteLaser = Assert.Contains(firstRemoteClientId, sut.RemoteLasers);
+        var secondRemoteLaser = Assert.Contains(secondRemoteClientId, sut.RemoteLasers);
+
+        Assert.Equal(SkiaSharp.SKColors.Red, firstRemoteLaser.Color);
+        Assert.Equal(SkiaSharp.SKColors.Green, secondRemoteLaser.Color);
+        Assert.False(firstRemoteLaser.IsActive);
+        Assert.True(secondRemoteLaser.IsActive);
+        Assert.Equal(1, firstRemoteLaser.Trail.Count);
+        Assert.Equal(1, secondRemoteLaser.Trail.Count);
+        Assert.Equal(new System.Numerics.Vector2(10, 15), firstRemoteLaser.Trail.GetPoints()[0].Position);
+        Assert.Equal(new System.Numerics.Vector2(20, 25), secondRemoteLaser.Trail.GetPoints()[0].Position);
+    }
+
+    [Fact]
     public async Task StrokePreview_AppendsWithoutCloningExistingPointList()
     {
         var sessions = new FakeGameSessionFactory();
@@ -1364,14 +1508,14 @@ public class MainViewModelTests
                     BoardState.Elements.RemoveAll(e => e.Id == delete.ElementId);
                     break;
                 case MoveElementOperation move:
-                {
-                    var element = BoardState.Elements.FirstOrDefault(e => e.Id == move.ElementId);
-                    if (element is null) return false;
-                    element.Position = move.Position;
-                    element.Size = move.Size;
-                    element.Rotation = move.Rotation;
-                    break;
-                }
+                    {
+                        var element = BoardState.Elements.FirstOrDefault(e => e.Id == move.ElementId);
+                        if (element is null) return false;
+                        element.Position = move.Position;
+                        element.Size = move.Size;
+                        element.Rotation = move.Rotation;
+                        break;
+                    }
                 default:
                     return false;
             }
