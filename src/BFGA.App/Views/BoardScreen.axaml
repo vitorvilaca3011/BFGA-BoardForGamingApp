@@ -14,6 +14,7 @@
                              Board="{Binding MainViewModel.Board}"
                              RemoteCursors="{Binding MainViewModel.RemoteCursors}"
                              RemoteStrokePreviews="{Binding MainViewModel.RemoteStrokePreviews}"
+                             RemoteLasers="{Binding MainViewModel.RemoteLasers}"
                              DotGridOpacity="{Binding MainViewModel.GridOpacity}" />
         </Border>
 

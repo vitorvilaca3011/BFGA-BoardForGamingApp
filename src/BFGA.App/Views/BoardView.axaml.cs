@@ -34,6 +34,9 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
     public static readonly StyledProperty<EraserPreviewState?> EraserPreviewProperty =
         AvaloniaProperty.Register<BoardView, EraserPreviewState?>(nameof(EraserPreview));
 
+    public static readonly StyledProperty<IReadOnlyDictionary<Guid, RemoteLaserState>?> RemoteLasersProperty =
+        AvaloniaProperty.Register<BoardView, IReadOnlyDictionary<Guid, RemoteLaserState>?>(nameof(RemoteLasers));
+
     static BoardView()
     {
         DotGridOpacityProperty.Changed.AddClassHandler<BoardView>((bv, e) =>
@@ -75,6 +78,12 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
     {
         get => GetValue(EraserPreviewProperty);
         set => SetValue(EraserPreviewProperty, value);
+    }
+
+    public IReadOnlyDictionary<Guid, RemoteLaserState>? RemoteLasers
+    {
+        get => GetValue(RemoteLasersProperty);
+        set => SetValue(RemoteLasersProperty, value);
     }
 
     public BoardView()

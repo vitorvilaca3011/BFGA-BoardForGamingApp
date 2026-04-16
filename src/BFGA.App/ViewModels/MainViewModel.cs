@@ -48,6 +48,7 @@ private readonly IFileDialogService? _fileDialogService;
     private IReadOnlyDictionary<Guid, PlayerInfo> _roster = new Dictionary<Guid, PlayerInfo>();
     private IReadOnlyDictionary<Guid, RemoteCursorState> _remoteCursors = new Dictionary<Guid, RemoteCursorState>();
     private IReadOnlyDictionary<Guid, RemoteStrokePreviewState> _remoteStrokePreviews = new Dictionary<Guid, RemoteStrokePreviewState>();
+    private Dictionary<Guid, RemoteLaserState> _remoteLasers = new();
     private string _statusText = "Ready. Choose Host or Join.";
     private IGameHostSession? _host;
     private IGameClientSession? _client;
@@ -264,6 +265,12 @@ public ConnectionMode SelectedMode
     {
         get => _remoteStrokePreviews;
         private set => SetProperty(ref _remoteStrokePreviews, value);
+    }
+
+    public IReadOnlyDictionary<Guid, RemoteLaserState> RemoteLasers
+    {
+        get => _remoteLasers;
+        private set => SetProperty(ref _remoteLasers, (Dictionary<Guid, RemoteLaserState>)value);
     }
 
     public string StatusText
@@ -916,6 +923,9 @@ public ConnectionMode SelectedMode
             case CursorUpdateOperation cursorUpdate:
                 UpsertRemoteCursor(cursorUpdate);
                 return;
+            case LaserPointerOperation laserOp:
+                UpsertRemoteLaser(laserOp);
+                return;
             case DrawStrokePointOperation drawStrokePoint:
                 UpsertRemoteStrokePreview(drawStrokePoint);
                 return;
@@ -1077,6 +1087,7 @@ public ConnectionMode SelectedMode
 
         RemoveRemoteCursor(clientId);
         RemoveRemoteStrokePreviews(clientId);
+        _remoteLasers.Remove(clientId);
     }
 
     private void UpsertRemoteCursor(CursorUpdateOperation operation)
@@ -1097,6 +1108,30 @@ public ConnectionMode SelectedMode
         };
 
         RemoteCursors = cursors;
+    }
+
+    private void UpsertRemoteLaser(LaserPointerOperation operation)
+    {
+        if (ShouldIgnoreLocalPresence(operation.SenderId))
+            return;
+
+        if (!_remoteLasers.TryGetValue(operation.SenderId, out var state))
+        {
+            var playerInfo = GetPlayerInfo(operation.SenderId);
+            state = new RemoteLaserState(playerInfo?.AssignedColor ?? SkiaSharp.SKColors.White);
+            _remoteLasers[operation.SenderId] = state;
+        }
+
+        state.IsActive = operation.IsActive;
+        state.LastUpdateMs = Environment.TickCount64;
+
+        if (operation.IsActive)
+        {
+            state.Trail.Add(operation.Position, Environment.TickCount64);
+        }
+
+        // Trigger property change to push to BoardCanvas styled property
+        RemoteLasers = _remoteLasers;
     }
 
     private void UpsertRemoteStrokePreview(DrawStrokePointOperation operation)
@@ -1243,6 +1278,7 @@ public ConnectionMode SelectedMode
         Roster = new Dictionary<Guid, PlayerInfo>();
         RemoteCursors = new Dictionary<Guid, RemoteCursorState>();
         RemoteStrokePreviews = new Dictionary<Guid, RemoteStrokePreviewState>();
+        _remoteLasers = new Dictionary<Guid, RemoteLaserState>();
     }
 
     private void StartAutosave()
