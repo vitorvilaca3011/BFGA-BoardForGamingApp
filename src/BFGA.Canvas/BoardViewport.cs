@@ -17,6 +17,7 @@ namespace BFGA.Canvas;
 public class BoardViewport : Border
 {
     private readonly BoardCanvas _canvas;
+    private readonly LaserOverlayCanvas _laserOverlay;
     private bool _initialCenterApplied;
 
     private double _zoom = 1.0;
@@ -29,7 +30,14 @@ public class BoardViewport : Border
     public BoardViewport()
     {
         _canvas = new BoardCanvas();
-        Child = _canvas;
+        _laserOverlay = new LaserOverlayCanvas();
+
+        var layeredHost = new Grid();
+        layeredHost.Children.Add(_canvas);
+        layeredHost.Children.Add(_laserOverlay);
+        _laserOverlay.SetValue(Panel.ZIndexProperty, 1); // Panel.SetZIndex(_laserOverlay, 1)
+
+        Child = layeredHost;
         ClipToBounds = true;
         Focusable = true;
     }
@@ -79,13 +87,13 @@ public class BoardViewport : Border
         BoardCanvas.EraserPreviewProperty.AddOwner<BoardViewport>();
 
     public static readonly StyledProperty<IReadOnlyDictionary<Guid, RemoteLaserState>?> RemoteLasersProperty =
-        BoardCanvas.RemoteLasersProperty.AddOwner<BoardViewport>();
+        LaserOverlayCanvas.RemoteLasersProperty.AddOwner<BoardViewport>();
 
     public static readonly StyledProperty<LocalLaserState?> LocalLaserProperty =
-        BoardCanvas.LocalLaserProperty.AddOwner<BoardViewport>();
+        LaserOverlayCanvas.LocalLaserProperty.AddOwner<BoardViewport>();
 
     public static readonly StyledProperty<PingMarkerState?> LocalPingProperty =
-        BoardCanvas.LocalPingProperty.AddOwner<BoardViewport>();
+        LaserOverlayCanvas.LocalPingProperty.AddOwner<BoardViewport>();
 
     public static readonly StyledProperty<float> DotGridOpacityProperty =
         AvaloniaProperty.Register<BoardViewport, float>(nameof(DotGridOpacity), 0.1f);
@@ -180,17 +188,17 @@ public class BoardViewport : Border
 
         RemoteLasersProperty.Changed.AddClassHandler<BoardViewport>((vp, e) =>
         {
-            vp._canvas.RemoteLasers = e.NewValue as IReadOnlyDictionary<Guid, RemoteLaserState>;
+            vp._laserOverlay.RemoteLasers = e.NewValue as IReadOnlyDictionary<Guid, RemoteLaserState>;
         });
 
         LocalLaserProperty.Changed.AddClassHandler<BoardViewport>((vp, e) =>
         {
-            vp._canvas.LocalLaser = e.NewValue as LocalLaserState;
+            vp._laserOverlay.LocalLaser = e.NewValue as LocalLaserState;
         });
 
         LocalPingProperty.Changed.AddClassHandler<BoardViewport>((vp, e) =>
         {
-            vp._canvas.LocalPing = e.NewValue as PingMarkerState;
+            vp._laserOverlay.LocalPing = e.NewValue as PingMarkerState;
         });
     }
 
@@ -277,7 +285,10 @@ public class BoardViewport : Border
     {
         _canvas.Zoom = (float)_zoom;
         _canvas.Pan = _pan;
+        _laserOverlay.Zoom = (float)_zoom;
+        _laserOverlay.Pan = _pan;
         _canvas.InvalidateVisual();
+        _laserOverlay.InvalidateVisual();
         ZoomChanged?.Invoke(this, EventArgs.Empty);
     }
 }
