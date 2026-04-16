@@ -13,7 +13,7 @@ Deliver a fully ephemeral laser pointer tool with fading trail, press-and-hold a
 - [x] **Phase 1: Network Protocol & Host Relay** - LaserPointerOperation type, routing bypass, sequenced delivery on channel 2
 - [x] **Phase 2: Trail Buffer & Renderer** - Ring buffer, per-segment fade rendering, smooth animation loop
 - [x] **Phase 3: Local Tool Implementation** - Press-and-hold activation, local dot + trail, ping marker, zoom/pan correctness
-- [ ] **Phase 4: Multiplayer Integration** - Remote laser rendering, per-user colors, simultaneous multi-peer lasers
+- [x] **Phase 4: Multiplayer Integration** - Remote laser rendering, per-user colors, simultaneous multi-peer lasers
 - [ ] **Phase 5: Polish & Configuration** - Color picker, disconnect cleanup, stale laser timeout, edge case handling
 
 ## Phase Details
@@ -71,7 +71,11 @@ Plans:
   2. Each peer's laser renders with their distinct user color — no color collisions in 4-player session
   3. Four peers can use laser pointers simultaneously with independent trails rendering correctly
   4. Remote laser rendering does NOT trigger full `BoardDrawOperation.Render()` — isolated overlay only
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [x] 04-01-PLAN.md — Publish local laser lifecycle from BoardView into LaserPointerOperation network flow
+- [x] 04-02-PLAN.md — Reconcile remote laser color, fade-out semantics, and stale peer cleanup in MainViewModel
+- [x] 04-03-PLAN.md — Move laser rendering to dedicated overlay control and isolate redraws from BoardCanvas
 
 ### Phase 5: Polish & Configuration
 **Goal**: User can customize laser color and edge cases (disconnect, tool switch, stale state) are handled
@@ -95,5 +99,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Network Protocol & Host Relay | 1/1 | Complete | Yes |
 | 2. Trail Buffer & Renderer | 2/2 | Complete | Yes |
 | 3. Local Tool Implementation | 3/3 | Complete | Yes |
-| 4. Multiplayer Integration | 0/? | Not started | - |
+| 4. Multiplayer Integration | 3/3 | Complete | Yes |
 | 5. Polish & Configuration | 0/? | Not started | - |
