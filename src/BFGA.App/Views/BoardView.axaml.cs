@@ -37,6 +37,12 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
     public static readonly StyledProperty<IReadOnlyDictionary<Guid, RemoteLaserState>?> RemoteLasersProperty =
         AvaloniaProperty.Register<BoardView, IReadOnlyDictionary<Guid, RemoteLaserState>?>(nameof(RemoteLasers));
 
+    public static readonly StyledProperty<LocalLaserState?> LocalLaserProperty =
+        AvaloniaProperty.Register<BoardView, LocalLaserState?>(nameof(LocalLaser));
+
+    public static readonly StyledProperty<PingMarkerState?> LocalPingProperty =
+        AvaloniaProperty.Register<BoardView, PingMarkerState?>(nameof(LocalPing));
+
     static BoardView()
     {
         DotGridOpacityProperty.Changed.AddClassHandler<BoardView>((bv, e) =>
@@ -84,6 +90,18 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
     {
         get => GetValue(RemoteLasersProperty);
         set => SetValue(RemoteLasersProperty, value);
+    }
+
+    public LocalLaserState? LocalLaser
+    {
+        get => GetValue(LocalLaserProperty);
+        set => SetValue(LocalLaserProperty, value);
+    }
+
+    public PingMarkerState? LocalPing
+    {
+        get => GetValue(LocalPingProperty);
+        set => SetValue(LocalPingProperty, value);
     }
 
     public BoardView()

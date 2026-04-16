@@ -81,6 +81,12 @@ public class BoardViewport : Border
     public static readonly StyledProperty<IReadOnlyDictionary<Guid, RemoteLaserState>?> RemoteLasersProperty =
         BoardCanvas.RemoteLasersProperty.AddOwner<BoardViewport>();
 
+    public static readonly StyledProperty<LocalLaserState?> LocalLaserProperty =
+        BoardCanvas.LocalLaserProperty.AddOwner<BoardViewport>();
+
+    public static readonly StyledProperty<PingMarkerState?> LocalPingProperty =
+        BoardCanvas.LocalPingProperty.AddOwner<BoardViewport>();
+
     public static readonly StyledProperty<float> DotGridOpacityProperty =
         AvaloniaProperty.Register<BoardViewport, float>(nameof(DotGridOpacity), 0.1f);
 
@@ -118,6 +124,18 @@ public class BoardViewport : Border
     {
         get => GetValue(RemoteLasersProperty);
         set => SetValue(RemoteLasersProperty, value);
+    }
+
+    public LocalLaserState? LocalLaser
+    {
+        get => GetValue(LocalLaserProperty);
+        set => SetValue(LocalLaserProperty, value);
+    }
+
+    public PingMarkerState? LocalPing
+    {
+        get => GetValue(LocalPingProperty);
+        set => SetValue(LocalPingProperty, value);
     }
 
     public float DotGridOpacity
@@ -163,6 +181,16 @@ public class BoardViewport : Border
         RemoteLasersProperty.Changed.AddClassHandler<BoardViewport>((vp, e) =>
         {
             vp._canvas.RemoteLasers = e.NewValue as IReadOnlyDictionary<Guid, RemoteLaserState>;
+        });
+
+        LocalLaserProperty.Changed.AddClassHandler<BoardViewport>((vp, e) =>
+        {
+            vp._canvas.LocalLaser = e.NewValue as LocalLaserState;
+        });
+
+        LocalPingProperty.Changed.AddClassHandler<BoardViewport>((vp, e) =>
+        {
+            vp._canvas.LocalPing = e.NewValue as PingMarkerState;
         });
     }
 

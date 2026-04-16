@@ -80,6 +80,8 @@
                               RemoteCursors="{Binding RemoteCursors, ElementName=root}"
                               RemoteStrokePreviews="{Binding RemoteStrokePreviews, ElementName=root}"
                               RemoteLasers="{Binding RemoteLasers, ElementName=root}"
+                              LocalLaser="{Binding LocalLaser, ElementName=root}"
+                              LocalPing="{Binding LocalPing, ElementName=root}"
                               EraserPreview="{Binding EraserPreview, ElementName=root}"
                               DotGridOpacity="{Binding DotGridOpacity, ElementName=root}" />
         <Canvas>
