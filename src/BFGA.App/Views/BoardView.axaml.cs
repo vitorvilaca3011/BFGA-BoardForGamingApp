@@ -474,6 +474,7 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
         _laserPressStartScreenPoint = screenPoint;
         _localLaserCanceled = false;
         LocalPing = null;
+        _boardScreenViewModel!.MainViewModel.PublishLocalBoardOperation(new LaserPointerOperation(Guid.Empty, boardPoint, true));
     }
 
     private void UpdateLocalLaser(Vector2 boardPoint, long timestampMs)
@@ -481,12 +482,10 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
         if (LocalLaser is null || !LocalLaser.IsActive)
             return;
 
-        LocalLaser.HeadPosition = boardPoint;
-        LocalLaser.LastUpdateMs = timestampMs;
+        if (!UpdateLocalLaserState(boardPoint, timestampMs))
+            return;
 
-        var points = LocalLaser.Trail.GetPoints();
-        if (points.Length == 0 || points[^1].Position != boardPoint)
-            LocalLaser.Trail.Add(boardPoint, timestampMs);
+        _boardScreenViewModel!.MainViewModel.PublishLocalBoardOperation(new LaserPointerOperation(Guid.Empty, boardPoint, true));
     }
 
     private void CompleteLocalLaser(Vector2 boardPoint, Point screenPoint, long timestampMs)
@@ -494,7 +493,7 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
         if (LocalLaser is null || !LocalLaser.IsActive)
             return;
 
-        UpdateLocalLaser(boardPoint, timestampMs);
+        UpdateLocalLaserState(boardPoint, timestampMs);
 
         var elapsed = timestampMs - _laserPressStartTimestampMs;
         var dx = screenPoint.X - _laserPressStartScreenPoint.X;
@@ -506,6 +505,7 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
 
         LocalLaser.IsActive = false;
         LocalLaser.LastUpdateMs = timestampMs;
+        _boardScreenViewModel!.MainViewModel.PublishLocalBoardOperation(new LaserPointerOperation(Guid.Empty, boardPoint, false));
     }
 
     private void CancelLocalLaser()
@@ -516,6 +516,23 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
         _localLaserCanceled = true;
         LocalLaser.IsActive = false;
         LocalLaser.LastUpdateMs = Environment.TickCount64;
+        _boardScreenViewModel!.MainViewModel.PublishLocalBoardOperation(new LaserPointerOperation(Guid.Empty, LocalLaser.HeadPosition, false));
+    }
+
+    private bool UpdateLocalLaserState(Vector2 boardPoint, long timestampMs)
+    {
+        if (LocalLaser is null)
+            return false;
+
+        LocalLaser.HeadPosition = boardPoint;
+        LocalLaser.LastUpdateMs = timestampMs;
+
+        var points = LocalLaser.Trail.GetPoints();
+        if (points.Length != 0 && points[^1].Position == boardPoint)
+            return false;
+
+        LocalLaser.Trail.Add(boardPoint, timestampMs);
+        return true;
     }
 
     private bool TryHandlePointer(PointerEventArgs e, PointerPhase phase, bool logThisPhase = true)
