@@ -70,6 +70,57 @@ public sealed class LaserOverlayCanvasTests
         Assert.Equal((byte)0, bitmap.GetPixel(0, 0).Alpha);
     }
 
+    [Fact]
+    public void LaserOverlayCanvas_StaleActiveRemoteLaser_BecomesInactiveAfterThreeSeconds()
+    {
+        var overlay = new LaserOverlayCanvas();
+        var staleTimestamp = 1_000L;
+        var state = CreateRemoteLaserState(SKColors.DeepPink, new Vector2(12f, 18f), timestampMs: staleTimestamp, isActive: true);
+        overlay.RemoteLasers = new Dictionary<Guid, RemoteLaserState>
+        {
+            [Guid.NewGuid()] = state
+        };
+
+        InvokeNonPublic(overlay, "OnLaserFadeTick", new[] { typeof(object), typeof(EventArgs) }, null!, EventArgs.Empty);
+
+        Assert.False(state.IsActive);
+    }
+
+    [Fact]
+    public void LaserOverlayCanvas_StaleTimeout_RefreshesLastPointForFadeOut()
+    {
+        var overlay = new LaserOverlayCanvas();
+        var staleTimestamp = 1_000L;
+        var state = CreateRemoteLaserState(SKColors.DeepPink, new Vector2(12f, 18f), timestampMs: staleTimestamp, isActive: true);
+        overlay.RemoteLasers = new Dictionary<Guid, RemoteLaserState>
+        {
+            [Guid.NewGuid()] = state
+        };
+
+        InvokeNonPublic(overlay, "ReleaseStaleRemoteLasers", new[] { typeof(long) }, 4_500L);
+
+        var points = state.Trail.GetPoints().ToArray();
+        Assert.Single(points);
+        Assert.Equal(4_500L, points[0].TimestampMs);
+    }
+
+    [Fact]
+    public void LaserOverlayCanvas_FreshRemoteLaser_RemainsActive()
+    {
+        var overlay = new LaserOverlayCanvas();
+        var state = CreateRemoteLaserState(SKColors.DeepPink, new Vector2(12f, 18f), timestampMs: 3_000L, isActive: true);
+        overlay.RemoteLasers = new Dictionary<Guid, RemoteLaserState>
+        {
+            [Guid.NewGuid()] = state
+        };
+
+        var changed = (bool)(InvokeNonPublic(overlay, "ReleaseStaleRemoteLasers", new[] { typeof(long) }, 5_500L) ?? false);
+
+        Assert.False(changed);
+        Assert.True(state.IsActive);
+        Assert.Equal(3_000L, state.Trail.GetPoints().ToArray()[0].TimestampMs);
+    }
+
     private static LocalLaserState CreateLocalLaserState(SKColor color, Vector2 head, long timestampMs)
     {
         var state = new LocalLaserState(color)
