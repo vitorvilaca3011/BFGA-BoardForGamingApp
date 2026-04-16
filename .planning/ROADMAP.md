@@ -42,8 +42,8 @@ Plans:
   4. Fade animation timer (16ms) runs only while laser is active, stops when no lasers present
 **Plans:** 2 plans
 Plans:
-- [ ] 02-01-PLAN.md — LaserTrailBuffer ring buffer + RemoteLaserState model (TDD)
-- [ ] 02-02-PLAN.md — LaserTrailRenderer + BoardCanvas integration (timer, property, draw pipeline)
+- [x] 02-01-PLAN.md — LaserTrailBuffer ring buffer + RemoteLaserState model (TDD)
+- [x] 02-02-PLAN.md — LaserTrailRenderer + BoardCanvas integration (timer, property, draw pipeline)
 
 ### Phase 3: Local Tool Implementation
 **Goal**: User can activate laser tool and see their own dot + trail with correct viewport behavior
