@@ -903,7 +903,39 @@ public class MainViewModelTests
 
         remoteLaser = Assert.Contains(remoteClientId, sut.RemoteLasers);
         Assert.False(remoteLaser.IsActive);
-        Assert.Equal(trailCountBeforeRelease, remoteLaser.Trail.Count);
+        Assert.Equal(trailCountBeforeRelease + 1, remoteLaser.Trail.Count);
+        Assert.Equal(new System.Numerics.Vector2(20, 25), remoteLaser.Trail.GetPoints()[^1].Position);
+    }
+
+    [Fact]
+    public async Task LaserPointerOperation_InactiveSameEndpoint_RefreshesLastTrailTimestamp()
+    {
+        var sessions = new FakeGameSessionFactory();
+        var sut = new MainViewModel(sessionFactory: sessions);
+        var localClientId = Guid.NewGuid();
+        var remoteClientId = Guid.NewGuid();
+
+        sut.SelectedMode = ConnectionMode.Join;
+        await sut.ConnectAsync();
+        sessions.LastCreatedClient!.RaiseConnected();
+        sessions.LastCreatedClient.RaiseOperationReceived(new FullSyncResponseOperation(localClientId, new BoardState(), new Dictionary<Guid, PlayerInfo>
+        {
+            { localClientId, new PlayerInfo("Me", SkiaSharp.SKColors.Blue) },
+            { remoteClientId, new PlayerInfo("Remote", SkiaSharp.SKColors.Red) }
+        }));
+
+        sessions.LastCreatedClient.RaiseOperationReceived(new LaserPointerOperation(remoteClientId, new System.Numerics.Vector2(10, 15), true));
+
+        var remoteLaser = Assert.Contains(remoteClientId, sut.RemoteLasers);
+        var beforeReleaseTimestamp = remoteLaser.Trail.GetPoints()[0].TimestampMs;
+
+        await Task.Delay(5);
+        sessions.LastCreatedClient.RaiseOperationReceived(new LaserPointerOperation(remoteClientId, new System.Numerics.Vector2(10, 15), false));
+
+        remoteLaser = Assert.Contains(remoteClientId, sut.RemoteLasers);
+        Assert.False(remoteLaser.IsActive);
+        Assert.Equal(1, remoteLaser.Trail.Count);
+        Assert.True(remoteLaser.Trail.GetPoints()[0].TimestampMs >= beforeReleaseTimestamp);
     }
 
     [Fact]
@@ -991,9 +1023,10 @@ public class MainViewModelTests
         Assert.Equal(SkiaSharp.SKColors.Green, secondRemoteLaser.Color);
         Assert.False(firstRemoteLaser.IsActive);
         Assert.True(secondRemoteLaser.IsActive);
-        Assert.Equal(1, firstRemoteLaser.Trail.Count);
+        Assert.Equal(2, firstRemoteLaser.Trail.Count);
         Assert.Equal(1, secondRemoteLaser.Trail.Count);
         Assert.Equal(new System.Numerics.Vector2(10, 15), firstRemoteLaser.Trail.GetPoints()[0].Position);
+        Assert.Equal(new System.Numerics.Vector2(30, 35), firstRemoteLaser.Trail.GetPoints()[1].Position);
         Assert.Equal(new System.Numerics.Vector2(20, 25), secondRemoteLaser.Trail.GetPoints()[0].Position);
     }
 

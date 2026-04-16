@@ -16,6 +16,7 @@ public class LaserOverlayCanvas : Control
     private float _zoom = 1f;
     private Vector2 _pan;
     private DispatcherTimer? _laserFadeTimer;
+    private long _renderGeneration;
 
     public static readonly StyledProperty<IReadOnlyDictionary<Guid, RemoteLaserState>?> RemoteLasersProperty =
         AvaloniaProperty.Register<LaserOverlayCanvas, IReadOnlyDictionary<Guid, RemoteLaserState>?>(nameof(RemoteLasers));
@@ -84,6 +85,7 @@ public class LaserOverlayCanvas : Control
             return;
 
         _zoom = zoom;
+        _renderGeneration++;
         InvalidateVisual();
     }
 
@@ -93,11 +95,13 @@ public class LaserOverlayCanvas : Control
             return;
 
         _pan = pan;
+        _renderGeneration++;
         InvalidateVisual();
     }
 
     private void OnLaserStateChanged()
     {
+        _renderGeneration++;
         InvalidateVisual();
         UpdateLaserFadeTimer();
     }
@@ -139,6 +143,7 @@ public class LaserOverlayCanvas : Control
             return;
         }
 
+        _renderGeneration++;
         InvalidateVisual();
     }
 
@@ -168,7 +173,7 @@ public class LaserOverlayCanvas : Control
 
         try
         {
-            LaserTrailRenderer.DrawLaserTrails(canvas, RemoteLasers, now);
+            LaserTrailRenderer.DrawLaserTrails(canvas, RemoteLasers, now, _zoom);
             LaserTrailRenderer.DrawLocalLaser(canvas, LocalLaser, now, _zoom);
             LaserTrailRenderer.DrawPingMarker(canvas, LocalPing, now, _zoom);
         }
@@ -183,6 +188,7 @@ public class LaserOverlayCanvas : Control
         private readonly LaserOverlayCanvas _owner;
         private readonly float _zoom;
         private readonly Vector2 _pan;
+        private readonly long _renderGeneration;
         private readonly IReadOnlyDictionary<Guid, RemoteLaserState>? _remoteLasers;
         private readonly LocalLaserState? _localLaser;
         private readonly PingMarkerState? _localPing;
@@ -193,6 +199,7 @@ public class LaserOverlayCanvas : Control
             Bounds = bounds;
             _zoom = zoom;
             _pan = pan;
+            _renderGeneration = owner._renderGeneration;
             _remoteLasers = owner.RemoteLasers;
             _localLaser = owner.LocalLaser;
             _localPing = owner.LocalPing;
@@ -211,6 +218,7 @@ public class LaserOverlayCanvas : Control
                 && ReferenceEquals(_owner, operation._owner)
                 && _zoom == operation._zoom
                 && _pan == operation._pan
+                && _renderGeneration == operation._renderGeneration
                 && ReferenceEquals(_remoteLasers, operation._remoteLasers)
                 && ReferenceEquals(_localLaser, operation._localLaser)
                 && Equals(_localPing, operation._localPing);
@@ -240,7 +248,7 @@ public class LaserOverlayCanvas : Control
 
             try
             {
-                LaserTrailRenderer.DrawLaserTrails(canvas, _remoteLasers, now);
+                LaserTrailRenderer.DrawLaserTrails(canvas, _remoteLasers, now, _zoom);
                 LaserTrailRenderer.DrawLocalLaser(canvas, _localLaser, now, _zoom);
                 LaserTrailRenderer.DrawPingMarker(canvas, _localPing, now, _zoom);
             }

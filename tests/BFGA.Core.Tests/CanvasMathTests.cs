@@ -1,6 +1,7 @@
 using System.Numerics;
 using System.Reflection;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Rendering.SceneGraph;
 using BFGA.Canvas;
 using BFGA.Canvas.Rendering;
@@ -913,7 +914,8 @@ public class BoardViewportTests
     {
         var vp = new BoardViewport();
         Assert.NotNull(vp.Canvas);
-        Assert.Equal(vp.Canvas, vp.Child);
+        var host = Assert.IsType<Grid>(vp.Child);
+        Assert.Contains(vp.Canvas, host.Children);
     }
 
     [Fact]

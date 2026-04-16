@@ -812,9 +812,12 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         {
             if (Host.TryApplyLocalOperation(operation))
             {
-                Host.BroadcastOperation(operation);
-                SyncBoardFromHost();
-                NotifyUndoRedoChanged();
+                if (operation is not LaserPointerOperation)
+                {
+                    Host.BroadcastOperation(operation);
+                    SyncBoardFromHost();
+                    NotifyUndoRedoChanged();
+                }
             }
         }
         else
@@ -1133,9 +1136,16 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         state.IsActive = operation.IsActive;
         state.LastUpdateMs = Environment.TickCount64;
 
-        if (operation.IsActive)
+        var points = state.Trail.GetPoints();
+        var shouldAppendPoint = points.Length == 0 || points[^1].Position != operation.Position;
+
+        if (shouldAppendPoint)
         {
             state.Trail.Add(operation.Position, Environment.TickCount64);
+        }
+        else if (!operation.IsActive)
+        {
+            state.Trail.UpdateLast(operation.Position, Environment.TickCount64);
         }
 
         // New dictionary instance so SetProperty detects change

@@ -16,7 +16,8 @@ public static class LaserTrailRenderer
     public static void DrawLaserTrails(
         SKCanvas canvas,
         IReadOnlyDictionary<Guid, RemoteLaserState>? lasers,
-        long currentTimestampMs)
+        long currentTimestampMs,
+        float zoom = 1f)
     {
         if (lasers is null || lasers.Count == 0)
             return;
@@ -33,13 +34,13 @@ public static class LaserTrailRenderer
                 float t = Math.Clamp(age / DefaultDecayMs, 0f, 1f);
                 float alpha = 1f - (t * t);
                 if (alpha > 0f)
-                    DrawLaserDot(canvas, points[0].Position, state.Color, alpha);
+                    DrawLaserDot(canvas, points[0].Position, state.Color, alpha, GetWorldSize(LocalDotScreenRadius, zoom));
                 continue;
             }
 
             using var paint = new SKPaint
             {
-                StrokeWidth = 3f,
+                StrokeWidth = GetWorldSize(LocalTrailScreenWidth, zoom),
                 IsAntialias = true,
                 Style = SKPaintStyle.Stroke,
                 StrokeCap = SKStrokeCap.Round

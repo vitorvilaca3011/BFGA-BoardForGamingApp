@@ -28,6 +28,15 @@ public sealed class LaserTrailBuffer
             _count++;
     }
 
+    public void UpdateLast(Vector2 position, long timestampMs)
+    {
+        if (_count == 0)
+            return;
+
+        var lastIndex = (_head - 1 + _points.Length) % _points.Length;
+        _points[lastIndex] = (position, timestampMs);
+    }
+
     public ReadOnlySpan<(Vector2 Position, long TimestampMs)> GetPoints()
     {
         if (_count == 0)
