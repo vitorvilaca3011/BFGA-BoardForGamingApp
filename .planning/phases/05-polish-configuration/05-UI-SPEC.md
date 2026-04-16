@@ -1,10 +1,11 @@
 ---
 phase: 05
 slug: polish-configuration
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-04-16
+reviewed_at: 2026-04-16T00:00:00Z
 ---
 
 # Phase 05 - UI Design Contract
@@ -51,7 +52,7 @@ Exceptions: none
 |------|------|--------|-------------|
 | Body | 12px | 400 | 1.5 |
 | Label | 10px | 500 | 1.2 |
-| Heading | 11px | 500 | 1.2 |
+| Heading | 14px | 500 | 1.2 |
 | Display | 16px | 500 | 1.2 |
 
 Rules:
@@ -129,11 +130,11 @@ Helper-text rules:
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-04-16
