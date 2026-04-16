@@ -23,7 +23,8 @@ public enum OperationType
     PeerJoined = 9,
     PeerLeft = 10,
     Undo = 11,
-    Redo = 12
+    Redo = 12,
+    LaserPointer = 13
 }
 
 /// <summary>
@@ -44,6 +45,7 @@ public enum OperationType
 [MessagePack.Union(10, typeof(PeerLeftOperation))]
 [MessagePack.Union(11, typeof(UndoOperation))]
 [MessagePack.Union(12, typeof(RedoOperation))]
+[MessagePack.Union(13, typeof(LaserPointerOperation))]
 public abstract class BoardOperation
 {
     /// <summary>
@@ -390,4 +392,37 @@ public sealed class UndoOperation : BoardOperation
 public sealed class RedoOperation : BoardOperation
 {
     public override OperationType Type => OperationType.Redo;
+}
+
+/// <summary>
+/// Transmits a laser pointer position for ephemeral collaborative pointing.
+/// Direction: Client -> Host -> All clients (relay only, no board state mutation)
+/// Note: Sent on Channel 2 (sequenced) — dedicated channel, not shared with cursor or reliable ops
+/// </summary>
+[MessagePackObject]
+public class LaserPointerOperation : BoardOperation
+{
+    public override OperationType Type => OperationType.LaserPointer;
+
+    /// <summary>
+    /// The laser pointer position in board (scene-space) coordinates.
+    /// </summary>
+    [Key(3)]
+    public Vector2 Position { get; set; }
+
+    /// <summary>
+    /// Whether the laser is currently active (pressed) or deactivating (released).
+    /// When false, signals peers to begin fade-out of this user's laser trail.
+    /// </summary>
+    [Key(4)]
+    public bool IsActive { get; set; }
+
+    public LaserPointerOperation() { }
+
+    public LaserPointerOperation(Guid clientId, Vector2 position, bool isActive)
+    {
+        SenderId = clientId;
+        Position = position;
+        IsActive = isActive;
+    }
 }
