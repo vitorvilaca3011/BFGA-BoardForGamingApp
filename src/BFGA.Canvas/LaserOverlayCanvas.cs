@@ -13,6 +13,7 @@ namespace BFGA.Canvas;
 
 public class LaserOverlayCanvas : Control
 {
+    private const long RemoteLaserStaleTimeoutMs = 3000;
     private float _zoom = 1f;
     private Vector2 _pan;
     private DispatcherTimer? _laserFadeTimer;
@@ -132,6 +133,7 @@ public class LaserOverlayCanvas : Control
     private void OnLaserFadeTick(object? sender, EventArgs e)
     {
         var now = Environment.TickCount64;
+        var releasedStaleRemoteLaser = ReleaseStaleRemoteLasers(now);
         var hasVisible = LaserTrailRenderer.HasVisibleTrails(RemoteLasers, now)
             || LaserTrailRenderer.HasVisibleLocalLaser(LocalLaser, now)
             || LaserTrailRenderer.HasVisiblePing(LocalPing, now);
@@ -143,8 +145,40 @@ public class LaserOverlayCanvas : Control
             return;
         }
 
-        _renderGeneration++;
-        InvalidateVisual();
+        if (releasedStaleRemoteLaser || hasVisible)
+        {
+            _renderGeneration++;
+            InvalidateVisual();
+        }
+    }
+
+    private bool ReleaseStaleRemoteLasers(long now)
+    {
+        if (RemoteLasers is null || RemoteLasers.Count == 0)
+            return false;
+
+        var changed = false;
+        foreach (var state in RemoteLasers.Values)
+        {
+            if (!state.IsActive)
+                continue;
+
+            if (now - state.LastUpdateMs < RemoteLaserStaleTimeoutMs)
+                continue;
+
+            state.IsActive = false;
+
+            var points = state.Trail.GetPoints();
+            if (points.Length > 0)
+            {
+                var last = points[^1];
+                state.Trail.UpdateLast(last.Position, now);
+            }
+
+            changed = true;
+        }
+
+        return changed;
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
