@@ -314,7 +314,8 @@ public class ProtocolTests
             new PeerLeftOperation(Guid.NewGuid()),
             new UndoOperation(),
             new RedoOperation(),
-            new LaserPointerOperation(Guid.NewGuid(), new Vector2(10, 20), true)
+            new LaserPointerOperation(Guid.NewGuid(), new Vector2(10, 20), true),
+            new UpdatePresenceColorOperation(SKColors.CornflowerBlue)
         };
 
         // Act & Assert - wrap in NetworkMessage for proper polymorphic serialization
@@ -367,6 +368,28 @@ public class ProtocolTests
         Assert.Equal(clientId, result.SenderId);
         Assert.Equal(new Vector2(42, 84), result.Position);
         Assert.False(result.IsActive);
+    }
+
+    [Fact]
+    public void UpdatePresenceColorOperation_RoundTrips_ThroughMessagePack()
+    {
+        // Arrange
+        var operation = new UpdatePresenceColorOperation(SKColors.MediumPurple)
+        {
+            SenderId = Guid.NewGuid()
+        };
+
+        // Act
+        var message = new NetworkMessage(operation);
+        var bytes = MessagePackSerializer.Serialize(message, MessagePackSetup.Options);
+        var restored = MessagePackSerializer.Deserialize<NetworkMessage>(bytes, MessagePackSetup.Options);
+
+        // Assert
+        Assert.NotNull(restored.Operation);
+        Assert.IsType<UpdatePresenceColorOperation>(restored.Operation);
+        var result = (UpdatePresenceColorOperation)restored.Operation;
+        Assert.Equal(operation.SenderId, result.SenderId);
+        Assert.Equal(SKColors.MediumPurple, result.Color);
     }
 
     [Fact]

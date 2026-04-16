@@ -85,7 +85,7 @@ public class NetworkTests
         // Act - Start connection
         var connectTask = client.ConnectAsync("localhost", hostPort);
         Assert.False(connectTask.IsCompleted);
-        
+
         // Pump events to establish connection and trigger PeerJoined
         for (int i = 0; i < 100; i++)
         {
@@ -114,7 +114,7 @@ public class NetworkTests
         using var host = new GameHost();
         host.Start(0);
         int hostPort = host.Port;
-        
+
         // Track host receiving operations
         BoardOperation? hostReceivedOp = null;
         host.OperationReceived += (sender, args) =>
@@ -123,10 +123,10 @@ public class NetworkTests
         };
 
         using var client = new GameClient("HostPlayer");
-        
+
         // Start connection (ConnectAsync polls client events internally)
         var connectTask = client.ConnectAsync("localhost", hostPort);
-        
+
         // Pump events on both host and client until connected
         // Note: ConnectAsync polls client events, but we also need to poll host events
         for (int i = 0; i < 100; i++)
@@ -177,7 +177,7 @@ public class NetworkTests
 
         // Assert
         var received = operationReceived.Wait(1000);
-        
+
         host.Stop();
         client.Disconnect();
 
@@ -253,7 +253,7 @@ public class NetworkTests
     public void GameHost_BroadcastOperation_DoesNotThrowWhenNoClients()
     {
         // This test validates broadcast doesn't throw when no clients are connected
-        
+
         // Arrange
         using var host = new GameHost();
         host.Start(0);
@@ -262,9 +262,9 @@ public class NetworkTests
         var operation = new CursorUpdateOperation(
             Guid.NewGuid(),
             new System.Numerics.Vector2(100, 200));
-        
+
         var exception = Record.Exception(() => host.BroadcastOperation(operation, reliable: false));
-        
+
         host.Stop();
 
         Assert.Null(exception);
@@ -438,6 +438,82 @@ public class NetworkTests
 
         Assert.NotNull(hostReceivedOp);
         Assert.IsType<LaserPointerOperation>(hostReceivedOp);
+
+        host.Stop();
+        client.Disconnect();
+    }
+
+    [Fact]
+    public async Task GameHost_UpdatePresenceColorOperation_UpdatesPlayerRosterAndBroadcastsPeerMetadata()
+    {
+        using var host = new GameHost();
+        host.Start(0);
+
+        using var client = new GameClient("ColorTester");
+        var connectTask = client.ConnectAsync("localhost", host.Port);
+
+        for (int i = 0; i < 100; i++)
+        {
+            host.PollEvents();
+            client.PollEvents();
+            await Task.Delay(10);
+            if (client.IsConnected)
+            {
+                break;
+            }
+        }
+
+        await connectTask;
+        Assert.True(client.IsConnected);
+
+        for (int i = 0; i < 100 && (host.PlayerRoster.Count == 0 || client.ClientId == Guid.Empty); i++)
+        {
+            host.PollEvents();
+            client.PollEvents();
+            await Task.Delay(10);
+        }
+
+        var localClientId = client.ClientId;
+        Assert.True(host.PlayerRoster.TryGetValue(localClientId, out var originalPlayer));
+
+        var receivedOperations = new ConcurrentQueue<BoardOperation>();
+        client.OperationReceived += (_, args) => receivedOperations.Enqueue(args.Operation);
+
+        var requestedColor = SKColors.Gold;
+        var spoofedSenderId = Guid.NewGuid();
+        var updateColor = new UpdatePresenceColorOperation(requestedColor)
+        {
+            SenderId = spoofedSenderId
+        };
+
+        client.SendOperation(updateColor);
+
+        PeerJoinedOperation? metadataBroadcast = null;
+        for (int i = 0; i < 100; i++)
+        {
+            host.PollEvents();
+            client.PollEvents();
+            await Task.Delay(10);
+
+            metadataBroadcast = receivedOperations
+                .OfType<PeerJoinedOperation>()
+                .LastOrDefault(op => op.ClientId == localClientId && op.AssignedColor == requestedColor);
+            if (metadataBroadcast is not null)
+            {
+                break;
+            }
+        }
+
+        Assert.True(host.PlayerRoster.TryGetValue(localClientId, out var updatedPlayer));
+        Assert.NotNull(updatedPlayer);
+        Assert.Equal(requestedColor, updatedPlayer.AssignedColor);
+        Assert.Equal(originalPlayer.DisplayName, updatedPlayer.DisplayName);
+
+        Assert.NotNull(metadataBroadcast);
+        Assert.Equal(localClientId, metadataBroadcast!.ClientId);
+        Assert.Equal(originalPlayer.DisplayName, metadataBroadcast.DisplayName);
+        Assert.Equal(requestedColor, metadataBroadcast.AssignedColor);
+        Assert.NotEqual(spoofedSenderId, metadataBroadcast.ClientId);
 
         host.Stop();
         client.Disconnect();
