@@ -40,7 +40,10 @@ Plans:
   2. Trail renders as per-segment lines with per-point alpha decay (ease-out curve, ~1-2s fade)
   3. Single `SKPaint` instance reused across all segments — no per-frame allocation
   4. Fade animation timer (16ms) runs only while laser is active, stops when no lasers present
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 02-01-PLAN.md — LaserTrailBuffer ring buffer + RemoteLaserState model (TDD)
+- [ ] 02-02-PLAN.md — LaserTrailRenderer + BoardCanvas integration (timer, property, draw pipeline)
 
 ### Phase 3: Local Tool Implementation
 **Goal**: User can activate laser tool and see their own dot + trail with correct viewport behavior
