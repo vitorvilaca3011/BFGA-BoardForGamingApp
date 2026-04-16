@@ -10,6 +10,7 @@ using BFGA.Core.Models;
 using SkiaSharp;
 using System.Numerics;
 using System.Threading;
+using Avalonia.Threading;
 
 namespace BFGA.Canvas;
 
@@ -24,6 +25,7 @@ public class BoardCanvas : Control
     private float _dotGridOpacity = 0.1f;
     private float _zoom = 1.0f;
     private Vector2 _pan;
+    private DispatcherTimer? _laserFadeTimer;
 
     /// <summary>
     /// Avalonia styled property for the board state to render.
@@ -42,6 +44,9 @@ public class BoardCanvas : Control
 
     public static readonly StyledProperty<EraserPreviewState?> EraserPreviewProperty =
         AvaloniaProperty.Register<BoardCanvas, EraserPreviewState?>(nameof(EraserPreview));
+
+    public static readonly StyledProperty<IReadOnlyDictionary<Guid, RemoteLaserState>?> RemoteLasersProperty =
+        AvaloniaProperty.Register<BoardCanvas, IReadOnlyDictionary<Guid, RemoteLaserState>?>(nameof(RemoteLasers));
 
     public float DotGridOpacity
     {
@@ -74,6 +79,7 @@ public class BoardCanvas : Control
         RemoteStrokePreviewsProperty.Changed.AddClassHandler<BoardCanvas>((canvas, _) => canvas.OnOverlayChanged());
         SelectionOverlayProperty.Changed.AddClassHandler<BoardCanvas>((canvas, _) => canvas.OnOverlayChanged());
         EraserPreviewProperty.Changed.AddClassHandler<BoardCanvas>((canvas, _) => canvas.OnOverlayChanged());
+        RemoteLasersProperty.Changed.AddClassHandler<BoardCanvas>((canvas, _) => canvas.OnLaserStateChanged());
     }
 
     public BoardCanvas()
@@ -144,6 +150,12 @@ public class BoardCanvas : Control
         set => SetValue(EraserPreviewProperty, value);
     }
 
+    public IReadOnlyDictionary<Guid, RemoteLaserState>? RemoteLasers
+    {
+        get => GetValue(RemoteLasersProperty);
+        set => SetValue(RemoteLasersProperty, value);
+    }
+
     /// <summary>
     /// Explicitly invalidates the canvas so the current board instance is repainted.
     /// Call this after mutating the existing <see cref="BoardState"/> in place.
@@ -177,10 +189,46 @@ public class BoardCanvas : Control
         InvalidateVisual();
     }
 
+    private void OnLaserStateChanged()
+    {
+        AdvanceRenderGeneration();
+        InvalidateVisual();
+        UpdateLaserFadeTimer();
+    }
+
+    private void UpdateLaserFadeTimer()
+    {
+        var hasVisible = LaserTrailRenderer.HasVisibleTrails(RemoteLasers, Environment.TickCount64);
+        if (hasVisible && _laserFadeTimer is null)
+        {
+            _laserFadeTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(16), DispatcherPriority.Render, OnLaserFadeTick);
+            _laserFadeTimer.Start();
+        }
+        else if (!hasVisible && _laserFadeTimer is not null)
+        {
+            _laserFadeTimer.Stop();
+            _laserFadeTimer = null;
+        }
+    }
+
+    private void OnLaserFadeTick(object? sender, EventArgs e)
+    {
+        if (!LaserTrailRenderer.HasVisibleTrails(RemoteLasers, Environment.TickCount64))
+        {
+            _laserFadeTimer?.Stop();
+            _laserFadeTimer = null;
+            return;
+        }
+        AdvanceRenderGeneration();
+        InvalidateVisual();
+    }
+
     /// <inheritdoc />
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnDetachedFromVisualTree(e);
+        _laserFadeTimer?.Stop();
+        _laserFadeTimer = null;
         _imageCache.Clear();
     }
 
@@ -215,6 +263,7 @@ public class BoardCanvas : Control
         private readonly IReadOnlyDictionary<Guid, RemoteCursorState>? _remoteCursors;
         private readonly SelectionOverlayState? _selectionOverlay;
         private readonly EraserPreviewState? _eraserPreview;
+        private readonly IReadOnlyDictionary<Guid, RemoteLaserState>? _remoteLasers;
 
         public BoardDrawOperation(BoardCanvas owner, Rect bounds, BoardState board, float zoom, Vector2 pan)
         {
@@ -230,6 +279,7 @@ public class BoardCanvas : Control
             _remoteCursors = owner.RemoteCursors;
             _selectionOverlay = owner.SelectionOverlay;
             _eraserPreview = owner.EraserPreview;
+            _remoteLasers = owner.RemoteLasers;
         }
 
         public Rect Bounds { get; }
@@ -298,6 +348,7 @@ public class BoardCanvas : Control
                 DrawEraserPreview(canvas, _eraserPreview, _zoom);
                 DrawRemoteStrokePreviews(canvas, _remoteStrokePreviews);
                 DrawRemoteCursors(canvas, _remoteCursors);
+                DrawLaserTrails(canvas, _remoteLasers);
             }
             finally
             {
@@ -333,6 +384,11 @@ public class BoardCanvas : Control
             {
                 CollaboratorOverlayHelper.DrawRemoteCursor(canvas, cursor);
             }
+        }
+
+        private static void DrawLaserTrails(SKCanvas canvas, IReadOnlyDictionary<Guid, RemoteLaserState>? lasers)
+        {
+            LaserTrailRenderer.DrawLaserTrails(canvas, lasers, Environment.TickCount64);
         }
 
         private static bool IsSortedByZIndex(IReadOnlyList<BoardElement> elements)

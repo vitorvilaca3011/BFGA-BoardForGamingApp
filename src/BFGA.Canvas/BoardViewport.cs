@@ -78,6 +78,9 @@ public class BoardViewport : Border
     public static readonly StyledProperty<EraserPreviewState?> EraserPreviewProperty =
         BoardCanvas.EraserPreviewProperty.AddOwner<BoardViewport>();
 
+    public static readonly StyledProperty<IReadOnlyDictionary<Guid, RemoteLaserState>?> RemoteLasersProperty =
+        BoardCanvas.RemoteLasersProperty.AddOwner<BoardViewport>();
+
     public static readonly StyledProperty<float> DotGridOpacityProperty =
         AvaloniaProperty.Register<BoardViewport, float>(nameof(DotGridOpacity), 0.1f);
 
@@ -109,6 +112,12 @@ public class BoardViewport : Border
     {
         get => GetValue(EraserPreviewProperty);
         set => SetValue(EraserPreviewProperty, value);
+    }
+
+    public IReadOnlyDictionary<Guid, RemoteLaserState>? RemoteLasers
+    {
+        get => GetValue(RemoteLasersProperty);
+        set => SetValue(RemoteLasersProperty, value);
     }
 
     public float DotGridOpacity
@@ -149,6 +158,11 @@ public class BoardViewport : Border
         EraserPreviewProperty.Changed.AddClassHandler<BoardViewport>((vp, e) =>
         {
             vp._canvas.EraserPreview = e.NewValue is EraserPreviewState preview ? preview : null;
+        });
+
+        RemoteLasersProperty.Changed.AddClassHandler<BoardViewport>((vp, e) =>
+        {
+            vp._canvas.RemoteLasers = e.NewValue as IReadOnlyDictionary<Guid, RemoteLaserState>;
         });
     }
 
