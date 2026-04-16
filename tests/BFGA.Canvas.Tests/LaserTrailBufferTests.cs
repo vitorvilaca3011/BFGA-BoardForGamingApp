@@ -11,7 +11,7 @@ public class LaserTrailBufferTests
         var buffer = new LaserTrailBuffer();
 
         Assert.Equal(0, buffer.Count);
-        Assert.Empty(buffer.GetPoints());
+        Assert.Equal(0, buffer.GetPoints().Length);
     }
 
     [Fact]
@@ -77,7 +77,7 @@ public class LaserTrailBufferTests
         buffer.Clear();
 
         Assert.Equal(0, buffer.Count);
-        Assert.Empty(buffer.GetPoints());
+        Assert.Equal(0, buffer.GetPoints().Length);
     }
 
     [Fact]
@@ -90,7 +90,7 @@ public class LaserTrailBufferTests
         buffer.Add(pos, ts);
 
         var points = buffer.GetPoints();
-        Assert.Single(points);
+        Assert.Equal(1, points.Length);
         Assert.Equal(pos, points[0].Position);
         Assert.Equal(ts, points[0].TimestampMs);
     }
