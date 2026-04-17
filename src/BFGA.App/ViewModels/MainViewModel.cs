@@ -1461,20 +1461,17 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
 
     private void OnHostOperationReceived(object? sender, OperationReceivedEventArgs e)
     {
-        if (e.ClientId == Guid.Empty)
+        if (e.Operation is not LaserPointerOperation)
         {
             return;
         }
 
-        switch (e.Operation)
+        if (e.Operation.SenderId == Guid.Empty)
         {
-            case CursorUpdateOperation:
-            case LaserPointerOperation:
-            case DrawStrokePointOperation:
-            case CancelStrokeOperation:
-                ApplyInboundOperation(e.Operation);
-                break;
+            return;
         }
+
+        ApplyInboundOperation(e.Operation);
     }
 
     private void SyncPreferredPresenceColor()
