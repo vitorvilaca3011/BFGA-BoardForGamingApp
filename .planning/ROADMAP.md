@@ -15,6 +15,9 @@ Deliver a fully ephemeral laser pointer tool with fading trail, press-and-hold a
 - [x] **Phase 3: Local Tool Implementation** - Press-and-hold activation, local dot + trail, ping marker, zoom/pan correctness
 - [x] **Phase 4: Multiplayer Integration** - Remote laser rendering, per-user colors, simultaneous multi-peer lasers
 - [x] **Phase 5: Polish & Configuration** - Color picker, disconnect cleanup, stale laser timeout, edge case handling
+- [ ] **Phase 6: Host Laser Inbound Rendering** - Host consumes remote laser ops, renders client lasers, verifies multiplayer path
+- [ ] **Phase 7: Verify Rendering And Input Coverage** - Add missing verification for local rendering, trail fade, and input flows
+- [ ] **Phase 8: Verify Configuration And Traceability Closure** - Verify configuration behavior and close audit traceability drift
 
 ## Phase Details
 
@@ -93,10 +96,47 @@ Plans:
 - [x] 05-03-PLAN.md — Use preferred presence color for local laser and enforce stale remote timeout release semantics
 **UI hint**: yes
 
+### Phase 6: Host Laser Inbound Rendering
+**Goal**: Host UI consumes inbound remote laser operations so multiplayer visibility requirements hold for every peer
+**Depends on**: Phase 4
+**Requirements**: MULT-01, MULT-02, MULT-03
+**Gap Closure**: Closes milestone audit integration blocker and broken flow for `Client laser visible on host`
+**Success Criteria** (what must be TRUE):
+  1. Host session exposes inbound laser operations from remote clients to the app layer
+  2. Host `MainViewModel` applies inbound remote laser updates through the existing remote laser path
+  3. Host screen renders client laser dots and trails with correct per-user colors
+  4. Regression coverage exists for `client sends laser -> host UI renders remote laser`
+  5. Phase 04 multiplayer behavior is backed by a `VERIFICATION.md` artifact
+**Plans**: 0 plans
+
+### Phase 7: Verify Rendering And Input Coverage
+**Goal**: Rendering and input behavior claimed by phases 02-03 is verified and traceable at milestone level
+**Depends on**: Phase 3
+**Requirements**: RNDR-01, RNDR-02, RNDR-04, RNDR-05, INPT-01, INPT-02
+**Gap Closure**: Closes orphaned requirements caused by missing verification artifacts for phases 02-03
+**Success Criteria** (what must be TRUE):
+  1. Phase 02 has a `VERIFICATION.md` covering trail fade and performance behavior
+  2. Phase 03 has a `VERIFICATION.md` covering local laser rendering, gesture lifecycle, and ping behavior
+  3. Requirement evidence is strong enough for milestone audit to mark rendering and input requirements satisfied
+  4. `REQUIREMENTS.md` traceability reflects the verification closure work
+**Plans**: 0 plans
+
+### Phase 8: Verify Configuration And Traceability Closure
+**Goal**: Configuration behavior and planning traceability are corrected so the milestone can pass re-audit
+**Depends on**: Phase 5
+**Requirements**: CONF-01
+**Gap Closure**: Closes Phase 05 verification gap and roadmap-to-requirements traceability drift identified by the milestone audit
+**Success Criteria** (what must be TRUE):
+  1. Phase 05 has a `VERIFICATION.md` covering configurable laser color and cleanup behavior
+  2. `REQUIREMENTS.md` accurately reflects satisfied and pending v1 requirements after gap work lands
+  3. Coverage counts in `REQUIREMENTS.md` match the traceability table
+  4. Milestone re-audit no longer fails on missing verification artifacts or stale requirement bookkeeping
+**Plans**: 0 plans
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -105,3 +145,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 3. Local Tool Implementation | 3/3 | Complete | Yes |
 | 4. Multiplayer Integration | 3/3 | Complete | Yes |
 | 5. Polish & Configuration | 3/3 | Complete | Yes |
+| 6. Host Laser Inbound Rendering | 0/0 | Planned | No |
+| 7. Verify Rendering And Input Coverage | 0/0 | Planned | No |
+| 8. Verify Configuration And Traceability Closure | 0/0 | Planned | No |

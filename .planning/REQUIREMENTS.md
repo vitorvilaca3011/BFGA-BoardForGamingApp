@@ -9,7 +9,7 @@
 
 - [ ] **RNDR-01**: User sees a colored dot at cursor position when laser tool is active and mouse is pressed
 - [ ] **RNDR-02**: Fading trail follows cursor movement, decaying over ~1-2 seconds after each point is drawn
-- [ ] **RNDR-03**: Laser rendering is ephemeral — never saved to board state, element list, or JSON file
+- [x] **RNDR-03**: Laser rendering is ephemeral — never saved to board state, element list, or JSON file
 - [ ] **RNDR-04**: Laser dot and trail render correctly at all zoom levels and pan positions (scene-space coords, viewport transform on render)
 - [ ] **RNDR-05**: Trail animation runs at smooth frame rate without degrading canvas performance
 
@@ -58,23 +58,25 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| RNDR-01 | Phase 3 | Pending |
-| RNDR-02 | Phase 2 | Pending |
-| RNDR-03 | Phase 1 | Pending |
-| RNDR-04 | Phase 3 | Pending |
-| RNDR-05 | Phase 2 | Pending |
-| MULT-01 | Phase 4 | Pending |
-| MULT-02 | Phase 4 | Pending |
-| MULT-03 | Phase 4 | Pending |
-| INPT-01 | Phase 3 | Pending |
-| INPT-02 | Phase 3 | Pending |
-| CONF-01 | Phase 5 | Pending |
+| RNDR-01 | Phase 7 | Pending |
+| RNDR-02 | Phase 7 | Pending |
+| RNDR-03 | Phase 1 | Satisfied |
+| RNDR-04 | Phase 7 | Pending |
+| RNDR-05 | Phase 7 | Pending |
+| MULT-01 | Phase 6 | Pending |
+| MULT-02 | Phase 6 | Pending |
+| MULT-03 | Phase 6 | Pending |
+| INPT-01 | Phase 7 | Pending |
+| INPT-02 | Phase 7 | Pending |
+| CONF-01 | Phase 8 | Pending |
 
 **Coverage:**
 - v1 requirements: 11 total
 - Mapped to phases: 11
 - Unmapped: 0
+- Satisfied: 1
+- Pending gap closure: 10
 
 ---
 *Requirements defined: 2026-04-15*
-*Last updated: 2026-04-15 — roadmap phase mapping complete*
+*Last updated: 2026-04-17 — milestone gap closure phases added*
