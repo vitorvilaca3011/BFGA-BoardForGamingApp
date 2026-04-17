@@ -7,11 +7,11 @@
 
 ### Rendering
 
-- [ ] **RNDR-01**: User sees a colored dot at cursor position when laser tool is active and mouse is pressed
-- [ ] **RNDR-02**: Fading trail follows cursor movement, decaying over ~1-2 seconds after each point is drawn
+- [x] **RNDR-01**: User sees a colored dot at cursor position when laser tool is active and mouse is pressed
+- [x] **RNDR-02**: Fading trail follows cursor movement, decaying over ~1-2 seconds after each point is drawn
 - [x] **RNDR-03**: Laser rendering is ephemeral — never saved to board state, element list, or JSON file
-- [ ] **RNDR-04**: Laser dot and trail render correctly at all zoom levels and pan positions (scene-space coords, viewport transform on render)
-- [ ] **RNDR-05**: Trail animation runs at smooth frame rate without degrading canvas performance
+- [x] **RNDR-04**: Laser dot and trail render correctly at all zoom levels and pan positions (scene-space coords, viewport transform on render)
+- [x] **RNDR-05**: Trail animation runs at smooth frame rate without degrading canvas performance
 
 ### Multiplayer
 
@@ -21,8 +21,8 @@
 
 ### Input
 
-- [ ] **INPT-01**: Laser activates on mouse press and deactivates on mouse release (press-and-hold gesture)
-- [ ] **INPT-02**: Quick tap (short click <200ms, <5px movement) produces a pulsing ping marker that fades after ~2-3 seconds
+- [x] **INPT-01**: Laser activates on mouse press and deactivates on mouse release (press-and-hold gesture)
+- [x] **INPT-02**: Quick tap (short click <200ms, <5px movement) produces a pulsing ping marker that fades after ~2-3 seconds
 
 ### Configuration
 
@@ -58,16 +58,16 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| RNDR-01 | Phase 7 | Pending |
-| RNDR-02 | Phase 7 | Pending |
+| RNDR-01 | Phase 7 | Complete |
+| RNDR-02 | Phase 7 | Complete |
 | RNDR-03 | Phase 1 | Satisfied |
-| RNDR-04 | Phase 7 | Pending |
-| RNDR-05 | Phase 7 | Pending |
+| RNDR-04 | Phase 7 | Complete |
+| RNDR-05 | Phase 7 | Complete |
 | MULT-01 | Phase 6 | Complete |
 | MULT-02 | Phase 6 | Complete |
 | MULT-03 | Phase 6 | Complete |
-| INPT-01 | Phase 7 | Pending |
-| INPT-02 | Phase 7 | Pending |
+| INPT-01 | Phase 7 | Complete |
+| INPT-02 | Phase 7 | Complete |
 | CONF-01 | Phase 8 | Pending |
 
 **Coverage:**
