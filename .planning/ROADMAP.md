@@ -127,8 +127,8 @@ Plans:
 
 Plans:
 - [x] 07-01-PLAN.md — refresh Phase 02 verification artifact for trail fade and redraw/performance evidence
-- [ ] 07-02-PLAN.md — refresh Phase 03 verification artifact for local rendering and input evidence
-- [ ] 07-03-PLAN.md — update requirements traceability and counts after Phase 02-03 verification closure
+- [x] 07-02-PLAN.md — refresh Phase 03 verification artifact for local rendering and input evidence
+- [x] 07-03-PLAN.md — update requirements traceability and counts after Phase 02-03 verification closure
 
 ### Phase 8: Verify Configuration And Traceability Closure
 **Goal**: Configuration behavior and planning traceability are corrected so the milestone can pass re-audit
