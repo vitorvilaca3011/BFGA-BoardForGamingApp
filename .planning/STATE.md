@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-15)
 ## Current Position
 
 Phase: 07 (verify-rendering-and-input-coverage) — EXECUTING
-Plan: 3 of 3
+Plan: 2 of 3
 Status: Ready to execute
 Last activity: 2026-04-17
 
@@ -59,7 +59,6 @@ Progress: [========--] 82%
 
 *Updated after each plan completion*
 | Phase 06 P02 | 6 min | 1 tasks | 2 files |
-| Phase 07-verify-rendering-and-input-coverage P02 | 1 min | 1 tasks | 2 files |
 | Phase 07 P01 | 1 min | 1 tasks | 2 files |
 
 ## Accumulated Context
@@ -91,8 +90,6 @@ Recent decisions affecting current work:
 - [Phase 5]: Peer disconnect removes remote laser immediately; tool switch sends inactive release semantics
 - [Phase 06]: Marked multiplayer requirements passed only after focused evidence commands and full dotnet suite were green during this execution.
 - [Phase 06]: Kept four-peer claim tied to automated per-peer isolation proof plus documented manual LAN validation guidance, not invented unrun end-to-end evidence.
-- [Phase 07-verify-rendering-and-input-coverage]: Kept Phase 03 verification scoped to local rendering and input evidence only, with no multiplayer or configuration drift. — Prevents audit evidence drift beyond local requirement closure.
-- [Phase 07-verify-rendering-and-input-coverage]: Documented subjective visual checks under explicit manual verification instead of treating them as automated proof. — Keeps requirement closure auditable and avoids overstating automation.
 - [Phase 07]: Bound RNDR-02 and RNDR-05 closure to exact Phase 02 fade/timer/redraw tests instead of stale audit text.
 - [Phase 07]: Kept direct performance confirmation manual-only because current automation proves timer lifecycle and redraw isolation, not measured FPS.
 
