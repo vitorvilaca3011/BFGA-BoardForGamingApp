@@ -1035,6 +1035,70 @@ public class MainViewModelTests
     }
 
     [Fact]
+    public async Task MainViewModel_HostInboundLaserOperation_UpdatesRemoteLasers()
+    {
+        // Host inbound remote laser regression.
+        var sessions = new FakeGameSessionFactory();
+        var sut = new MainViewModel(sessionFactory: sessions);
+        var remoteClientId = Guid.NewGuid();
+
+        await sut.StartHostAsync();
+        sessions.LastCreatedHost!.RaisePeerJoined(remoteClientId, "Remote", SkiaSharp.SKColors.Red);
+
+        sessions.LastCreatedHost.RaiseOperationReceived(
+            new LaserPointerOperation(remoteClientId, new System.Numerics.Vector2(10, 15), true),
+            remoteClientId);
+
+        var remoteLaser = Assert.Contains(remoteClientId, sut.RemoteLasers);
+        Assert.Equal(SkiaSharp.SKColors.Red, remoteLaser.Color);
+        Assert.True(remoteLaser.IsActive);
+        Assert.Equal(1, remoteLaser.Trail.Count);
+        Assert.Empty(sut.Board.Elements);
+    }
+
+    [Fact]
+    public async Task MainViewModel_HostInboundInactiveLaser_PreservesTrailForFade()
+    {
+        // Host inbound remote laser regression.
+        var sessions = new FakeGameSessionFactory();
+        var sut = new MainViewModel(sessionFactory: sessions);
+        var remoteClientId = Guid.NewGuid();
+
+        await sut.StartHostAsync();
+        sessions.LastCreatedHost!.RaisePeerJoined(remoteClientId, "Remote", SkiaSharp.SKColors.Red);
+        sessions.LastCreatedHost.RaiseOperationReceived(
+            new LaserPointerOperation(remoteClientId, new System.Numerics.Vector2(10, 15), true),
+            remoteClientId);
+
+        var beforeRelease = Assert.Contains(remoteClientId, sut.RemoteLasers).Trail.Count;
+
+        sessions.LastCreatedHost.RaiseOperationReceived(
+            new LaserPointerOperation(remoteClientId, new System.Numerics.Vector2(20, 25), false),
+            remoteClientId);
+
+        var remoteLaser = Assert.Contains(remoteClientId, sut.RemoteLasers);
+        Assert.False(remoteLaser.IsActive);
+        Assert.Equal(beforeRelease + 1, remoteLaser.Trail.Count);
+        Assert.Equal(new System.Numerics.Vector2(20, 25), remoteLaser.Trail.GetPoints()[^1].Position);
+    }
+
+    [Fact]
+    public async Task MainViewModel_HostInboundGuidEmptyLaser_IsIgnored()
+    {
+        // Host inbound remote laser regression.
+        var sessions = new FakeGameSessionFactory();
+        var sut = new MainViewModel(sessionFactory: sessions);
+
+        await sut.StartHostAsync();
+
+        sessions.LastCreatedHost!.RaiseOperationReceived(
+            new LaserPointerOperation(Guid.Empty, new System.Numerics.Vector2(10, 15), true),
+            Guid.Empty);
+
+        Assert.Empty(sut.RemoteLasers);
+    }
+
+    [Fact]
     public async Task MainViewModel_HostPeerJoined_ColorRefresh_UpdatesRosterEntry()
     {
         var sessions = new FakeGameSessionFactory();
