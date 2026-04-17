@@ -140,7 +140,11 @@ Plans:
   2. `REQUIREMENTS.md` accurately reflects satisfied and pending v1 requirements after gap work lands
   3. Coverage counts in `REQUIREMENTS.md` match the traceability table
   4. Milestone re-audit no longer fails on missing verification artifacts or stale requirement bookkeeping
-**Plans**: 0 plans
+**Plans**: 2 plans
+
+Plans:
+- [ ] 08-01-PLAN.md — create Phase 05 verification artifact from existing CONF-01 evidence
+- [ ] 08-02-PLAN.md — close requirements ledger drift and rerun milestone audit
 
 ## Progress
 
