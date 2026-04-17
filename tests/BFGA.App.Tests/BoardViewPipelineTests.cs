@@ -867,6 +867,7 @@ public sealed class BoardViewPipelineTests
 
         public event EventHandler<BFGA.Network.PeerJoinedEventArgs>? PeerJoined { add { } remove { } }
         public event EventHandler<BFGA.Network.PeerLeftEventArgs>? PeerLeft { add { } remove { } }
+        public event EventHandler<BFGA.Network.OperationReceivedEventArgs>? OperationReceived { add { } remove { } }
 
         public void Start(int port = 7777) { }
 

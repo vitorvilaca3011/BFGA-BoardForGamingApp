@@ -31,6 +31,12 @@ public sealed class NetworkGameSessionFactory : IGameSessionFactory
             remove => _inner.PeerJoined -= value;
         }
 
+        public event EventHandler<OperationReceivedEventArgs>? OperationReceived
+        {
+            add => _inner.OperationReceived += value;
+            remove => _inner.OperationReceived -= value;
+        }
+
         public event EventHandler<PeerLeftEventArgs>? PeerLeft
         {
             add => _inner.PeerLeft += value;

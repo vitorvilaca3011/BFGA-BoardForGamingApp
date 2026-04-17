@@ -6,6 +6,7 @@ namespace BFGA.App.Networking;
 
 public interface IGameHostSession : IDisposable
 {
+    event EventHandler<OperationReceivedEventArgs>? OperationReceived;
     event EventHandler<PeerJoinedEventArgs>? PeerJoined;
     event EventHandler<PeerLeftEventArgs>? PeerLeft;
 

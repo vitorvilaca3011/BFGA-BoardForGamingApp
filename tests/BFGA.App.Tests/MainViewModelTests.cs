@@ -1681,6 +1681,7 @@ public class MainViewModelTests
 
         public event EventHandler<PeerJoinedEventArgs>? PeerJoined;
         public event EventHandler<PeerLeftEventArgs>? PeerLeft;
+        public event EventHandler<OperationReceivedEventArgs>? OperationReceived;
 
         public bool IsRunning { get; private set; }
         public int Port { get; private set; }
@@ -1763,6 +1764,12 @@ public class MainViewModelTests
         public void RaisePeerJoined(Guid clientId, string displayName, SkiaSharp.SKColor assignedColor)
         {
             PeerJoined?.Invoke(this, new PeerJoinedEventArgs(clientId, displayName, assignedColor));
+        }
+
+        public void RaiseOperationReceived(BoardOperation operation, Guid clientId)
+        {
+            operation.SenderId = clientId;
+            OperationReceived?.Invoke(this, new OperationReceivedEventArgs(operation, clientId));
         }
     }
 
