@@ -373,6 +373,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
             {
                 _host.PeerJoined -= OnPeerJoined;
                 _host.PeerLeft -= OnPeerLeft;
+                _host.OperationReceived -= OnHostOperationReceived;
             }
 
             _host = value;
@@ -381,6 +382,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
             {
                 _host.PeerJoined += OnPeerJoined;
                 _host.PeerLeft += OnPeerLeft;
+                _host.OperationReceived += OnHostOperationReceived;
             }
 
             OnPropertyChanged();
@@ -1454,6 +1456,24 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         catch (ArgumentException)
         {
             return SkiaSharp.SKColors.White;
+        }
+    }
+
+    private void OnHostOperationReceived(object? sender, OperationReceivedEventArgs e)
+    {
+        if (e.ClientId == Guid.Empty)
+        {
+            return;
+        }
+
+        switch (e.Operation)
+        {
+            case CursorUpdateOperation:
+            case LaserPointerOperation:
+            case DrawStrokePointOperation:
+            case CancelStrokeOperation:
+                ApplyInboundOperation(e.Operation);
+                break;
         }
     }
 
