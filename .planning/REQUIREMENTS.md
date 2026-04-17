@@ -15,9 +15,9 @@
 
 ### Multiplayer
 
-- [ ] **MULT-01**: Local user's laser dot and trail are visible to all connected peers in real-time via network broadcast
-- [ ] **MULT-02**: Each peer's laser renders with a distinct per-user color
-- [ ] **MULT-03**: Multiple users can use laser pointers simultaneously — each peer's trail renders independently
+- [x] **MULT-01**: Local user's laser dot and trail are visible to all connected peers in real-time via network broadcast
+- [x] **MULT-02**: Each peer's laser renders with a distinct per-user color
+- [x] **MULT-03**: Multiple users can use laser pointers simultaneously — each peer's trail renders independently
 
 ### Input
 
@@ -63,9 +63,9 @@
 | RNDR-03 | Phase 1 | Satisfied |
 | RNDR-04 | Phase 7 | Pending |
 | RNDR-05 | Phase 7 | Pending |
-| MULT-01 | Phase 6 | Pending |
-| MULT-02 | Phase 6 | Pending |
-| MULT-03 | Phase 6 | Pending |
+| MULT-01 | Phase 6 | Complete |
+| MULT-02 | Phase 6 | Complete |
+| MULT-03 | Phase 6 | Complete |
 | INPT-01 | Phase 7 | Pending |
 | INPT-02 | Phase 7 | Pending |
 | CONF-01 | Phase 8 | Pending |

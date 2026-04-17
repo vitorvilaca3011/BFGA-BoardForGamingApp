@@ -107,7 +107,11 @@ Plans:
   3. Host screen renders client laser dots and trails with correct per-user colors
   4. Regression coverage exists for `client sends laser -> host UI renders remote laser`
   5. Phase 04 multiplayer behavior is backed by a `VERIFICATION.md` artifact
-**Plans**: 0 plans
+**Plans**: 2 plans
+
+Plans:
+- [x] 06-01-PLAN.md — expose host inbound laser operation contract and wire MainViewModel host remote-laser handling
+- [x] 06-02-PLAN.md — create Phase 04 multiplayer verification artifact with host-visibility closure evidence
 
 ### Phase 7: Verify Rendering And Input Coverage
 **Goal**: Rendering and input behavior claimed by phases 02-03 is verified and traceable at milestone level
