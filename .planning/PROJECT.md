@@ -57,8 +57,14 @@ Real-time collaborative canvas that stays in sync across all connected peers —
 | Dot + fading trail | More expressive than dot-only; shows movement path | — Pending |
 | Press-and-hold activation | Natural gesture; avoids accidental laser when browsing | — Pending |
 | Configurable color | Users want distinct laser colors in multiplayer | — Pending |
-| Visible to all peers | Core use case is pointing things out to others | — Pending |
+| Visible to all peers | Core use case is pointing things out to others | Verified in Phases 04 and 06 |
 | ~1-2s fade time | Long enough to see trail, short enough to stay clean | — Pending |
 
+## Current State
+
+- Phase 06 complete: host now consumes inbound remote laser operations and reuses the existing remote laser render path.
+- `MULT-01`, `MULT-02`, and `MULT-03` are now verified and closed in milestone traceability.
+- Next gap-closure target: Phase 07 verification artifacts for rendering and input coverage.
+
 ---
-*Last updated: 2026-04-15 after /gsd-new-project init*
+*Last updated: 2026-04-17 after Phase 06 completion*
