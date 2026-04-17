@@ -55,16 +55,16 @@ Real-time collaborative canvas that stays in sync across all connected peers —
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
 | Dot + fading trail | More expressive than dot-only; shows movement path | — Pending |
-| Press-and-hold activation | Natural gesture; avoids accidental laser when browsing | — Pending |
+| Press-and-hold activation | Natural gesture; avoids accidental laser when browsing | Verified in Phase 07 |
 | Configurable color | Users want distinct laser colors in multiplayer | — Pending |
 | Visible to all peers | Core use case is pointing things out to others | Verified in Phases 04 and 06 |
-| ~1-2s fade time | Long enough to see trail, short enough to stay clean | — Pending |
+| ~1-2s fade time | Long enough to see trail, short enough to stay clean | Verified in Phase 07 |
 
 ## Current State
 
-- Phase 06 complete: host now consumes inbound remote laser operations and reuses the existing remote laser render path.
-- `MULT-01`, `MULT-02`, and `MULT-03` are now verified and closed in milestone traceability.
-- Next gap-closure target: Phase 07 verification artifacts for rendering and input coverage.
+- Phase 07 complete: rendering and input claims from Phases 02-03 now have current verification artifacts and milestone traceability.
+- `RNDR-01`, `RNDR-02`, `RNDR-04`, `RNDR-05`, `INPT-01`, and `INPT-02` are now verified and closed.
+- Next gap-closure target: Phase 08 configuration verification and final traceability cleanup for `CONF-01`.
 
 ---
-*Last updated: 2026-04-17 after Phase 06 completion*
+*Last updated: 2026-04-17 after Phase 07 completion*
