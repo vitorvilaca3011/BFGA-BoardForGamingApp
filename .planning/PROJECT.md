@@ -56,15 +56,15 @@ Real-time collaborative canvas that stays in sync across all connected peers —
 |----------|-----------|---------|
 | Dot + fading trail | More expressive than dot-only; shows movement path | — Pending |
 | Press-and-hold activation | Natural gesture; avoids accidental laser when browsing | Verified in Phase 07 |
-| Configurable color | Users want distinct laser colors in multiplayer | — Pending |
+| Configurable color | Users want distinct laser colors in multiplayer | Verified in Phase 08 |
 | Visible to all peers | Core use case is pointing things out to others | Verified in Phases 04 and 06 |
 | ~1-2s fade time | Long enough to see trail, short enough to stay clean | Verified in Phase 07 |
 
 ## Current State
 
-- Phase 07 complete: rendering and input claims from Phases 02-03 now have current verification artifacts and milestone traceability.
-- `RNDR-01`, `RNDR-02`, `RNDR-04`, `RNDR-05`, `INPT-01`, and `INPT-02` are now verified and closed.
-- Next gap-closure target: Phase 08 configuration verification and final traceability cleanup for `CONF-01`.
+- Phase 08 complete: configuration verification, requirements traceability, and milestone bookkeeping are closed.
+- All v1 laser-pointer requirements are now verified, including `CONF-01`.
+- Next step: milestone archive and release closeout for `v1.0`.
 
 ---
-*Last updated: 2026-04-17 after Phase 07 completion*
+*Last updated: 2026-04-18 after Phase 08 completion*
