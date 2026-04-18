@@ -26,7 +26,7 @@
 
 ### Configuration
 
-- [ ] **CONF-01**: User can configure their laser pointer color via a color picker or setting
+- [x] **CONF-01**: User can configure their laser pointer color via a color picker or setting
 
 ## v2 Requirements
 
@@ -68,15 +68,15 @@
 | MULT-03 | Phase 6 | Complete |
 | INPT-01 | Phase 7 | Satisfied |
 | INPT-02 | Phase 7 | Satisfied |
-| CONF-01 | Phase 8 | Pending |
+| CONF-01 | Phase 8 | Satisfied |
 
 **Coverage:**
 - v1 requirements: 11 total
 - Mapped to phases: 11
 - Unmapped: 0
-- Satisfied: 10
-- Pending gap closure: 1
+- Satisfied: 11
+- Pending gap closure: 0
 
 ---
 *Requirements defined: 2026-04-15*
-*Last updated: 2026-04-17 — Phase 07 rendering/input verification closure*
+*Last updated: 2026-04-18 — Phase 08 configuration verification closure*
