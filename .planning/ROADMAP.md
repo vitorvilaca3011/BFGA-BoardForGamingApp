@@ -144,7 +144,7 @@ Plans:
 
 Plans:
 - [x] 08-01-PLAN.md — create Phase 05 verification artifact from existing CONF-01 evidence
-- [ ] 08-02-PLAN.md — close requirements ledger drift and rerun milestone audit
+- [x] 08-02-PLAN.md — close requirements ledger drift and rerun milestone audit
 
 ## Progress
 

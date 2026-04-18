@@ -1,0 +1,1 @@
+- 2026-04-18 — `dotnet test --no-restore -v q` still reports `BFGA.App.Tests.MainViewModelTests.MainViewModel_HostLaserPresenceColorChange_BroadcastsHostMetadataUpsert` failing during documentation-only Phase 08-02 execution. Treated as pre-existing/out-of-scope because this plan modified planning artifacts only.
