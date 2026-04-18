@@ -143,7 +143,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 08-01-PLAN.md — create Phase 05 verification artifact from existing CONF-01 evidence
+- [x] 08-01-PLAN.md — create Phase 05 verification artifact from existing CONF-01 evidence
 - [ ] 08-02-PLAN.md — close requirements ledger drift and rerun milestone audit
 
 ## Progress
@@ -160,4 +160,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 5. Polish & Configuration | 3/3 | Complete | Yes |
 | 6. Host Laser Inbound Rendering | 2/2 | Complete   | 2026-04-17 |
 | 7. Verify Rendering And Input Coverage | 3/3 | Complete | 2026-04-17 |
-| 8. Verify Configuration And Traceability Closure | 0/0 | Planned | No |
+| 8. Verify Configuration And Traceability Closure | 1/2 | In Progress|  |
