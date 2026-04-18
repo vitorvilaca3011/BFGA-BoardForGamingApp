@@ -140,11 +140,13 @@ Plans:
   2. `REQUIREMENTS.md` accurately reflects satisfied and pending v1 requirements after gap work lands
   3. Coverage counts in `REQUIREMENTS.md` match the traceability table
   4. Milestone re-audit no longer fails on missing verification artifacts or stale requirement bookkeeping
-**Plans**: 2 plans
+**Plans**: 4 plans
 
 Plans:
 - [x] 08-01-PLAN.md — create Phase 05 verification artifact from existing CONF-01 evidence
 - [x] 08-02-PLAN.md — close requirements ledger drift and rerun milestone audit
+- [x] 08-03-PLAN.md — fix host presence-color metadata upsert regression blocking CONF-01 evidence
+- [ ] 08-04-PLAN.md — rerun Phase 08 verification and resolve stale deferred regression note
 
 ## Progress
 
@@ -160,4 +162,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 5. Polish & Configuration | 3/3 | Complete | Yes |
 | 6. Host Laser Inbound Rendering | 2/2 | Complete   | 2026-04-17 |
 | 7. Verify Rendering And Input Coverage | 3/3 | Complete | 2026-04-17 |
-| 8. Verify Configuration And Traceability Closure | 2/2 | Complete | 2026-04-18 |
+| 8. Verify Configuration And Traceability Closure | 2/4 | In Progress | 2026-04-18 |
