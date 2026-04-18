@@ -111,11 +111,11 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
         ZoomOutCommand = new RelayCommand(ZoomOut);
         ZoomResetCommand = new RelayCommand(ResetZoom);
         viewport.ZoomChanged += HandleZoomChanged;
-        viewport.PointerPressed += HandlePointerPressed;
-        viewport.PointerMoved += HandlePointerMoved;
-        viewport.PointerReleased += HandlePointerReleased;
-        viewport.PointerExited += HandlePointerExited;
-        viewport.PointerCaptureLost += HandlePointerCaptureLost;
+        viewport.AddHandler(InputElement.PointerPressedEvent, HandlePointerPressed, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, true);
+        viewport.AddHandler(InputElement.PointerMovedEvent, HandlePointerMoved, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, true);
+        viewport.AddHandler(InputElement.PointerReleasedEvent, HandlePointerReleased, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, true);
+        viewport.AddHandler(InputElement.PointerExitedEvent, HandlePointerExited, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, true);
+        viewport.AddHandler(InputElement.PointerCaptureLostEvent, HandlePointerCaptureLost, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, true);
         DataContextChanged += HandleDataContextChanged;
         InlineTextEditor.KeyDown += HandleInlineTextEditorKeyDown;
         InlineTextEditor.LostFocus += HandleInlineTextEditorLostFocus;
@@ -474,6 +474,7 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
         _laserPressStartScreenPoint = screenPoint;
         _localLaserCanceled = false;
         LocalPing = null;
+        InvalidateLaserOverlay();
         _boardScreenViewModel!.MainViewModel.PublishLocalBoardOperation(new LaserPointerOperation(Guid.Empty, boardPoint, true));
     }
 
@@ -485,6 +486,7 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
         if (!UpdateLocalLaserState(boardPoint, timestampMs))
             return;
 
+        InvalidateLaserOverlay();
         _boardScreenViewModel!.MainViewModel.PublishLocalBoardOperation(new LaserPointerOperation(Guid.Empty, boardPoint, true));
     }
 
@@ -505,6 +507,7 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
 
         LocalLaser.IsActive = false;
         LocalLaser.LastUpdateMs = timestampMs;
+        InvalidateLaserOverlay();
         _boardScreenViewModel!.MainViewModel.PublishLocalBoardOperation(new LaserPointerOperation(Guid.Empty, boardPoint, false));
     }
 
@@ -516,6 +519,7 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
         _localLaserCanceled = true;
         LocalLaser.IsActive = false;
         LocalLaser.LastUpdateMs = Environment.TickCount64;
+        InvalidateLaserOverlay();
         _boardScreenViewModel!.MainViewModel.PublishLocalBoardOperation(new LaserPointerOperation(Guid.Empty, LocalLaser.HeadPosition, false));
     }
 
@@ -533,6 +537,11 @@ public partial class BoardView : UserControl, INotifyPropertyChanged
 
         LocalLaser.Trail.Add(boardPoint, timestampMs);
         return true;
+    }
+
+    private void InvalidateLaserOverlay()
+    {
+        viewport.InvalidateVisual();
     }
 
     private bool TryHandlePointer(PointerEventArgs e, PointerPhase phase, bool logThisPhase = true)

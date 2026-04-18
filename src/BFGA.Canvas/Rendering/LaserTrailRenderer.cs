@@ -8,9 +8,9 @@ public static class LaserTrailRenderer
     private const float DefaultDecayMs = 1500f;
     private const float LocalDotScreenRadius = 5f;
     private const float LocalTrailScreenWidth = 3f;
-    private const float PingCenterDotScreenRadius = 4f;
-    private const float PingRingStartScreenRadius = 10f;
-    private const float PingRingEndScreenRadius = 24f;
+    private const float PingCenterDotScreenRadius = 5f;
+    private const float PingRingStartScreenRadius = 18f;
+    private const float PingRingEndScreenRadius = 72f;
     private const float DefaultPingLifetimeMs = 2400f;
 
     public static void DrawLaserTrails(
@@ -245,7 +245,7 @@ public static class LaserTrailRenderer
             Color = ping.Color.WithAlpha(pingAlpha),
             IsAntialias = true,
             Style = SKPaintStyle.Stroke,
-            StrokeWidth = GetWorldSize(2f, zoom)
+            StrokeWidth = GetWorldSize(3f, zoom)
         };
 
         canvas.DrawCircle(

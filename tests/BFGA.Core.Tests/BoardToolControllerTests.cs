@@ -515,7 +515,7 @@ public class BoardToolControllerTests
         var controller = new BoardToolController(board);
         controller.SetTool(BoardToolType.Eraser);
 
-var result = controller.HandlePointerDown(new Vector2(26, 26));
+        var result = controller.HandlePointerDown(new Vector2(26, 26));
 
         Assert.True(result.Handled);
         Assert.True(result.BoardChanged);
@@ -541,11 +541,11 @@ var result = controller.HandlePointerDown(new Vector2(26, 26));
         var moveResult = controller.HandlePointerMove(new Vector2(34, 16));
         var repeatResult = controller.HandlePointerMove(new Vector2(16, 16));
 
-Assert.DoesNotContain(board.Elements, element => element.Id == first.Id);
+        Assert.DoesNotContain(board.Elements, element => element.Id == first.Id);
         Assert.DoesNotContain(board.Elements, element => element.Id == second.Id);
         Assert.Contains(board.Elements, element => element.Id == third.Id);
         Assert.True(moveResult.Handled);
-Assert.True(moveResult.BoardChanged);
+        Assert.True(moveResult.BoardChanged);
         Assert.Equal(second.Id, Assert.IsType<DeleteElementOperation>(Assert.Single(moveResult.Operations)).ElementId);
         Assert.True(repeatResult.Handled);
         Assert.False(repeatResult.BoardChanged);

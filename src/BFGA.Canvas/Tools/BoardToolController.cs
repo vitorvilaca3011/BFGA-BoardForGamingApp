@@ -21,7 +21,7 @@ public sealed class BoardToolController
         Shape
     }
 
-private readonly SelectionState _selection = new();
+    private readonly SelectionState _selection = new();
     private readonly Dictionary<Guid, Vector2> _interactionStartPositions = new();
     private readonly Dictionary<Guid, float> _interactionStartRotations = new();
     private readonly HashSet<Guid> _erasedElementIds = new();
@@ -59,7 +59,7 @@ private readonly SelectionState _selection = new();
 
     public ShapeType ShapeType { get; set; } = ShapeType.Rectangle;
 
-public void SetTool(BoardToolType tool)
+    public void SetTool(BoardToolType tool)
     {
         CurrentTool = tool;
         _gestureMode = GestureMode.None;
@@ -76,7 +76,7 @@ public void SetTool(BoardToolType tool)
         if (ReferenceEquals(Board, board))
             return;
 
-Board = board;
+        Board = board;
         PreserveSelection(selectedIds);
         _gestureMode = GestureMode.None;
         _activeStroke = null;
@@ -135,7 +135,7 @@ Board = board;
     {
         _current = position;
 
-return _gestureMode switch
+        return _gestureMode switch
         {
             GestureMode.SelectBox => ToolResult.HandledOnly,
             GestureMode.Manipulate => HandleManipulationMove(position),
@@ -150,7 +150,7 @@ return _gestureMode switch
     {
         _current = position;
 
-return _gestureMode switch
+        return _gestureMode switch
         {
             GestureMode.SelectBox => FinishSelectBox(position),
             GestureMode.Manipulate => FinishManipulation(position),
@@ -405,7 +405,7 @@ return _gestureMode switch
         return ToolResult.HandledOnly;
     }
 
-private ToolResult HandleEraserDown(Vector2 position)
+    private ToolResult HandleEraserDown(Vector2 position)
     {
         _selection.Clear();
         _eraserGestureActive = true;
@@ -417,7 +417,7 @@ private ToolResult HandleEraserDown(Vector2 position)
         return EraseAt(position);
     }
 
-private ToolResult FinishEraser(Vector2 position)
+    private ToolResult FinishEraser(Vector2 position)
     {
         var result = EraseAt(position);
         _eraserGestureActive = false;

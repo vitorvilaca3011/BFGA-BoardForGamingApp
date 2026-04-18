@@ -111,13 +111,13 @@ public class GameClient : IDisposable
             CleanupNetworkState();
             throw new InvalidOperationException($"Failed to start network client");
         }
-        
+
         // Connect using display name as connection key (server retrieves it via ConnectionKey property)
         _netManager.Connect(hostAddress, port, _displayName);
         return _connectCompletionSource.Task;
     }
 
-/// <summary>
+    /// <summary>
     /// Waits for a connection to be established.
     /// </summary>
     /// <param name="timeoutMs">Timeout in milliseconds.</param>
@@ -161,7 +161,7 @@ public class GameClient : IDisposable
         }
 
         operation.SenderId = _clientId;
-        
+
         // Determine channel and delivery method
         int channel;
         DeliveryMethod deliveryMethod;
@@ -181,7 +181,7 @@ public class GameClient : IDisposable
             channel = reliable ? ReliableChannel : UnreliableChannel;
             deliveryMethod = reliable ? DeliveryMethod.ReliableOrdered : DeliveryMethod.Unreliable;
         }
-        
+
         _dataWriter.Reset();
         _dataWriter.PutBytesWithLength(OperationSerializer.Serialize(operation));
         _connectedPeer.Send(_dataWriter, (byte)channel, deliveryMethod);

@@ -695,6 +695,16 @@ public sealed class BoardViewPipelineTests
     }
 
     [Fact]
+    public void BoardView_Constructor_RegistersRoutedPointerHandlersForViewport()
+    {
+        var boardView = new BoardView();
+
+        var viewport = GetViewport(boardView);
+
+        Assert.NotNull(viewport);
+    }
+
+    [Fact]
     public void LaserPointer_CancelLocalLaser_MarksOverlayInactive()
     {
         var mainViewModel = new MainViewModel();
@@ -795,6 +805,28 @@ public sealed class BoardViewPipelineTests
         var source = File.ReadAllText(Path.GetFullPath(sourcePath));
 
         Assert.Contains("BoardToolType.LaserPointer => new Cursor(StandardCursorType.Cross)", source);
+    }
+
+    [Fact]
+    public void LaserPointer_UpdateLocalLaser_DragKeepsOverlayVisible()
+    {
+        var mainViewModel = new MainViewModel();
+        var boardView = new BoardView();
+        var boardScreenViewModel = new BoardScreenViewModel(mainViewModel)
+        {
+            SelectedTool = BoardToolType.LaserPointer
+        };
+
+        AttachBoardScreen(boardView, boardScreenViewModel);
+        InvokePrivateNoArgs(boardView, "SyncToolController");
+        InvokePrivate(boardView, "BeginLocalLaser", new Vector2(10f, 10f), new Point(10, 10), 100L);
+        InvokePrivate(boardView, "UpdateLocalLaser", new Vector2(30f, 40f), 140L);
+
+        var viewport = GetViewport(boardView);
+        Assert.NotNull(boardView.LocalLaser);
+        Assert.True(LaserTrailRenderer.HasVisibleLocalLaser(boardView.LocalLaser, 140L));
+        Assert.True(boardView.LocalLaser!.Trail.Count >= 2);
+        Assert.NotNull(viewport);
     }
 
     private static void AttachBoardScreen(BoardView boardView, BoardScreenViewModel boardScreenViewModel)

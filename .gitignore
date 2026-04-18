@@ -1,6 +1,8 @@
 .opencode/
 .superpowers/
 .worktrees/
+.codenomad/
+.planning/
 docs/
 
 .vs/

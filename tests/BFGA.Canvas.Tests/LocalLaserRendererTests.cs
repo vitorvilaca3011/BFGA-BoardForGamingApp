@@ -83,7 +83,7 @@ public sealed class LocalLaserRendererTests
         float endRadius = LaserTrailRenderer.GetPingRingScreenRadius(startedAtMs, 3400);
 
         // Assert
-        Assert.Equal(10f, startRadius, 3);
-        Assert.Equal(24f, endRadius, 3);
+        Assert.Equal(18f, startRadius, 3);
+        Assert.Equal(72f, endRadius, 3);
     }
 }
