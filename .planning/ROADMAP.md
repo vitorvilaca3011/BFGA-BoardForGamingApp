@@ -146,7 +146,7 @@ Plans:
 - [x] 08-01-PLAN.md — create Phase 05 verification artifact from existing CONF-01 evidence
 - [x] 08-02-PLAN.md — close requirements ledger drift and rerun milestone audit
 - [x] 08-03-PLAN.md — fix host presence-color metadata upsert regression blocking CONF-01 evidence
-- [ ] 08-04-PLAN.md — rerun Phase 08 verification and resolve stale deferred regression note
+- [x] 08-04-PLAN.md — rerun Phase 08 verification and resolve stale deferred regression note (completed 2026-04-18)
 
 ## Progress
 
