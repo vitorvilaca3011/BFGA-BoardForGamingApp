@@ -998,40 +998,50 @@ public class MainViewModelTests
     [Fact]
     public async Task MainViewModel_HostLaserPresenceColorChange_BroadcastsHostMetadataUpsert()
     {
-        var sessions = new FakeGameSessionFactory();
-        var sut = new MainViewModel(sessionFactory: sessions)
+        await RunWithIsolatedSettingsFileAsync(async _ =>
         {
-            DisplayName = "Host Player"
-        };
+            var sessions = new FakeGameSessionFactory();
+            using var sut = new MainViewModel(sessionFactory: sessions)
+            {
+                DisplayName = "Host Player"
+            };
 
-        await sut.StartHostAsync();
-        sessions.LastCreatedHost!.BroadcastedOperations.Clear();
+            await sut.StartHostAsync();
+            sessions.LastCreatedHost!.BroadcastedOperations.Clear();
 
-        sut.LaserPresenceColor = SkiaSharp.SKColors.Orange;
+            sut.LaserPresenceColor = SkiaSharp.SKColors.Orange;
 
-        var metadata = Assert.Single(sessions.LastCreatedHost.BroadcastedOperations);
-        var join = Assert.IsType<PeerJoinedOperation>(metadata);
-        Assert.Equal(Guid.Empty, join.ClientId);
-        Assert.Equal("Host Player", join.DisplayName);
-        Assert.Equal(SkiaSharp.SKColors.Orange, join.AssignedColor);
-        Assert.Equal("Host Player", sessions.LastCreatedHost.HostDisplayName);
-        Assert.Equal(SkiaSharp.SKColors.Orange, sessions.LastCreatedHost.HostAssignedColor);
+            var metadata = Assert.Single(sessions.LastCreatedHost.BroadcastedOperations);
+            var join = Assert.IsType<PeerJoinedOperation>(metadata);
+            Assert.Equal(Guid.Empty, join.ClientId);
+            Assert.Equal("Host Player", join.DisplayName);
+            Assert.Equal(SkiaSharp.SKColors.Orange, join.AssignedColor);
+            Assert.Equal("Host Player", sessions.LastCreatedHost.HostDisplayName);
+            Assert.Equal(SkiaSharp.SKColors.Orange, sessions.LastCreatedHost.HostAssignedColor);
+
+            await sut.StopHostAsync();
+        });
     }
 
     [Fact]
     public async Task MainViewModel_StartHost_SyncsHostPresenceIntoSession()
     {
-        var sessions = new FakeGameSessionFactory();
-        var sut = new MainViewModel(sessionFactory: sessions)
+        await RunWithIsolatedSettingsFileAsync(async _ =>
         {
-            DisplayName = "Host Player",
-            LaserPresenceColor = SkiaSharp.SKColors.MediumPurple
-        };
+            var sessions = new FakeGameSessionFactory();
+            using var sut = new MainViewModel(sessionFactory: sessions)
+            {
+                DisplayName = "Host Player",
+                LaserPresenceColor = SkiaSharp.SKColors.MediumPurple
+            };
 
-        await sut.StartHostAsync();
+            await sut.StartHostAsync();
 
-        Assert.Equal("Host Player", sessions.LastCreatedHost!.HostDisplayName);
-        Assert.Equal(SkiaSharp.SKColors.MediumPurple, sessions.LastCreatedHost.HostAssignedColor);
+            Assert.Equal("Host Player", sessions.LastCreatedHost!.HostDisplayName);
+            Assert.Equal(SkiaSharp.SKColors.MediumPurple, sessions.LastCreatedHost.HostAssignedColor);
+
+            await sut.StopHostAsync();
+        });
     }
 
     [Fact]
@@ -1111,6 +1121,27 @@ public class MainViewModelTests
 
         var player = Assert.Contains(remoteClientId, sut.Roster);
         Assert.Equal(SkiaSharp.SKColors.Gold, player.AssignedColor);
+    }
+
+    [Fact]
+    public async Task MainViewModel_HostOperationReceived_LaserPointer_UpdatesRemoteLaserState()
+    {
+        var sessions = new FakeGameSessionFactory();
+        var sut = new MainViewModel(sessionFactory: sessions);
+        var remoteClientId = Guid.NewGuid();
+
+        await sut.StartHostAsync();
+        sessions.LastCreatedHost!.RaisePeerJoined(remoteClientId, "Remote", SkiaSharp.SKColors.DeepSkyBlue);
+        sessions.LastCreatedHost.RaiseOperationReceived(
+            new LaserPointerOperation(remoteClientId, new System.Numerics.Vector2(10, 15), true),
+            remoteClientId);
+
+        var laser = Assert.Contains(remoteClientId, sut.RemoteLasers);
+        var points = laser.Trail.GetPoints();
+        Assert.True(laser.IsActive);
+        Assert.Equal(SkiaSharp.SKColors.DeepSkyBlue, laser.Color);
+        Assert.Equal(1, points.Length);
+        Assert.Equal(new System.Numerics.Vector2(10, 15), points[0].Position);
     }
 
     [Fact]
